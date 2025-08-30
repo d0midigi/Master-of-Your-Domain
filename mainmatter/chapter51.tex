@@ -1,0 +1,250 @@
+
+AD Persistence: Malicious Security Support Provider (SSP)
+
+Key Terminology
+
+Active Directory Schema:
+
+The Active Directory schema is a blueprint that defines the structure and rules for objects and their attributes within an Active Directory forest. It specifies what types of objects can be created (like users, computers, groups) and the properties (attributes) that each object can have. Essentially, it dictates how information is organized and stored in the Active Directory database.
+
+Azure Active Directory (Azure AD):
+
+Azure Active Directory (Azure AD), now known as Microsoft Entra ID, is a cloud-based identity and access management service. It allows organizations to manage users, groups, and access to resources in the cloud and on-premises. Essentially, it acts as a directory service and an identity provider, enabling secure access to various Microsoft and third-party applications.
+
+C-Suite:
+
+In cybersecurity, the "C-suite" refers to the highest level of executives within an organization, typically including positions like CEO, CFO, CIO, and CISO. These leaders play a crucial role in cybersecurity by setting the strategic direction, allocating resources, and ensuring that security is integrated into the overall business strategy. Their involvement is essential for establishing a strong security posture and mitigating risks.
+
+DCSync:
+
+DCSync is a technique used in cybersecurity attacks to impersonate a Domain Controller (DC) and request replication data, including sensitive credentials, from other DCs in an Active Directory (AD) environment.
+
+Domain Replication:
+
+Domain replication is the process of copying and synchronizing directory data across multiple domain controllers (or other servers) within a network. This ensures that all domain controllers have the same information, improving reliability, performance, and data consistency. Essentially, any changes made to the directory on one domain controller are automatically replicated to all others.
+
+Group Policy Object (GPO):
+
+In Active Directory (AD), a Group Policy Object (GPO) is a virtual collection of settings that allows administrators to manage and configure user and computer settings within an AD environment. GPOs are fundamental for centrally controlling and standardizing settings across an organization's network, ensuring consistency and security.
+
+Impersonation:
+
+In cybersecurity, impersonation refers to a malicious tactic where an attacker pretends to be a trusted individual, organization, or system to deceive a target into taking actions that benefit the attacker. This often involves social engineering to manipulate victims into revealing sensitive information, transferring funds, or granting access to systems.
+
+Password Hashes:
+
+Password hashing is a security measure that converts passwords into irreversible, fixed-length strings of characters (hashes) using a one-way function. This prevents the storage of passwords in plain text, making them unreadable even if a database is compromised. Instead of storing the actual password, a system stores its hash, which can be compared to a user's input during login, ensuring authentication without exposing the original password.
+
+Principle of Least Privilege (PoLP):
+
+PoLP stands for the Principle of Least Privilege. It's a cybersecurity concept that dictates users, applications, and systems should only have the minimum necessary access rights to perform their intended tasks. This approach minimizes the potential damage from compromised accounts and reduces the attack surface for malicious actors.
+
+Role-based Access Control (RBAC):
+
+Role-Based Access Control (RBAC) is a security approach that restricts system access based on a user's role within an organization. Instead of granting permissions directly to users, RBAC assigns permissions to roles, and then users are assigned to those roles. This helps manage access effectively and ensures users only have the resources they need.
+
+Security Event and Information Management (SIEM):
+
+SIEM, which stands for Security Information and Event Management, is a cybersecurity solution that aggregates and analyzes security data from various sources within an IT environment. It helps organizations detect, investigate, and respond to security threats in real-time. Essentially, SIEM systems collect logs and event data, correlate that information, and provide a centralized view of security incidents, enabling faster and more effective threat detection and response.
+
+Introduction
+
+A Sneaky AD Persistence Method
+
+Active Directory Recon Without Admin Rights
+
+Active Directory has several levels of administration beyond the Domain Admins group. Securing Domain Controllers to Improve Active Directory Security is what defenders can do to to better secure Domain Controllers and by extension, Active Directory. This post provides information on how Active Directory is typically administered and the associated roles \& rights.
+
+Domain Admins is the AD group that most people think of when discussing Active Directory administration. This group has full admin rights by default on all domain-joined servers and workstations, Domain Controllers, and Active Directory. It gains admin rights on domain-joined computers since when these systems are joined to AD, the Domain Admins group is added to the computer’s Administrators group.
+
+Enterprise Admins is a group in the forest root domain that has full AD rights to every domain in the AD forest. It is granted this right through membership in the Administrators group in every domain in the forest.
+
+Administrators in the AD domain, is the group that has default admin rights to Active Directory and Domain Controllers and provides these rights to Domain Admins and Enterprise Admins, as well as any other members.
+
+Schema Admins is a group in the forest root domain that has the ability to modify the Active Directory forest schema.
+
+Since the Administrators group is the domain group that provides full rights to AD and Domain Controllers, it’s important to monitor this group’s membership (including all nested groups). The Active Directory PowerShell cmdlet “Get-ADGroupMember” can provide group membership information.
+
+Default groups in Active Directory often have extensive rights – many more than typically required. For this reason, we don’t recommend using these groups for delegation. Where possible, perform custom delegation to ensure the principle of least privilege is followed. The following groups should have a “DC” prefix added to them since the scope applies to Domain Controllers by default. Furthermore, they have elevated rights on Domain Controllers and should be considered effectively Domain Controller admins.
+
+Backup Operators is granted the ability to logon to, shut down, and perform backup/restore operations on Domain Controllers (assigned via the Default Domain Controllers Policy GPO). This group cannot directly modify AD admin groups, though associated privileges provides a path for escalation to AD admin. Backup Operators have the ability to schedule tasks which may provide an escalation path. They also are able to clear the event logs on Domain Controllers.
+
+Print Operators is granted the ability to manage printers and load/unload device drivers on Domain Controllers as well as manage printer objects in Active Directory. By default, this group can logon to Domain Controllers and shut them down. This group cannot directly modify AD admin groups.
+
+Server Operators is granted the ability to logon to, shut down, and perform backup/restore operations on Domain Controllers (assigned via the Default Domain Controllers Policy GPO). This group cannot directly modify AD admin groups, though associated privileges provides a path for escalation to AD admin.
+
+To a lesser extend, we’ll group Remote Desktop Users into this category as well.
+
+Remote Desktop Users is a domain group designed to easily provide remote access to systems. In many AD domains, this group is added to the “Allow log on through Terminal Services” right in the Default Domain Controllers Policy GPO providing potential remote logon capability to DCs.
+
+We also see that many times the following is configured via GPO linked to the Domain Controllers OU:
+
+Remote Desktop Users: often granted “Allow log on through Terminal Services” right via Group Policy linked to the Domain Controllers OU.
+
+Server Operators: granted “Allow log on through Terminal Services” right via Group Policy linked to the Domain Controllers OU.
+
+Server Operators: granted “Log on as a batch job” right via GPO providing the ability to schedule tasks.
+
+Review the GPOs linked to the Domain and the Domain Controllers OU and ensure the GPO settings are appropriate.
+
+We often find that a servers GPO is also linked to the Domain Controllers OU and it adds a “Server Admins” group to the local Administrators group. Since Domain Controllers don’t have a “local” Administrators group, the DC updates the domain Administrators group by adding Server Admins. This scenario makes all members of Server Admins Active Directory admins.
+
+Any group/account granted logon locally rights to Domain Controllers should be scrutinized.
+
+Server Operators \& Backup Operators have elevated rights on Domain Controllers and should be monitored. The Active Directory PowerShell cmdlet “Get-ADGroupMember” can provide group membership information.
+
+Other default groups with elevated rights:
+
+Account Operators has the rights to modify accounts and groups in the domain. Also has the ability to log on to Domain Controllers by default (assigned via the Default Domain Controllers Policy GPO). This group cannot directly modify AD admin groups, though associated privileges provides a path for escalation to AD admin.
+
+DNSAdmins has administrative access to Microsoft Active Directory DNS and is often granted the ability to logon to Domain Controllers.
+
+Note that by default, members of the DNSAdmins group are able to run a DLL on a Domain Controller which could provide privilege escalation to Domain Admin rights: 
+
+Group Policy Creator Owners can create, modify, and delete Group Policies in the domain.
+
+Most of the rights granted to groups and accounts on Domain Controllers is applied by the “Default Domain Controllers Policy” Group Policy. These are typically defined in the User Rights Assignment section which we review when performing an Active Directory Security Assessment since it is often very enlightening as to who has rights to DCs. The settings in the Default Domain Controllers Policy have changed over the years from Windows 2000 to now. Note that if you promoted Active Directory with a Windows 2000 or 2003 server, this policy will still contain those original settings, even when running Windows Server 2016 (assuming no one changed the policy settings).
+
+Sensitive Domain Controller User Rights Assignments:
+
+Allow log on locally
+
+This policy setting determines which users can start an interactive session on the computer. Users must have this user right to log on over a Remote Desktop Services or Terminal Services session that is running on a Windows-based member computer or domain controller.
+
+Note:
+
+Users who do not have this right are still able to start a remote interactive session on the computer if they have the Allow logon through Remote Desktop Services right.
+
+Back-up files \& directories
+
+This user right determines which users can bypass file and directory, registry, and other persistent object permissions for the purposes of backing up the system. This user right is effective only when an application attempts access through the NTFS backup application programming interface (API) through a backup tool such as NTBACKUP.EXE. Otherwise, standard file and directory permissions apply.
+
+This user right is similar to granting the following permissions to the user or group you have selected on all files and folders on the system:
+
+Traverse Folder/Execute File
+
+List Folder/Read Data
+
+Read Attributes
+
+Read Extended Attributes
+
+Read Permissions
+
+Default on workstations and servers:
+
+Administrators
+
+Backup Operators
+
+Default on domain controllers:
+
+Administrators
+
+Backup Operators
+
+Server Operators
+
+Enable computer and user accounts to be trusted for delegation (SeEnableDelegationPrivilege)
+
+This policy setting determines which users can set the Trusted for Delegation setting on a user or computer object.Security account delegation provides the ability to connect to multiple servers, and each server change retains the authentication credentials of the original client. Delegation of authentication is a capability that client and server applications use when they have multiple tiers. It allows a public-facing service to use client credentials to authenticate to an application or database service. For this configuration to be possible, the client and the server must run under accounts that are trusted for delegation.Only administrators who have the Enable computer and user accounts to be trusted for delegation credential can set up delegation. Domain admins and Enterprise admins have this credential. The procedure to allow a user to be trusted for delegation depends on the functionality level of the domain.The user or computer object that is granted this right must have write access to the account control flags. A server process running on a computer (or under a user context) that is trusted for delegation can access resources on another computer by using the delegated credentials of a client. However, the client account must have Write access to the account control flags on the object.
+
+Force shutdown from a remote system
+
+This security setting determines which users are allowed to shut down a computer from a remote location on the network. This allows members of the Administrators group or specific users to manage computers (for tasks such as a restart) from a remote location.
+
+Log on as a batch job
+
+This policy setting determines which accounts can log on by using a batch-queue tool such as the Task Scheduler service. When an administrator uses the Add Scheduled Task Wizard to schedule a task to run under a particular user name and password, that user is automatically assigned the Log on as a batch job user right. When the scheduled time arrives, the Task Scheduler service logs on the user as a batch job instead of as an interactive user, and the task runs in the user’s security context.
+
+Log on as a service
+
+This policy setting determines which service accounts can register a process as a service. Running a process under a service account circumvents the need for human intervention.
+
+Manage auditing and security log
+
+Determines which users can specify object access auditing options for individual resources such as files, Active Directory objects, and registry keys.
+
+A user with this right can use the security tab in the security permission set editor’s Properties dialog box to specify auditing options for the selected object.
+
+This user right is defined in the Default Domain Controller Group Policy object (GPO) and in the local security policy of workstations and servers.
+
+By default, only administrators have the privilege to manage auditing and the security log.
+
+Note:
+
+This policy does not allow a user to specify that file and object access auditing be enabled in general. In order for such auditing to take place, the Audit object access setting under Audit Policies must be configured.
+
+Audited events are viewed in the security log of the Event Viewer . A user with this policy can also view and clear the security log.
+
+Restore files \& directories
+
+This security setting determines which users can bypass file, directory, registry, and other persistent object permissions when they restore backed up files and directories, and it determines which users can set valid security principals as the owner of an object.
+
+Granting this user right to an account is similar to granting the account the following permissions to all files and folders on the system:
+
+Traverse folder / execute file
+
+Write
+
+Synchronize directory service data (SeSyncAgentPrivilege)
+
+Ensure that no accounts are assigned the Synchronize directory service data user right. Only domain controllers need this privilege, which they inherently have.
+
+This policy setting determines which users and groups have authority to synchronize all directory service data, regardless of the protection for objects and properties. This privilege is required to use LDAP directory synchronization (dirsync) services. Domain controllers have this user right inherently because the synchronization process runs in the context of the System account on domain controllers.
+
+This policy when coupled with DS-Replication-Get-Changes-All likely grants the type of rights required to run Mimikatz DCSync which enables an attacker to request password hashes for all users in the domain.
+
+Take ownership of files or other objects (SeTakeOwnershipPrivilege)
+
+This policy setting determines which users can take ownership of any securable object in the device, including Active Directory objects, NTFS files and folders, printers, registry keys, services, processes, and threads.
+
+Every object has an owner, whether the object resides in an NTFS volume or Active Directory database. The owner controls how permissions are set on the object and to whom permissions are granted.
+
+By default, the owner is the person who or the process which created the object. Owners can always change permissions to objects, even when they are denied all access to the object.
+
+Note: Be very careful with providing the ability to logon locally and via Terminal Services to Domain Controllers since the ability to logon to a Domain Controller provides several potential escalation paths to AD administrator.
+
+Default Domain Controllers Policy GPO (Windows Server 2012 R2)
+
+Default Groups and the rights provided through the Default Domain Controllers Policy:
+
+Note that the AD “Built-In” Administrators group is granted most rights.
+
+Server Operators is  provided the following rights through this GPO:
+
+Allow log on locally
+
+Back-up files \& directories
+
+Force shutdown from a remote system
+
+Restore files \& directories
+
+Shut down the system
+
+Backup Operators is provided the following rights through this GPO:
+
+Allow log on locally
+
+Back-up files \& directories
+
+Log on as a batch job
+
+Manage auditing and security log
+
+Restore files \& directories
+
+Shut down the system
+
+Print Operators is provided the following rights through this GPO:
+
+Allow log on locally
+
+Load and unload device drivers
+
+Shut down the system
+
+helps people better understand the default rights that builtin AD groups have on Domain Controllers.
+
+ 

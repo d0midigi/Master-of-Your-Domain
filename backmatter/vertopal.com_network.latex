@@ -1,0 +1,2319 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same} % disable monospaced font for URLs
+\hypersetup{
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\author{}
+\date{}
+
+\begin{document}
+
+resume reseau
+
+\begin{quote}
+\begin{quote}
+Network Protocols\\
+\strut \\
+\end{quote}
+\end{quote}
+
+http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml
+
+Mac address
+
+46 bits/ 6 Bytes
+
+Manufacturer ID
+
+Network interface identifier
+
+MSB heavyweight
+
+LSB low weight
+
+Byte1
+
+Byte2
+
+Byte3
+
+Byte4
+
+Byte5
+
+Byte6
+
+b7
+
+b6
+
+b5
+
+b4
+
+b3
+
+b2
+
+b1
+
+b0
+
+b0
+
+0 = unicast
+
+1= Multicast
+
+b1
+
+0 = unique in the world
+
+1= administer locally
+
+b6
+
+0= Universal (manufacturer equipment)
+
+1= Local
+
+b7
+
+0= Individual (station)
+
+1= Group (broadcast)
+
+\hfill\break
+\hfill\break
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hfill\break
+\hfill\break
+
+Ethernet frame
+
+Physical Level
+
+Mac level
+
+Preamble
+
+SFD
+
+@DEST
+
+@SRC
+
+Type DATA
+
+DATA
+
+FCS
+
+7
+
+1
+
+6
+
+6
+
+2
+
+46-1500
+
+4
+
+Preamble
+
+Clock synchronization 10101010 (7byte)
+
+SFD
+
+Start Frame Delimiter 10101011 (start of frame transmission)
+
+@DEST
+
+destination mac address
+
+@SRC
+
+source mac address
+
+Type DATA
+
+data type
+
+DATA
+
+useful data
+
+FCS
+
+Frame Check Sequence (error detection code)
+
+\hfill\break
+\hfill\break
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hfill\break
+\hfill\break
+
+802.3 Frame
+
+Physical Level
+
+Mac level
+
+Preamble
+
+SFD
+
+@DEST
+
+@SRC
+
+Lg DATA
+
+DATA
+
+FCS
+
+7
+
+1
+
+6
+
+6
+
+2
+
+46-1500
+
+4
+
+Preamble
+
+Clock synchronization 10101010 (7byte)
+
+SFD
+
+Start Frame Delimiter 10101011 (start of frame transmission)
+
+@DEST
+
+destination mac address
+
+@SRC
+
+source mac address
+
+Lg DATA
+
+length of useful data
+
+DATA
+
+useful data
+
+FCS
+
+Frame Check Sequence (error detection code)
+
+\hfill\break
+\hfill\break
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hfill\break
+\hfill\break
+
+Material
+
+the repeater:
+
+regenerates the signal\\
+passes everything from one sector to another error included\\
+generates jamming if collision (jamming)\\
+reforms the preamble\\
+allows to change media (copper-fiber)\\
+
+the Hub
+
+same as the repeater (multiport)\\
+used on star topologies
+
+\hfill\break
+\hfill\break
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hfill\break
+\hfill\break
+
+The bridges
+
+definition
+
+allows to reduce the network load\\
+intelligent equipment (does not transmit if not necessary)\\
+active listening of each subnetwork (promiscius), stores in its memory
+the frames, processes them and retransmits if necessary to the
+appropriate networks\\
+builds a table of mac (source)\\
+\strut \\
+on reception of a frame\\
+1) recipient on the same segment = frame ignored\\
+2) recipient on another segment = frame copied on this other segment\\
+3) unknown recipient or broadcast) frame copied on all segments
+
+STP (spanning tree)
+
+definition
+
+also called STP, spanning tree based on an algorithm described by Radia
+Perlman in 1985 is a layer 2 network protocol for determining a
+loop-free network topology (called the spanning tree algorithm). Thus
+avoiding broadcast storming, the bridges exchange messages called BPDUs
+(bridge protocol data unit) topology change messages
+
+BPDU frame
+
+definition
+
+BPDUs (Bridge Protocol Data Units) are messages for exchanging topology
+changes
+
+datagram
+
+2
+
+1
+
+1
+
+1
+
+8
+
+4
+
+8
+
+2
+
+2
+
+2
+
+2
+
+2
+
+Protocol Identifier
+
+Version
+
+Message Type
+
+Flags
+
+Root ID
+
+Root Path Cost
+
+Bridge ID
+
+Port ID
+
+Message age
+
+Maximum age
+
+Hello time
+
+Forward delay
+
+Message Type
+
+0 = configuration message\\
+128 = topology change
+
+Flags
+
+1 byte -\textgreater{} 2 useful bits\\
+TC (Topology Change)\\
+TCA (Topology Change Acknowledge)
+
+Root ID
+
+Root Ident. 2 priority bytes + 6 ID bytes (@MAC)
+
+Root Path Cost
+
+path cost to the root
+
+Bridge ID
+
+Bridge ID (same as Root ID)
+
+Port ID
+
+Port ID on which the message was sent
+
+Message Age
+
+time since root sent the configuration message
+
+Maximum Age
+
+Indicates when the current configuration should be cleared (TTL of
+BPDUs)
+
+Hello Time
+
+Frequency at which a designated port sends BPDUs (2s by default)
+
+Forward Delay
+
+Specifies the time to wait before moving to a new state on a topology
+change. State "Listening" to "forwarding" (15 s by default)
+
+functioning
+
+1) The switch with the lowest priority number becomes the root switch.\\
+2) Identification of root ports (the lowest cost to go to the root
+switch).\\
+3) Designation of designated ports (the least cost paths).\\
+4) Any port that is neither root nor designated becomes a blocked
+port.\\
+5) On slightest change the tree is recalculated.\\
+
+RSTP 802.1w (spanning tree)
+
+definition
+
+Improved convergence times (almost immediate)
+
+PVST (or VSTP)
+
+definition
+
+Like STP but there is one STP instance per Vlan (it is the traffic of
+the vlan concerned which is blocked but not the physical port)
+
+PVRST
+
+definition
+
+Same as above but like RSTP with one instance per Vlan
+
+MSTP
+
+definition
+
+STP region concept → Switch group\\
+1 Root Bridge/instance per region\\
+Allows to reduce the number of instances with PVST\\
+Load balancing by VLAN distribution (VLAN mapping per instance)
+
+\hfill\break
+\hfill\break
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hfill\break
+\hfill\break
+
+The switches
+
+definition
+
+Same operating principle as the bridge for processing frames.\\
+Has as many I/O ports as connectors: frame retransmission is based on
+the principle of switching.\\
+The switch has a switching matrix allowing several frames to be
+processed simultaneously.\\
+Dedicated bandwidth for each port.\\
+Stations can transmit whenever they want. They can also transmit and
+receive at the same time (Full Duplex), so no more collisions, no more
+need for CSMA/CD except in special cases.\\
+Collision management with CSMA/CD+BEB (binary exponential backoff)
+
+Switching
+
+on the fly/cut through
+
+Reading the frame up to the recipient\textquotesingle s MAc then
+switching to the appropriate output port.\\
+Advantage: very low latency time, independent of the frame length.\\
+Disadvantage: retransmission of errors (CRC, Frame in collision
+-\textgreater{} start OK but remains scrambled)
+
+Store \& Forward
+
+Memorization of the entire frame for processing then switching to the
+appropriate output port if correct.\\
+Advantage: Error processing (CRC, length, etc.). Possibility of advanced
+features: VLAN, priority management, etc.\\
+Disadvantage: Slower than "on the fly". Latency time depends on the
+length of the frame.
+
+Fragment-free
+
+equivalent to ``cut through'' but removes frames that are too short
+(runt)
+
+adaptive
+
+démarrage en « cut through » puis passe en « store \& forward » à partir
+d 'un certain taux d 'erreurs (et vice-versa) .
+
+explain
+
+Cut through
+
+Fragment free (64eme octect)
+
+Store \& forward
+
+Préambule
+
+SFD
+
+@ DEST
+
+@ SRC
+
+Lg DATA
+
+DATA
+
+FCS
+
+Vlans
+
+definition
+
+Les VLAN sont définis par la norme 802.1q qui consiste à « marquer » les
+trames 802.3 en y associant une étiquette .\\
+La norme 802.1q est également construite sur la norme 802.1p qui
+introduit la notion de priorité donc de qualité de service .\\
+Cette étiquette peut être implicite :\\
+pas d'ajout de champ dans la trame -\textgreater{} l'appartenance au
+VLAN est basée sur l 'association (@MAC,@IP).\\
+Ou explicite :\\
+2 octets sont insérés dans la trame après l\textquotesingle adresse Mac
+src\\
+
+datagramme
+
+16 bits\\
+0x8100
+
+3 bits\\
+8 niveau de priorité
+
+1 bits
+
+12 bits\\
+4096 identificateurs
+
+Préambule
+
+SFD
+
+@ DEST
+
+@ SRC
+
+Tag Protocol Id
+
+User Priority
+
+CFI
+
+Vlan IDentifier
+
+Lg DATA
+
+DATA
+
+FCS
+
+16 bits
+
+3 bits
+
+1 bits
+
+12 bits
+
+TPID
+
+Tag Control Information
+
+vlans de niveau 1
+
+VLAN par port (Port-Based VLAN)
+
+vlans de niveau 2
+
+VLAN par @MAC (Mac Address-Based VLAN)
+
+vlans de niveau 3
+
+VLAN par @ de sous-réseau protocolaire (Network Address-Based VLAN)
+
+vMAN (QinQ, 802.1ad)
+
+definition
+
+Virtual Metropolitan Area Network, encapsulation de vlans dans des
+vlans.\\
+La trame est « double-taggée », ajout de 4 octets supplémentaires →
+Taille à 1526 octets : nécessite le support des Jumbo Frame.
+
+datagramme
+
+Préambule
+
+SFD
+
+@ DEST
+
+@ SRC
+
+S-TPI
+
+S-TCI
+
+C-TPI
+
+C-TCI
+
+Type
+
+DATA
+
+CRC
+
+Outer Tag
+
+Inner Tag
+
+C
+
+Customer : Tag du vlan du site (Inner Tag)
+
+S
+
+Service : Tag du (Super)vlan qui encapsule les vlans du site (Outer Tag)
+
+Agrégation de liens
+
+definition
+
+L\textquotesingle agrégation de liens est une technique utilisée dans
+les réseaux informatiques, permettant le regroupement de plusieurs ports
+réseau et de les utiliser comme s\textquotesingle il
+s\textquotesingle agissait d\textquotesingle un seul. Le but est
+d'accroitre le débit au-delà des limites d\textquotesingle un seul lien,
+et éventuellement de faire en sorte que les autres ports prennent le
+relai si un lien tombe en panne (redondance).
+
+LAG (link agregation group)
+
+En statique les ports/interfaces constituent juste une agrégation de
+lien sans mécanismes de détection d\textquotesingle erreur avec son
+homologue.
+
+LACP (Link Aggregation Control Protocol)
+
+permet à un périphérique réseau de négocier dynamiquement un groupement
+automatique de liens en envoyant des paquets LACP à son homologue.
+
+Détection de la défaillance d\textquotesingle un lien de
+l\textquotesingle agrégat et basculement automatique du trafic sur les
+liens actifs. En statique le périphérique pourrait continuer à envoyer
+du trafic sur le lien défaillant et faire échouer la connexion.\\
+Vérification dynamique que l\textquotesingle autre extrémité peut gérer
+l\textquotesingle agrégation de lien. En statique cette absence de
+détection pourrait entrainer un fonctionnement instable du réseau en cas
+de problème sur le média (câblage)
+
+2 modes
+
+Active : initie la transmission des trames LACP sur les liens actif\\
+Passive : ne fait que répondre aux trames LACP envoyées
+
+Périodicité pour l\textquotesingle envoie des trames LACP
+
+Slow : toutes les 30 secondes\\
+Fast : toutes les secondes
+
+Securite de commutation
+
+MAC
+
+MAC limit
+
+limitation du nombre d\textquotesingle adresses MAC apprises par port →
+contre les attaques type flooding (inondation/saturation)
+
+MAC static
+
+on fixe les adresses MAC sur les ports. Seules ces adresses MAC (source)
+pourront communiquer sur le port. On peut aussi désactiver
+l\textquotesingle apprentissage automatique des adresses MAC
+(no-mac-learning) → Contre les attaques type spoofing (usurpation) et
+saturation.
+
+MAC move limit
+
+limitation des même adresses sources MAC apprises depuis différents
+ports → protection/détection des boucles réseaux et usurpation
+
+DHCP
+
+DHCP Snooping
+
+on indique sur le switch quels sont les ports où les réponses aux
+requêtes DHCP sont autorisés (normalement là où se situe le serveur DHCP
+officiel) → protection contre les serveurs DHCP non autorisés\\
+Le commutateur surveille les requêtes DHCP et construit une BDD avec les
+informations IP/MAC/Port/Vlan (+ durée correspondant au bail)
+
+Dynamic ARP inspection
+
+e commutateur inspecte les requêtes ARP sur le port et autorise le
+trafic uniquement si le couple IP/Mac source est dans la BDD DHCP
+snooping → protection contre l\textquotesingle usurpation
+d\textquotesingle adresse MAC (ARP spoofing)
+
+IP source guard
+
+le commutateur inspecte l\textquotesingle adresse IP/MAC source sur le
+port et autorise le trafic uniquement si le couple IP/Mac source est
+dans la BDD DHCP snooping → protection contre
+l\textquotesingle usurpation d\textquotesingle adresse IP.
+
+\hfill\break
+\hfill\break
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hfill\break
+\hfill\break
+
+terminologie
+
+LAN (Local Area Network)
+
+réseau local
+
+WAN (Wide Area Network)
+
+réseau étendu
+
+MAN (Réseau intermédiaire)
+
+reseau semi etendu exemple une ville
+
+WLAN (réseau LAN sans fil)
+
+802.11
+
+Réseau de stockage SAN
+
+stoquage service et duplication de donnée
+
+IETF
+
+Internet Engineering Task Force
+
+ICANN
+
+Internet Corporation for Assigned Names and Numbers
+
+IAB
+
+Internet Architecture Board
+
+SVI
+
+switch virtual interface
+
+CAM
+
+Content-Addressable Memory, table de mémoire associative, table
+d\textquotesingle adresses MAC
+
+commutation store-and-forward
+
+stoque les trames vérifie les erreurs et les envoie
+
+commutation Fast-Forward
+
+transmet la trame immédiatement apres lecture de
+l\textquotesingle adresse de destination
+
+commutation Fragment-free
+
+stocke les 64 premiers octets
+
+commutation cut-through par port
+
+passe automatiquement en mode de commutation
+store-and-forward/cut-through en fonction d\textquotesingle un seuil
+d\textquotesingle erreur défini
+
+l\textquotesingle opération AND
+
+opération qui avec le masque de sous réseau permet de déterminer la
+partie hote de la partie réseau de l\textquotesingle adresse IPV.4.
+
+routage CIDR (Classless Inter-Domain Routing, routage interdomaine sans
+classe)
+
+permettant aux fournisseurs de services d\textquotesingle attribuer des
+adresses IPv4 sur n\textquotesingle importe quelle limite binaire
+(longueur de préfixe) au lieu d\textquotesingle utiliser uniquement les
+classes A, B ou C.
+
+la configuration automatique des adresses sans état (SLAAC)
+
+permet à un périphérique d\textquotesingle obtenir son préfixe, la
+longueur de préfixe, l\textquotesingle adresse de la passerelle par
+défaut et d\textquotesingle autres informations à partir
+d\textquotesingle un routeur Ipv6 sans utiliser un serveur DHCPv6
+
+NDP (Neighbor Discovery Protocol)
+
+nouveauté dans ICMPv6
+
+Message de sollicitation de routeur (RS)
+
+Message d\textquotesingle annonce de routeur (RA)
+
+Message de sollicitation de voisin utilisés pour la résolution
+d\textquotesingle adresse et la détection d\textquotesingle adresse
+dupliquée (DAD)
+
+Messages d\textquotesingle annonce de voisin utilisés pour la résolution
+d\textquotesingle adresse et la détection d\textquotesingle adresse
+dupliquée (DAD)
+
+\hfill\break
+\hfill\break
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hfill\break
+\hfill\break
+
+réseau bianire et caculs
+
+table bianire
+
+128
+
+64
+
+32
+
+16
+
+8
+
+4
+
+2
+
+1
+
+1
+
+1
+
+0
+
+1
+
+1
+
+1
+
+1
+
+0
+
+= 222
+
+1
+
+1
+
+0
+
+0
+
+0
+
+0
+
+0
+
+0
+
+= 192
+
+Masque de sous réseau
+
+255.0.0.0
+
+11111111.00000000.00000000.00000000
+
+/8
+
+2\^{}24=16777216-2=16777214 machines
+
+255.255.0.0
+
+11111111.11111111.00000000.00000000
+
+/16
+
+2\^{}16 =65536-2=65534 machines
+
+255.255.255.0
+
+11111111.11111111.11111111.00000000
+
+/24
+
+2\^{}8 =256-2=254 machines
+
+255.255.255.128
+
+11111111.11111111.11111111.10000000
+
+/25
+
+2\^{}7=128-2=126 machines
+
+255.255.255.192
+
+11111111.11111111.11111111.11000000
+
+/26
+
+2\^{}6=64-2=62 machines
+
+255.255.255.224
+
+11111111.11111111.11111111.11100000
+
+/27
+
+2\^{}5=32-2=30 machines
+
+255.255.255.240
+
+11111111.11111111.11111111.11110000
+
+/28
+
+2\^{}4=16-2=14 machines
+
+255.255.255.248
+
+11111111.11111111.11111111.11111000
+
+/29
+
+2\^{}3= 4-2=2 machines
+
+255.255.255.252
+
+11111111.11111111.11111111.11111100
+
+/30
+
+2\^{}2= 4-2=2 machines
+
+Calcul de l\textquotesingle adresse réseau
+
+AND entre l\textquotesingle adresse hôte et le masque de sous réseau
+
+calcul de l\textquotesingle adresse locale
+
+inverser bit à bit le masque de sous réseau puis applquer un ET logique
+avec l\textquotesingle adresse IP
+
+\hfill\break
+\hfill\break
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hfill\break
+\hfill\break
+
+ipv4
+
+adresses de multidiffusions
+
+ipv4 224.0.0.0 à 239.255.255.255 mac associé: 01-00-5E-*****
+
+IPv6 commence par FF00::/8
+
+Les blocs d\textquotesingle adresses privées sont les suivantsb
+
+10.0.0.0 /8 ou 10.0.0.0 à 10.255.255.255\\
+172.16.0.0 /12 ou 172.16.0.0 à 172.31.255.255\\
+192.168.0.0 /16 ou 192.168.0.0 à 192.168.255.255
+
+les adresses privées sont définie par :
+https://tools.ietf.org/html/rfc1918
+
+Adresses de bouclage
+
+127.0.0.0 /8 ou 127.0.0.1 à 127.255.255.254
+
+utilisées par des hôtes pour diriger le trafic vers eux-mêmes
+
+Adresses locales-liens
+
+169.254.0.0 /16 ou 169.254.0.1 à 169.254.255.254
+
+elles sont utilisées par un client DHCP (DHCPDISCOVER, DHCPOFFER,
+DHCPREQUEST, DHCPACK, DHCPNAKWindows pour se configurer automatiquement
+si aucun serveur DHCP n\textquotesingle est disponible.DHCPV6 (SOLICIT,
+ADVERTISE, INFORMATION REQUEST et REPLY)
+
+Adresses TEST-NET
+
+192.0.2.0/24 ou 192.0.2.0 à 192.0.2.255
+
+réservées à des fins pédagogiques et utilisées dans la documentation et
+dans des exemples de réseau
+
+other
+
+https://tools.ietf.org/html/rfc3330
+
+en prévisionel
+
+\hfill\break
+\hfill\break
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hfill\break
+\hfill\break
+
+ipv6
+
+Adresse de bouclage
+
+0000 à 00FF
+
+n\textquotesingle importe quelle adresse, adresse non spécifiée ou
+adresse compatible IPv4
+
+Adresse de diffusion globale
+
+2000 à 3FFF
+
+(adresse routable dans une plage d\textquotesingle adresses actuellement
+distribuée par l\textquotesingle IANA {[}Internet Assigned Numbers
+Authority{]})
+
+Adresses link-local
+
+FE80::1 à FEBF
+
+adresses de multidiffusion
+
+même préfixe :
+
+FF00::/8 à FFFF::
+
+Groupe de multidiffusion vers tous les nœuds
+
+FF02::1
+
+GGroupe de multidiffusion vers tous les routeurs
+
+FF02::2
+
+\hfill\break
+\hfill\break
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hfill\break
+\hfill\break
+
+protocoles
+
+couche application
+
+Domain Name System (DNS)
+
+traduit les noms de domaine Internet en adresse IP ou autres
+enregistrements
+
+53
+
+Bootstrap Protocol (BOOTP)
+
+protocole réseau d\textquotesingle amorçage, qui permet à une machine
+cliente sans disque dur de découvrir sa propre adresse IP
+
+67/68
+
+Dynamic Host Configuration Protocol (DHCP)
+
+protocole de configuration dynamique des hôtes) est un protocole réseau
+dont le rôle est d'assurer la configuration automatique des paramètres
+IP d'une station ou d\textquotesingle une machine, notamment en lui
+attribuant automatiquement une adresse IP et un masque de sous-réseau
+
+S67/C68
+
+Simple Mail Transfer Protocol (SMTP)
+
+protocole de communication utilisé pour transférer le courrier
+électronique (courriel) vers les serveurs de messagerie électronique.
+
+25 (sans chiffrement)/465 (chiffrement implicite)/587 (chiffrement
+explicite)
+
+Post Office Protocol (POP)
+
+protocole qui permet de récupérer les courriers électroniques situés sur
+un serveur de messagerie électronique
+
+110/995 (TLS implicite)
+
+File Transfer Protocol (FTP)
+
+protocole de communication destiné au partage de fichiers sur un réseau
+TCP/IP. Il permet, depuis un ordinateur, de copier des fichiers vers un
+autre ordinateur du réseau, ou encore de supprimer ou de modifier des
+fichiers sur cet ordinateur
+
+21 (écoute)/20 (données par défaut)
+
+Trivial File Transfer Protocol (TFTP)
+
+Il fonctionne en UDP sur le port 69, au contraire du FTP qui utilise lui
+TCP. L\textquotesingle utilisation d\textquotesingle UDP, protocole «
+non fiable », implique que le client et le serveur doivent gérer
+eux-mêmes une éventuelle perte de paquets.
+
+69
+
+L\textquotesingle Hypertext Transfer Protocol (HTTP)
+
+littéralement « protocole de transfert hypertexte ») est un protocole de
+communication client-serveur développé pour le World Wide Web
+
+80
+
+protocoles transport
+
+TCP (Transmission Control Protocol)
+
+divise les messages HTTP en petites parties appelées segments. Ces
+segments sont envoyés entre les processus du serveur web et du client
+exécutés sur l\textquotesingle hôte de destination
+
+31 bit? a vérifier
+
+User Datagram Protocol (UDP)
+
+Le rôle de ce protocole est de permettre la transmission de données
+(sous forme de datagrammes) de manière très simple entre deux entités,
+chacune étant définie par une adresse IP et un numéro de port. Aucune
+communication préalable n\textquotesingle est requise pour établir la
+connexion, au contraire de TCP (qui utilise le procédé de handshaking).
+UDP utilise un mode de transmission sans connexion.
+
+31?
+
+couche internet
+
+IP (Internet Protocol)
+
+regrouppe les messages en pacquets responsable de la récupération des
+segments formatés à partir du protocole TCP
+
+network address translation (NAT)
+
+translation d\textquotesingle adresse réseau interne en externe, En
+particulier, un cas courant est de permettre à des machines disposant
+d\textquotesingle adresses qui font partie d\textquotesingle un intranet
+et ne sont ni uniques ni routables à l\textquotesingle échelle
+d\textquotesingle Internet, de communiquer avec le reste
+d\textquotesingle Internet en faisant semblant
+d\textquotesingle utiliser des adresses externes uniques et routables.
+
+Internet Control Message Protocol (ICMP)
+
+est l'un des protocoles fondamentaux constituant la suite des protocoles
+Internet. Il est utilisé pour véhiculer des messages de contrôle et
+d'erreur pour cette suite de protocoles, par exemple lorsqu'un service
+ou un hôte est inaccessible
+
+Open Shortest Path First (OSPF)
+
+chaque routeur établit des relations d\textquotesingle adjacence avec
+ses voisins immédiats en envoyant des messages hello à intervalle
+régulier. Chaque routeur communique ensuite la liste des réseaux
+auxquels il est connecté par des messages Link-state advertisements
+(LSA) propagés de proche en proche à tous les routeurs du réseau.
+L\textquotesingle ensemble des LSA forme une base de données de
+l\textquotesingle état des liens Link-State Database (LSDB) pour chaque
+aire, qui est identique pour tous les routeurs participants dans cette
+aire. Chaque routeur utilise ensuite l\textquotesingle algorithme de
+Dijkstra,
+
+Enhanced Interior Gateway Routing Protocol (EIGRP)
+
+EIGRP est un protocole semi-ouvert (CISCO proprio) de routage à vecteur
+de distance IP, avec une optimisation permettant de minimiser
+l\textquotesingle instabilité de routage due aussi bien au changement de
+topologie qu\textquotesingle à l\textquotesingle utilisation de la bande
+passante et la puissance du processeur du routeur.
+
+couche accès réseaux
+
+Address Resolution Protocol (ARP)
+
+protocole utilisé pour traduire une adresse de protocole de couche
+réseau (typiquement une adresse IPv4) en une adresse de protocole de
+couche de liaison (typiquement une adresse MAC). Il se situe à
+l'interface entre la couche réseau (couche 3 du modèle OSI) et la couche
+de liaison (couche 2 du modèle OSI).
+
+type:0x806
+
+Point-to-Point Protocol (PPP)
+
+protocole de transmission pour internet, décrit par le standard RFC
+1661, fortement basé sur HDLC, qui permet d\textquotesingle établir une
+connexion entre deux hôtes sur une liaison point à point. Il fait partie
+de la couche liaison de données (couche 2) du modèle OSI.
+
+Ethernet
+
+permet de définir les règles de cablages et de signalisation sur une
+couche d\textquotesingle accès réseau
+
+802.3
+
+pilote d\textquotesingle interface
+
+fourni les instruction à un ordinateur permettant de contrôler une
+interface déterminée sur un périphérique réseau
+
+masquage de sous-réseau de longueur variable (VLSM)
+
+optimise le partage en sous réseaux
+
+80
+
+\hfill\break
+\hfill\break
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hfill\break
+\hfill\break
+
+Le protocole IPv4
+
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+7
+
+8
+
+9
+
+10
+
+11
+
+12
+
+13
+
+14
+
+15
+
+16
+
+17
+
+18
+
+19
+
+20
+
+21
+
+22
+
+23
+
+24
+
+25
+
+26
+
+27
+
+28
+
+29
+
+30
+
+31
+
+Vers
+
+HLEN
+
+TOS
+
+Total Length
+
+ID
+
+Flags
+
+Fragment Offset
+
+TTL
+
+Protocol
+
+Heander Cheksum
+
+Source Address
+
+Destination Address
+
+Options
+
+IP Data
+
+Vers
+
+Version du protocol . Actuellement 4
+
+HLEN
+
+Header Length . En mot de 4 octets (Si pas d 'options HLEN=5)
+
+TOS
+
+Type Of Service . Contient des informations qui aideront le routeur à
+choisir le chemin : optimisation de l 'algorithme de routage
+
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+7
+
+Precedence
+
+D
+
+T
+
+R
+
+C
+
+\hfill\break
+\textbf{D} délai\\
+\textbf{T} Débit\\
+\textbf{R} Fiabilité\\
+\textbf{C} Coût\\
+ps voir diapo 25 DSCP et congestion
+
+Total Length
+
+Longueur total du paquet (65535 Max) . Si les paquets sont encapsulés
+dans une trame ethernet , ça permet de distinguer le padding.
+
+TTL
+
+Time To Live . Durée de vie résiduelle du paquet . Chaque routeur qui
+traite le paquet décrémente la valeur . Si =0 le paquet est détruit .
+
+Protocole
+
+Identification du protocole chargé d'exploiter le champ données . (UDP
+17 , TCP 6, ICMP 1 ...)
+
+Header Checksum
+
+Addition en complément à 1 des demi-mots (16 bits) constituant l 'entête
+du paquet . (Capacité de détection faible)
+
+ID
+
+identifie le datagramme par un numéro unique . Si le paquet est
+fragmenté , tous les fragments porteront ce numéro
+
+Flags
+
+01x : ne pas fragmenter (Do not fragment)\\
+001 : il y a encore des fragments (More Fragments)\\
+000 : dernier fragment
+
+Fragment offset
+
+indique la position du premier octet dans le datagramme total (non
+fragmenté) . = 0 pour le premier fragment .. Le destinataire doit
+récupérer tous les fr
+
+Options
+
+Partie variable (facultative) de l'entête : limité à 40 octets . Le
+traitement ralentit le routage .\\
+C : indique que l\textquotesingle option doit être recopiée dans tous
+les fragments (c=1) ou bien uniquement dans le premier fragment (c=0).
+Les bits classe d\textquotesingle option et numéro
+d\textquotesingle option indiquent le type de l\textquotesingle option
+et une option particulière de ce type : Routage par la source (source
+routing) , horodatage (time stamp)\\
+• Record Route : (classe = 0, option = 7) : permet à la source de créer
+une liste d\textquotesingle adresse IP vide et de demander à chaque
+passerelle d\textquotesingle ajouter son adresse dans la liste (voir
+ping -R)\\
+• Source Routing strict : (classe = 0, option = 9): prédéfinit le
+routage qui doit être utilisé dans l\textquotesingle interconnexion en
+indiquant la suite des adresses IP dans l\textquotesingle option . S'il
+manque un routeur le datagramme est détruit .\\
+• Source Routing loose : (classe = 0, option = 3): Cette option
+autorise, entre deux passages obligés, le transit par
+d\textquotesingle autres intermédiaires . S'il manque un routeur l
+'algorithme de routage standard est appliqué .
+
+\hfill\break
+\hfill\break
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hfill\break
+\hfill\break
+
+Le protocole ARP
+
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+7
+
+8
+
+9
+
+10
+
+11
+
+12
+
+13
+
+14
+
+15
+
+16
+
+17
+
+18
+
+19
+
+20
+
+21
+
+22
+
+23
+
+24
+
+25
+
+26
+
+27
+
+28
+
+29
+
+30
+
+31
+
+Hardware Type 1: eth
+
+Protocole Type (0x800 : IP)
+
+HLEN
+
+PLEN
+
+Operation 1 : Request 2: response
+
+Sender Hardware address
+
+Sender Hardware address
+
+Sender Protocol Address
+
+Sender Protocol Address
+
+Target Hardware Address
+
+Target Hardware address
+
+Target Protocol address
+
+\hfill\break
+\hfill\break
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hfill\break
+\hfill\break
+
+Le protocole UDP
+
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+7
+
+8
+
+9
+
+10
+
+11
+
+12
+
+13
+
+14
+
+15
+
+16
+
+17
+
+18
+
+19
+
+20
+
+21
+
+22
+
+23
+
+24
+
+25
+
+26
+
+27
+
+28
+
+29
+
+30
+
+31
+
+Port src
+
+Port dst
+
+UDP packet length
+
+Checksum
+
+Data
+
+Port src et Port dst
+
+contiennent les numéros de ports utilisés pour démultiplexer les
+datagrammes destinés aux processus en attente de les recevoir . Le port
+source est facultatif (=0 si non utilisé)
+
+UDP packet length
+
+longueur du message (Header+DATA) en octects
+
+Checksum
+
+(optionnel =0 si non utilisé)
+
+\hfill\break
+\hfill\break
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hfill\break
+\hfill\break
+
+Le protocole TCP
+
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+7
+
+8
+
+9
+
+10
+
+11
+
+12
+
+13
+
+14
+
+15
+
+16
+
+17
+
+18
+
+19
+
+20
+
+21
+
+22
+
+23
+
+24
+
+25
+
+26
+
+27
+
+28
+
+29
+
+30
+
+31
+
+Port src
+
+Port dst
+
+Sequence Number
+
+Ack Number
+
+HLEN
+
+reservé
+
+Codes
+
+Window size
+
+Checksum
+
+Urgent Pointer
+
+Options
+
+Data
+
+Port src
+
+Numéro du port qui identifie l 'application côté émetteur du segmentTCP
+
+Port dst
+
+Numéro du port qui identifie l 'application côté destinataire du
+segmentTCP
+
+Sequence Number
+
+(en octets) assure le bon séquencement , nombre faisantréférence au flux
+dans la même direction par rapport au début de la connexion .
+
+Ack Number
+
+(en octets) information en retour . Indique le numéro de Seq duprochain
+segment attendu . Correspond à l 'acquittement de tous les octets qui
+ontété reçus auparavant .
+
+Codes (6 bits)
+
+définit la fonction des messages et la validité de certains champs
+
+CWR
+
+ECE
+
+URG
+
+ACK
+
+PSH
+
+RST
+
+SYN
+
+FIN
+
+\textbf{URG} : Valide le champ « Urgent pointer »\\
+\textbf{ACK} : Valide le champ « Ack Number »\\
+\textbf{PUSH} : Les données reçues doivent être immédiatement transmises
+à la couche supérieure\\
+\textbf{RST} : Fermeture de la connexion (erreur irrécupérable)\\
+\textbf{SYN} : demande d 'ouverture de la connexion\\
+\textbf{FIN} : Demande de libération de la connexion\\
+ECE (ECN echo) : quand la source reçoit un paquet avec ce bit positionné
+à1,son débit d'émission doit être réduit.\\
+\textbf{CWR} (Congestion Window Reduced) : indique au destinataire du
+paquet que lasource a effectivement réduit son débit en réponse à la
+réception d'un ECE\\
+
+HLEN
+
+Longueur en-tête en mot de 32 bits (5 si pas d'options)
+
+Window size
+
+Information de retour. Nb d'octets que l'émetteur peut envoyer par
+rapport à l'ack number sans recevoir d'acquittement (espace libre dans
+le buffer deréception) -\textgreater{} Contrôle de flux .
+
+Checksum
+
+même chose que pour UDP (pseudo en-tête)
+
+Urgent Pointer
+
+indique la fin de la partie urgente du segment qui commence au début de
+la partie Data.Données urgentes : Out of band data . Transmises hors
+ducontrôle de flux , permet de transmettre des données sans retard(ex :
+interruption d 'un traitement en cours -\textgreater{} Abort)
+
+Options
+
+permet d 'ajouter des options . Format de chaque option de la
+listesimilaire à IP : Type of option (1 octet) , length of value (1
+octet),value
+
+\hfill\break
+\hfill\break
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hfill\break
+\hfill\break
+
+Le protocole RIP
+
+Routing Information Protocol (RIP, protocole
+d\textquotesingle information de routage) est un protocole de routage IP
+de type Vector Distance (à vecteur de distances)
+s\textquotesingle appuyant sur l\textquotesingle algorithme de\\
+détermination des routes décentralisé Bellman-Ford. Il permet à chaque
+routeur de communiquer aux routeurs voisins. La métrique utilisée est la
+distance qui sépare un routeur d\textquotesingle un réseau IP déterminé
+quant au\\
+nombre de sauts (ou « hops » en anglais).
+
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+7
+
+8
+
+9
+
+10
+
+11
+
+12
+
+13
+
+14
+
+15
+
+16
+
+17
+
+18
+
+19
+
+20
+
+21
+
+22
+
+23
+
+24
+
+25
+
+26
+
+27
+
+28
+
+29
+
+30
+
+31
+
+Commande
+
+Version
+
+0
+
+AFI
+
+Route TAG
+
+@IP
+
+Subnet Mask
+
+Next Hop
+
+Metric
+
+Command
+
+1 (requête) : demande qu'un routeur envoie tout ou partie de ses tables
+de routage (sans attendre la prochaine diffusion)\\
+2 (réponse) : soit une mise à jour périodique des tables , soit une
+réponse à la requête
+
+Version
+
+2
+
+AFI
+
+2 pour IP, si =0xFFFF , le champ Route Tag contient le type d
+'authentification et les 4 champs suivants permettent d'avoir les
+paramètres d 'authentification (16 octets)
+
+Route Tag
+
+tilisé pour véhiculer des informations apprises par un autre protocole
+de routage inter-domaine (IGP ou EGP) ou pour l'authentification
+
+Next-Hop
+
+Utilisé si le prochain routeur (celui par lequel on doit passer pour
+atteindre la destination) n'est pas l'émetteur du paquet, sinon 0.0.0.0
+
+\hfill\break
+\hfill\break
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hfill\break
+\hfill\break
+
+Le protocole RIPng (IPv6)
+
+identique à RIP pour l\textquotesingle ipv6
+
+\hfill\break
+\hfill\break
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hfill\break
+\hfill\break
+
+Le protocole OSPFv2
+
+Dans OSPF, chaque routeur établit des relations
+d\textquotesingle adjacence avec ses voisins immédiats en envoyant des
+messages hello à intervalle régulier. Chaque routeur communique ensuite
+la liste\\
+des réseaux auxquels il est connecté par des messages Link-state
+advertisements (LSA) propagés de proche en proche à tous les routeurs du
+réseau. L\textquotesingle ensemble des LSA forme une base de données de
+l\textquotesingle état des liens\\
+Link-State Database (LSDB) pour chaque aire, qui est identique pour tous
+les routeurs participants dans cette aire. Chaque routeur utilise
+ensuite l\textquotesingle algorithme de Dijkstra, Shortest Path First
+(SPF) pour\\
+déterminer la route la plus rapide vers chacun des réseaux connus dans
+la LSDB.
+
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+7
+
+8
+
+9
+
+10
+
+11
+
+12
+
+13
+
+14
+
+15
+
+16
+
+17
+
+18
+
+19
+
+20
+
+21
+
+22
+
+23
+
+24
+
+25
+
+26
+
+27
+
+28
+
+29
+
+30
+
+31
+
+Version
+
+Type
+
+Packet Length
+
+Routeur Id
+
+Area Id
+
+Checksum
+
+Authentication Type
+
+Autentication
+
+Data
+
+Type
+
+Hello\\
+DBD\\
+LSU\\
+LSR\\
+LSAck
+
+Packet Length
+
+Longueur du paquet en octects (entête compris)
+
+Router Id
+
+identifie le routeur qui a émis le paquet
+
+Area Id
+
+Identifie l'Area sur laquelle le paquet est actif.
+
+Authentication type
+
+0- No Password\\
+1- Plain-text password\\
+2- MD5 authentication
+
+Authentification
+
+Contient les informations pour l 'authentification.
+
+\hfill\break
+\hfill\break
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hfill\break
+\hfill\break
+
+Le protocole BGP
+
+BGP s'appuie sur le protocole TCP (port 179) pour communiquer avec ses
+voisins. Le protocole TCP lui assure la fiabilité des communications
+(statefull, retransmission, séquencement, ...)2 routeurs BGP ayant
+établis cette connexion TCP sont désignés comme voisins (neighbor) ou
+homologues (peer) → OPEN\\
+À la première connexion les routeurs s'échangent la totalité de leurs
+informations de routage, ensuite seules les mises à jour (modifications)
+sont échangées → UPDATEUn numéro est associé à chaque version des
+informations collectées par un routeur. Tous les voisins BGP doivent
+avoir le même numéro qui est modifié à chaque mise à jour.Des messages
+sont transmis périodiquement pour vérifier le bon fonctionnement de la
+session BGP et conserver la connexion ouverte → KEEPALIVE
+
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+7
+
+8
+
+9
+
+10
+
+11
+
+12
+
+13
+
+14
+
+15
+
+16
+
+17
+
+18
+
+19
+
+20
+
+21
+
+22
+
+23
+
+24
+
+25
+
+26
+
+27
+
+28
+
+29
+
+30
+
+31
+
+Version
+
+Type
+
+Packet Length
+
+Routeur Id
+
+Area Id
+
+Checksum
+
+Authentication Type
+
+Autentication
+
+Data
+
+Type
+
+OPEN
+
+Connexion établie entre 2 voisins (peering)
+
+UPDATE
+
+Mise à jour d'information de routage
+
+KEEPALIVE
+
+La liaison est active, conservation de la connexion ouverte
+
+NOTIFICATION
+
+Condition d'erreurs
+
+Attributs
+
+AS\_PATH
+
+indique la suite des AS que le message BGP a traversé → Détection des
+boucles, permet d'appliquer des politiques spécifiques aux AS. L'AS-PATH
+le plus court est choisi.
+
+NEXT\_HOP
+
+indique l\textquotesingle adresse IP à contacter sur le prochain AS dans
+le chemin vers la destination. En EBGP c'est le routeur voisin (peer le
+plus proche) sur le même réseau local, en IBGP c'est un routeur tiers.
+
+ORIGIN
+
+indique l'origine de l'information → IGP (même AS), EGP (autre AS),
+incomplete (autre moyen ou méthode inconnue → généralement
+redistribution de route)
+
+LOCAL\_PREF
+
+indique aux routeurs BGP qui appartiennent au même AS quel est le chemin
+préféré pour une destination donnée. Influence localement la sélection
+du chemin (préférence élevée → priorité haute). N'est pas transmis aux
+routeurs EBGP voisins.
+
+ATOMIC\_AGGREGATE
+
+pour informer le voisin que le routeur d\textquotesingle origine a
+agrégé les routes
+
+AGGREGATOR
+
+Il est possible d'annoncer un ensemble de routes agrégées au niveau de
+l'AS (10.0.0.0/22 plutôt que 10.0.0.0/24 + 10.0.0.1/24 + ...). Indique
+l'AS et l'ID du routeur qui a effectuél'agrégation.
+
+COMMUNITY
+
+Tag transmis aux voisins qui permet d'appliquer des décisions de
+routages (entrantes ou sortantes). Souvent représenté au format x:y →
+Numéro d'AS(1-65535) : numéro de communauté (1-65535). Une même
+destination peut être membre de plusieurs communautés.
+
+MULTI\_EXIT\_DISC
+
+destiné à être utilisé sur des liaisons externes (inter-AS) pour faire
+la distinction entre plusieurs points de sortie ou
+d\textquotesingle entrée vers le même voisin AS. La valeur de
+l\textquotesingle attribut MULTI\_EXIT\_DISC est un nombre non signé de
+quatre octets, appelé métrique
+
+MED (Multi-Exit Discriminator)
+
+Cas où il existe différent point d'entrée dans l'AS, il permet
+d'influencer les décisions de routage vers certains préfixes de l'AS
+(modification du métrique).
+
+\hypertarget{goog-gt-tt}{}
+
+\end{document}

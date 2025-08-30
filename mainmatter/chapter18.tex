@@ -1,0 +1,37 @@
+
+
+\chapter{Attacking and Defending Active Directory (AD) for Ethical Hackers Handbook}
+
+1. Chapter 1: The Blueprint of Enterprise Control: Unmasking Active Directory's Core Security Architecture Objective: Deconstruct the fundamental components of Active Directory and their inherent security implications, establishing a proactive framework for identifying critical attack surfaces and preparing for sophisticated engagements.
+
+
+Understanding Active Directory's Architecture: The Attacker's View
+Domain Controllers and Global Catalogs: Core Trust Boundaries and Replication Targets
+NTDS.DIT Database: The Crown Jewels of Many Organizations AD Credentials and Objects
+SYSVOL and Group Policy objects (GPOs): Policy Enforcement and Configuration Weaknesses
+DNS Integration: Critical for Resolution, Critical for Reconnaissance
+Authentication Mechanisms: Cracking the Enterprise Gateways
+Kerberos Protocol: Golden Tickets, Silver Tickets, and Beyond
+NTLM: Hash Harvesting and Pass-the-Hash (PtH) Vulnerabilities
+Multi-Factor Authentication (MFA) Bypass Techniques: Beyond Simple Credential Theft
+Active Directory Objects: Enumerating and Exploiting Permissions
+Users and Groups: Identifying privileged Accounts and Their Relationships
+Service Accounts: Weak Passwords and Kerberoasting Targets
+Organizational Units (OUs): Delegation Misconfigurations
+
+- Offensive Reconnaissance: Unveiling Hidden Pathways to Complete Domain Control
+-- Passive Information Gathering: Low-Risk Footprinting for High-Value Targets
+--- Open-Source Intelligence (OSINT) for AD: Public Records and Exposed Data
+--- DNS Enumeration: Mapping the Domain Landscape
+--- Email and Employee Information Harvesting: Social Engineering Pre-cursors
+-- Active Enumeration: Interrogating Active Directory Directly
+--- LDAP Querying: Discovering Objects, Attributes, and Permissions
+--- SMB Enumeration: Identifying Shares, Sessions, and Potentially Sensitive Data
+--- Service Principal Name (SPN) Scanning for Kerberoasting: Identifying Service Accounts for Credential Theft
+--- Vulnerability Scanning for Known Flaws: Automated Discovery of Weak Links
+
+- Defensive Measures: Establishing a Resilient Active Directory Perimeter
+-- Principle of Least Privilege Enforcement: Minimizing the Attack Surface
+--- Tiered Administration Models: Isolating Critical Assets
+Just-in-Time (JIT) Access: Ephemeral Privileges for High-Risk Tasks
+Role-Based Access Control (RBAC) in AD: Granular Permission Management

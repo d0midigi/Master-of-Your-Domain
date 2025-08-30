@@ -1,0 +1,79 @@
+%%%%%%%%%%%%%%%%%%%%% chapter.tex %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% sample chapter
+%
+% Use this file as a template for your own input.
+%
+%%%%%%%%%%%%%%%%%%%%%%%% Springer-Verlag %%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\motto{Use the template \emph{chapter.tex} to style the various elements of your chapter content.}
+
+\chapter{Chapter Heading}
+\label{ch1-intro} % Always give a unique label
+% use \chaptermark{}
+% to alter or adjust the chapter heading in the running head
+
+\abstract*{Each chapter should be preceded by an abstract (no more than 200 words) that summarizes the content. The abstract will appear \textit{online} at \url{www.SpringerLink.com} and be available with unrestricted access. This allows unregistered users to read the abstract as a teaser for the complete chapter.
+Please use the 'starred' version of the new \texttt{abstract} command for typesetting the text of the online abstracts (cf. source file of this chapter template \texttt{abstract}) and include them with the source files of your manuscript. Use the plain \texttt{abstract} command if the abstract is also to appear in the printed version of the book.}
+
+\abstract{Each chapter should be preceded by an abstract (no more than 200 words) that summarizes the content. The abstract will appear \textit{online} at \url{www.SpringerLink.com} and be available with unrestricted access. This allows unregistered users to read the abstract as a teaser for the complete chapter.}
+
+\section{Section Heading}
+%\label{sec:1}
+Use the template \emph{chapter.tex} together with the document class SVMono (monograph-type books) or SVMult (edited books) to style the various elements of your chapter content conformable to the Springer Nature layout.
+
+\section{Section Heading}
+%\label{sec:2}
+% Always give a unique label
+% and use \ref{<label>} for cross-references
+% and \cite{<label>} for bibliographic references
+% use \sectionmark{}
+% to alter or adjust the section heading in the running head
+
+Instead of simply listing headings of different levels we recommend to let every heading be followed by at least a short passage of text. Furthermore, please use the \LaTeX\ automatism for all your cross-references and citations.
+
+This chapter explores the reality of backdoors in Microsoft Active Directory environments and introduces \textit{BTA (Backdoor Tracing and Analysis)}, an open-source framework developed by Airbus Group Innovations. Active Directory is a critical component in enterprise identity infrastructures, making it a high-valued target for attackers and a difficult system to audit. The chapter demonstrates how legitimate features such as Domain Admin group permissions or AdminSDHolder mechanisms can be abused for persistent access and privilege escalation. It outlines real-world case studies, explains the challenges of manual auditing and security control spot-checking, and shows how BTA enables effective offline analysis of NTDS.dit files. With modules for importing, mining, and comparing AD states, BTA empowers defenders and security teams to identify misconfigurations, backdoors, and bad practices that traditional tools often miss or overlook. The chapter concludes with insights from field audits and highlights BTA's reproducibility, automation, and practical benefits for red and blue teams alike.
+
+\section{Introduction to Active Directory Backdoors: Myth or Reality?}
+
+Active Directory (AD) lies at the heart of most enterprise identity infrastructures, acting as the cornerstone of authentication, authorization, and policy enforcement across Windows-based networks. It manages users, computers, and services, governs access to shared resources on a network, and enforces organizational security policies across domains and enterprises. Because of its critical role in controlling who or what can access resources within an enterprise, AD represents a prime, juicy target for attackers. Compromising AD often equates to gaining control of the entire environment. From an attacker's view, it offers a single point of elevation. From a defender's viewpoint, it presents a complex and sprawling surface that is difficult to fully understand, let alone secure entirely.
+
+In this chapter, we explore the reality of backdoors in Active Directory environments. We introduce \textbf{BTA (Backdoor Tracing and Analysis)}, an open-source framework developed to help security professionals identify subtle misconfigurations, hidden permissions, and privilege abuse that may persist unnoticed within an AD deployment. These issues are often overlooked by traditional security tools but can be exploited for long-term access and lateral movement within the network. BTA provides security practitioners with a repeatable and deterministic method to audit AD data, making it easier to spot backdoors that rely on native, legitimate functionality abused in malicious ways.
+
+\section{Context and Motivation}
+%\label{sec:3}
+% Always give a unique label
+% and use \ref{<label>} for cross-references
+% and \cite{<label>} for bibliographic references
+% use \sectionmark{}
+% to alter or adjust the section heading in the running head
+
+In real-world enterprise AD environments, security teams — including systems administrators, incident responders, penetration testers, ethical hackers, and auditors — face a common challenge: ensuring the confidentiality, integrity, and availability of Active Directory in the face of growing complexity and increasingly advanced threat actors. AD is not only large but also dynamic; users and permissions change constantly, and many of the risks lie in subtle or long-standing configurations rather than in overt malware or intrusions.
+
+Defenders and security professionals must often sift through thousands of users, groups, and permissions, looking for signs of privilege abuse, security control tampering, inappropriate delegations, or dormant attack vectors, such as forgotten active user accounts that should have been disabled or deleted the moment the user was escorted off-premises. In many organizations, this work is often done manually, using a mix of graphical tools and ad hoc scripts. Unfortunately, this approach is not scalable and, sometimes, not feasible. It is slow, time-consuming, error-prone, and difficult to reproduce — particularly when trying to compare the state of AD over time for security baselining purposes or during an incident response investigation.
+
+BTA was developed to bridge this gap. It automates deep inspection of AD data extracted from Domain Controllers, providing consistent outputs and facilitating offline analysis. Its goal is to simplify the process of identifying common AD abuses and to empower defenders to spot persistent misconfigurations before attackers do.
+
+\section{Backdoor Tracing Analysis (BTA): Understanding the Threat: Threat Hunting Backdoors}
+%\label{sec:4}
+
+To understand how attackers can abuse AD, we examine two realistic and commonly exploited backdoor mechanisms: manipulation of the Domain Admins group and the misuse of the AdminSDHolder object. These examples are not hypothetical — they are based on real-world abuse patterns observed during red team exercises and post-compromise investigations.
+
+\section{Backdoor 1: Domain Admin Group Manipulation}
+%\label{sec:5}
+
+The Domain Admins group is one of the most powerful entities in an Active Directory domain. Its members effectively have full domain control over domain-wide resources. As such, it is a critical group that needs continuous monitoring, should be tightly and strictly administered and maintained, and rarely changed. Yet attackers often target it directly or indirectly to establish initial access and persistence.
+
+One popular technique involves obtaining the ability to \textbf{add or remove members} from the group. This does not always require being a Domain Admin initially. An attacker who compromises an account with GenericAll access to the Domain Admins group object can silently add another user, service account, or even a malicious script to the group without being noticed by traditional security tools and detection mechanisms.
+
+In some instances, attackers don't just add users — they embed (and sometimes hard-code) permissions that allow them to re-add accounts later, even after an administrator believes they have removed the threat completely. These changes may be hidden within nested groups or disguised through indirect delegation.
+
+Another avenue involves assigning extended rights to a low-privileged user that enables \textbf{password resets or permission changes} on privileged accounts. For example, if a user has ResetPassword rights on a Domain Admin account, they can effectively assume that identity at will.
+
+These subtle forms of access manipulation are difficult to detect manually. The key challenge lies in identifying \textbf{who has effective control over the group} — not just who appears as a member. That requires a full audit of the group's security descriptor, including inherited and delegated permissions, and a recursive understanding of group nesting in Active Directory.
+
+Please note that the first line of text that follows a heading is not indented, whereas the first lines of all subsequent paragraphs are.
+
+To address these challenges, BTA provides automated miners that parse the security metadata from the NTDS.dit database, allowing defenders to easily list group memberships, access rights, and historical changes to privileged groups. Using BTA, analysts can quickly answer questions such as:
+
+By surfacing these insights, BTA empowers defenders to spot backdoors that may otherwise remain hidden in plain sight.

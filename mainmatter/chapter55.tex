@@ -1,0 +1,662 @@
+
+\textbf{AD-AS-REP Roasting}
+
+\textit{Owning the Kingdom by Forging the King’s Signature}
+
+Section 1: Attacker’s View
+
+\section{\textbf{Understanding Golden Ticket Attacks}}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{| l | l |}
+\hline
+\textbf{What It Is in Shortform:} & \textbf{Tools Used:} \\
+\hline
+\textit{Golden Ticket attacks use a forged Kerberos Ticket Granting Ticket (TGT) to gain unrestricted access or resources within an Active Directory domain.} &  \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\subsection{\textbf{AS-REP Roasting}}
+
+\textit{\textbf{Shortform: }}\textit{Technique that enables attackers to steal password hashes of user accounts that have Kerberos preauthentication disabled.}
+
+\textbf{The Sweet Spot: Exploiting Optional Weakness by Default}
+
+When I’m inside a Windows domain, I’m not looking to kight up alarms. I’m not trying to drop malware or beacon out via port 443. I’m looking for low-effort, high-yield actions that exploit built-in features - the stuff blue teams forget is even there. And AS-REP Roasting is exactly that: a protocol abuse hiding in plain site, enabled by misconfiguration and rarely checked on.
+
+Kerberos is supposed to be secure. That’s the whole pitch - mutual authentiation, ticket-granting infrastructure, encrypted communications. And for the most part, it’s solid. But just like any complex system, it has edge cases. And one of those edge cases is this: \textbf{if a user account doesn’t require preauthentication, }the KDC will send you a chunk of encrypted data without verifying who you are. That chunk? It’s a straight-up password hash. A gift.
+
+That’s what AS-REP Roasting is. It’s not an exploit. It’s not even a vulnerability. It’s an intentional behavior in Kerberos authentication. If a user has `DONT\_REQUIRE\_PREAUTH` set in Active Directory, then anyone - even unauthenticated attackers - can request their AS-REP (authentication service response) and get a blob encrypted with the user’s password hash. No logon required. No domain membership. Just a simple request. The domain gives it to you on a silver platter.
+
+And that’s where the game begins. Once I’ve got the blob, I throw it into my cracking rig. Hashcat, John the Ripper - whatever I’m using that day. Because it’s encrypted with a key derived from the user’s password, I can try password guesses offline. No lockouts. No alerts. No rate-limits. Just raw compute against an exposed credential. 
+
+Best part? This works \textbf{from the outside}. If the domain controller is exposed - via misconfigured VPN access, exposed LDAP, or if I’ve phished a user into an internal relay - I can enumerate accounts, request their AS-REPs, and start roasting. No access needed. No initial foothold. This is recon and credential harvesting rolled into one - quiet, legal-by-design, and overlooked by 90\% of network defenders.
+
+You know what makes it even better? Most organizations don’t even know which users have preauth disabled. Sometimes it’s old service accounts. Sometimes it’s legacy users who got a special policy exception. Sometimes it’s just AD hygiene that fell apart over the years. I don’t need to know why. I just need one user. One valid hash to crack. One foothold. And AS-REP Roasting gives me that without even touching the workstation.
+
+\textbf{Scouting the Target: How to Identify Roasting Opportunities}
+
+Before I roast anything, I first need targets. AS-REP Roasting isn’t blind - it’s surgical. I’m looking for user accounts in Active Directory that have the \textbf{`DONT\_REQ\_PREAUTH`} flag set. That flag disables the need for preauthentication in Kerberos, which is exactly what I need to request an encrypted blob anonymously. They think it’s some obscure configuration only used in lab environments. They’re wrong. It shows up in the wild all the time - usually by accident.
+
+So first: I enumerate domain users. If I’ve already landed inside the network - even on a low-privileged account - I can use PowerView, ADFind, or GetADUser in PowerShell to pull every user object in the domain. I don’t need passwords. I don’t need elevated rights. Just domain access and a list of usernames. If I’m working externally, it’s tricker - but with a misconfigured LDAP or a cracked VPN portal, I can get that same list without much friction.
+
+Once I’ve got usernames, I sort for the weaker ones. Using `Get-ADUser -Properties DoesNotRequirePreauth` in PowerShell or the ``--format` options in Impacket’s `GetNPUsers.py`, I can filter which accounts are roastable. What I’m looking for is that flag. The moment I see it set to `True` on any account, I tag it. Because that’s a user I can request an AS-REP for - without logging in. Without even knowing their password.
+
+Most of the time, it’s \textbf{service accounts}. Legacy systems that needed to “autologin” to something twenty years ago. Or test accounts created by developers who didn’t want to deal with login delays. Occasionally, it’s a real user who had the setting misconfigured by someone clicking through AD too fast. And if that user has a weak password? Game over.
+
+My tool of choice for harvesting is Impacket’s GetNPUsers.py. It’s lightweight, fast, and doesn’t raise flags unless you’re being sloppy. It lets you pull AS-REP encrypted blobs for any roastable user you have a name for. If you’re smart, you feed it a carefully built list of usernames - ones that actually exist. No wild guessing. You don’t want to spam the DCs. You want clean hits.
+
+If I’m inside the domain and don’t want to use Python, I’ll drop into PowerShell and use Rubeus. It’s quiet, it doesn’t need external binaries to call on, and it pulls AS-REP responses directly. Once I have those ciphertext blobs, I export them and prepare for cracking. No further interaction with the domain needed. From here, everything goes offline.
+
+And let’s not forget: this whole process is stealthy. I’m not logging into anything. I’m not failing passwords. I’m not triggering lockouts or alerts. I’m requesting data the domain controller is configured to hand out. I’m just asking for it, and it’s obliging - because someone didn’t turn off a setting no one pays attention to.
+
+This is what makes AS-REP Roasting such a powerful move in a post-recon chain. I can get credentials - legit ones - without dropping malware, without exploiting a service, without ripping detection systems. I can do it with a script and a username. If the hash cracks? That account becomes my entry point or my escalation path. And nobody saw it coming.
+
+\textbf{The Crack: Turning AS-REP Hashes Into Real Access}
+
+Now I’ve got what I came for: an AS-REP encrypted blob - essentially, a Kerberos reply encrypted with the user’s NTLM hash. This is gold. Not just a random hash, but one that can be brute-forced offline without touching the network. No failed logon attempts. No rate-limits. No logs that say “someone tried to guess a password.” Just me, a file, and however much GPU power I need to throw at it.
+
+If I use Impacket to gather it, the command looks like this:
+
+```
+
+python3 GetNPUsers.py 'corp.local/' -usersfile users.txt -no-pass -format hashcat -dc-ip 10.0.0.10
+
+```
+
+That pulls down AS-REP hashes for any users in `users.txt` that have preauth disabled. The `-format hashcat` flag outputs it in a format Hashcat understands natively, which makes things faster. Eahc line looks like this:
+
+```
+
+\$krb5asrep\$23\$user@corp.local:cb62d1f7d76f40404d23fa9d3df57c47\$5a3e4c1eae...
+
+```
+
+That string is what I feed into my cracking rig. The `\$krb5asrep\$23\$` prefix tells Hashcat it’s a Kerberos 5 AS-REP hash using RC4-HMAC. The rest is the user’s encrypted reply.
+
+From there, I queue up Hashcat with mode 18200 (the mode for AS-REP hashes):
+
+```
+
+hashcat -m 18200 asrep\_hashes.txt rockyou.txt --force -O
+
+```
+
+That command launches the crack using the legendary `rockyou.txt` wordlist I mentioned earlier. If I’m going after corporate environments, I might use custom wordlists built from company info, seasonal passwords, or user patterns (`CorpName2025!`, `Welcome123`). Hashcat will churn through every candidate password, encrypt it, and compare it to the blob. If it matches, the password’s cracked - and I now have full login credentials for that user.
+
+Here is what a successful crack looks like:
+
+```
+
+\$krb5asrep\$23\$svc\_backup@corp.local:...:\$Password1!
+
+```
+
+That `Password1!` is real. Reusable. A login key into the domain. If that account is a service account, it probably has persistent access somewhere. If it’s tied to a script, app, or scheduled task, I might be able to escalate from there - or blend in without triggering any user activity alerts. If the account is still active, I just got a beachhead. All without ever sending a password over the wire.
+
+If I use Rubeus inside the domain, the syntax is just as simple. Fire up a PowerShell session with Rubeus in memory, then run:
+
+```
+
+Rubeus.exe asreproast
+
+```
+
+This dumps all roastable accounts and their AS-REP hashes, right there. From inside the domain, that’s fast and effortless. I export those to a file and move them off the network immediately. From that point forward, the domain controller never sees me again. I’m offline, quiet, and quite dangerous.
+
+Cracking times may vary, so keep that in mind. If the password is weak - something human-picked - it’ll fall within minutes. If it’s a 16-character randomized string? Probably not worth my time unless I know that account is critical. But I don’t need them all. I need just one. One cracked password. One door left unlocked. One misconfigured user. And AS-REP Roasting gives me that opportunity with little to no risk.
+
+Offline attacks are where defenders have zero control. You can’t block what you can’t see. You can’t lock the attacker out at that point. You can’t really rate-limit their attempts. Once they’ve got the blob, they own the tempo. And if you’re not auditing which accounts the attackers have preauth disabled, I promise, they’ll find one before you do.
+
+At this point, we have cracked the hash. Now it’s time to make that access count. Because getting a password is just step one. The real game is what you \textbf{do} with it - how you pivot, how you escalate, and how you turn one roastable user into domain dominance without ever raising a flag.
+
+\textbf{Weaponizing Access}
+
+Cracking the password gives me a real, functioning set of credentials. I;ve gone from passive observer to active threat. Now the question becomes: \textbf{who is the user, and what can they touch? }Because not all accounts are created equal. Sometimes I crack a dormant account. Unless. But other times? I crack something that’s been running unnoticed in production for years - a script, a service account, an embedded credential with more reach than any human user.
+
+My first move is always the same: \textbf{validate the creds}. Quietly, Carefully. I don’t log in through RDP. I don’t trigger MFA. I test SMB, DLAP, or WinRM with Impacket to see what machines accept the login. Here’s a go-to command I use frequently:
+
+```
+
+crackmapexec smb 10.0.0.0/24 -u svc\_backup -p 'Password1!'
+
+```
+
+That lets me sweep the subnet and see where this account has local or domain rights. Maybe it’s just one machine. Maybe it’s twenty. If it returns `Pwn3d!`, I know I’ve got admin access - and that’s where the escalation starts.
+
+Next, I try Kerberos authentication. If I’ve got valid creds, I can request a TGT:
+
+```
+
+Rubeus.exe tgtdeleg /user:svc\_backup /password:Password1!
+
+\begin{verbatim}
+\end{verbatim}
+Or with Impacket:
+
+```
+
+kerberos\_login.py -username svc\_backup -password 'Password1!' -domain corp.local
+
+
+This proves the credentials are valid and usable across protocols. From here, I map where this account can reach. Is it tied to file shares? Does it run a scheduled task? Is it embedded in a  config file or used by an app pool on a web server? I don’t just want access - I want persistence. I want something automated that will keep working for me long after I leave.
+
+My next step is moving laterally. If I can use the account to access other machines - especially ones where users are actively logging in - I dump LSASS. You know the playbook: one cracked password leads to a box, which gives me a cached hash, which, in turn, gets me to another box, and so on. Every time a higher-privileged token shows up, I get one step closer to domain control.
+
+And I’m monitoring and watching logs, too - not because I care, but because I assume you’re not. Most organizations don’t log successful logins in detail. They watch for failed attempts and brute-force patterns, not clean Kerberos auths from known accounts. So if I blend in well enough - log in like a script would, at the same time of day, on the same machine - I essentially become invisible.
+
+If I’m feeling bold enough, I’ll backdoor the account. Change the description field to embed commands. Modify an unused attribute with an encoded payload. Or just drop a skeleton key on a secondary domain controller using the cracked credentials. All of this happens under the radar. Because in your SIEM, it just looks like a user doing what they’re allowed to do. And unless you’re correlating behavior by endpoint, time, and volume, you won’t see it.
+
+That’s the beauty of AS-REP Roasting. It gives me the keys \textbf{before} I even touch a system. I walk in authenticated. I don’t need to leverage any pre-existing exploits to make this happen. I don’t need malware. I’m not elevating (yet) - I’m just \textbf{using what you left exposed}, by design. And once I’m in, I take my sweet time. Because with a valid user account, I’m not an intruder. I’m just another part of the network.
+
+Moving forward, you’ve seen how attackers can weaponize cracked access - but the real question is, \textbf{why does AS-REP Roasting keep working? }Why does this ancient misconfiguration still exist and show up in today’s modern networks that claim to be secure? This section is about the blind spots, the habits witnessed, and the false sense of security that keep defenders one step behind.
+
+\textbf{Why AS-REP Roasting Continues to Be Successful}
+
+Allow me to be blunt for a moment: AS-REP Roasting isn’t some unknown tactic buried in red team lore. It’s been around for years. It’s public knowledge. Documented. Built into every major offensive toolkit. So why does it continue to persist as a threat? Because it lives in the gray space - between bad configuration, inherited risk, and the assumptions defenders make about what’s “safe enough.”
+
+Most Active Directory environments are bloated. They carry years of technical debt - old accounts, legacy policies, misconfigured users left untouched because nobody knows what they break. And somewhere in between that mess, one or two accounts have `DONT\_REQ\_PREAUTH` set. Maybe they were created for testing purposes. Maybe for legacy apps. Maybe someone disabled preauth to troubleshoot an issue and forgot to reverse it. Whatever the case may be, the end result is always the same: the door is left open.
+
+The problem for defenders is visibility. Most administrators don’t have alerts for accounts with preauth disabled. It’s not a setting that shows up in standard AD reports, Active Directory Users and Computers (ADUC) snap-in, or Group Policy audits. There’s no “risky account” warning baked into Active Directory. Unless you’re explicitly querying that flag - or running an AD hardening script - \textbf{you don’t even know what’s truly exposed.}
+
+And when defenders do become aware of AS-REP Roasting, they usually assume it’s only a threat \textbf{after compromise. }They think you need a foothold to first exploit it. Not true. You don’t. If the domain controller is reachable from outside the networ boundary or perimeter - through a misconfigured VPN, a split-tunnel endpoint, or a legacy web app using LDAP - you can roast from the internet. Zero access needed. Just usernames and a request packet.
+
+The other failure? \textbf{Assuming strong passwords make roasting safe. }They don’t. AS-REP Roasting doesn’t break Kerberos. It doesn’t exploit a weakness in the crypto chain. It targets human behavior: repeated use of the same password across platforms, predictable patterns, reused phrases. And the cracking rigs attackers use don’t care about policies - they chew through billions of guesses a second. So if even one account is using `CorpName2023!`, again, it’s game over.
+
+Detection is basically nonexistent. There’s no log for “user X had an AS-REP requested” unless you’re actively auditing Kerberos events - and even then, it’s not that specific. No lockouts, no failed logins. Just a KDC responding to a request. Unless you’ve got deep packet inspection or custom KDC telemetry, you won’t even know it happened. And if you think your EDR is catching it? It isn’t. Because AS-REP Roasting doesn't touch endpoints. It hits the controller and walks away.
+
+What makes this even more dangerous is how little risk it appears to present - \textbf{until it doesn’t}. One user account doesn’t seem like much. But one service account can have domain rights. One cracked password can get you into an internal VPN. One misstep can lead to ticket forging, lateral movement, or even complete domain dominance.
+
+Attackers love AS-REP Roasting because it sits there quietly until someone curious enough asks the right question. And 90\% of environments never bother to ask.
+\subsubsection{\textbf{Tools}}
+
+\begin{itemize}
+    \item Shodan
+
+    \item Nmap scripts
+
+    \item Medusa
+
+\end{itemize}
+
+\subsubsection{\textbf{Attack Code}}
+
+nmap -sV --script=http-default-accounts 192.168.1.1
+
+\subsubsection{\textbf{Defense}}
+
+Now that you’ve seen how the AS-REP Roasting attack works, let’s flip the lens. We’re still deep in the trenches - but now you’re \textbf{defending} the domain, trying to stop this exact scenario from unfolding. This isn’t about theory. It’s about closing holes and plugging gaps, understanding your blind spots, and killing AS-REP Roasting \textbf{before} someone turns it into real access.
+
+\textbf{How to Defend Against AS-REP Roasting}
+
+If you are defending a Windows domain and you’re not actively looking for AS-REP Roasting exposure, you are gambling, plain and simple. This attack does not require malware. It does not need an exploit. It does not require the attacker to be authenticated. It takes one misconfigured user, one missed setting, and the attacker walks away with an offline crackable hash. That’s all it takes to lose control of your network.
+
+Your first job is \textbf{visibility. }You can’t protect what you can’t see. AS-REP Roasting only works against accounts that have pre-authentication disabled, specifically, when the \texttt{DONT\_REQ\_PREAUTH} flag is set in the user’s properties. Your job is to \textbf{find those accounts immediately}. No waiting. No guesswork.
+
+If you’re using PowerShell, here’s how to list roastable users:
+
+\begin{verbatim}
+
+Get-ADUser -Filter \{DoesNotRequirePreAuth -eq \$True\} -Properties DoesNotRequirePreAuth | Select-Object Name,SamAccountName
+
+\end{verbatim}
+
+This command shows you every account where preauth is disabled. If you see more than zero results, you have a problem. And no, 'just one' is not safe. All an attacker needs is one valid username, one exposed AS-REP blob, and enough GPU time to crack it offline. Then they’re in - and you won’t know until it’s too late.
+
+Some defenders assume service accounts are exempt. That’s a mistake. Service accounts should be \textbf{hardened}, not exempted. They should have long, random passwords stored in a password vault - not human-picked phrases. If you must disable preauth (rare), you need to \textbf{document it}, monitor it, and make sure that account has minimal privileges (least privilege principles applied). The moment that account has domain rights and a crackable password, you’ve handled the keys to the castle over without even knowing it.
+
+Detection isn’t impossible, however, but it does require work. You won’t see AS-REP Roasting unless you \textbf{log Kerberos events at the domain controller level. }Specifically, enable \textbf{Advanced Audit Policy} for:
+
+
+\begin{itemize}
+    \item \textbf{\textbf{Audit Kerberos Authentication Service}}
+    \item \textbf{\textbf{Audit Kerberos Service Ticket Operations}}
+\end{itemize}
+Once logging is active, \textbf{Event ID 4768} shows you authenticaiton ticket requests. What you’re looking for are requests \textbf{without preauth data}. That’s a red flag. If you start seeing unauthenticated AS-REP requests for accounts with `DoesNotRequirePreAuth = True`, that’s likely a roasting attempt. Flag it. Alert on it. Investigate immediately.
+
+You also want to monitor public-facing services. If your DC is exposed through a VPN, misconfigured LDAP gateway, or hybrid cloud mismanagement, attackers can still roast from the outside. They don’t need to be inside the actual network for this to be possible. They just need line of sight to the controller. Segment your domain controllers. Shield them from unauthorized subnets. If they don’t need to talk to the internet, they shouldn’t be.
+
+Finally, \textbf{rotate passwords} on any accounts you identify as roastable. Immediately. Don’t just fix the flag - \textbf{change the password, too}, because you don’t know how long that hash has been exposed. And while you’re at it, review all of your account policies. Kill any legacy automation that requires `DONT\_REQ\_PREAUTH`. Update your provisioning process. Make sure no new accounts are created with that setting.
+
+This isn’t just patching a hole. It’s rebuilding trust in your authentication flow. Because when attackers can get password-equivalent hashes without logging in, you’ve lost before the breach even starts.
+
+Now, we move from \textbf{detection and response} into \textbf{proactive hardening} - what real-world defenders need to do to make AS-REP Roasting dead on arrival. This isn’t about theory as previously stated - it’s about specific, tactical changes to how you manage accounts, enforce policies, and monitor your entire environment.
+
+\textbf{Real-World Hardening: Kill the Roast Before It Starts}
+
+If you want to stop AS-REP Roasting from ever becoming an issue in your environment, you don’t wait for alerts - you change the operating environment so the attack doesn’t work. That means hunting down and fixing the misconfigurations that make it possible in the first place. And it starts with the \textit{Group Policy Object (GPO) }level.
+
+There’s no checkbox in Group Policy that says “Disable AS-REP Roasting,” but what you \textit{can} control is how accounts are created and what flags are applied by default. You want to make sure that any provisioning scripts, automation, or manual user creation processes \textbf{do not assign the `DONT\_REQ\_PREAUTH` flag}. That means auditing user creation routines and making sure your directory management tools enforce preauthentication \textbf{as a default.}
+
+For existing users, you need a continuous audit. You don’t want this to be a once-a-year compliance checkbox. You want a weekly report that lists any accounts where preauth has been disabled. You can automate that easily with PowerShell and Task Scheduler, or even better - pipe it into your SIEM and aler in near-real-time:
+
+```
+
+Get-ADUser -Filter * -Properties DoesNotRequirePreAuth | Where-Object \_DoesNotRequirePreAuth -eq \$true\}
+
+```
+
+If that list ever changes, \textbf{you investigate immediately.}
+
+For \textbf{service accounts}, you need to be more aggressive. These are often the most vulnerable because they run silently in the background, are rarely changed, and frequently have elevated privileges applied. If you must have a service account without preauth (a terrible idea, but reality is messy), then the password needs to be at least 25+ characters, randomized, and rotated regularly through a vault like \textbf{CyberArk, Thycotic, }or \textbf{HashiCorp Vault}. And even then - you monitor it like a privileged admin.
+
+You will also need a baseline. Use your SIEM or log aggregation tool to build a \textbf{normal activity profile} for your domain controllers and the ingress/egress that pass through them. This includes:
+
+\begin{itemize}
+    \item Expected AS-REP traffic volume
+    \item Who requests Kerberos tickets
+    \item Frequency of authentication failures
+    \item AS-REP requests without preauth data
+\end{itemize}
+Once you know what “normal” looks like, spotting “weird” becomes easier. That ‘weird’ could be an internal red team - or it could be an external attacker hitting you through a neglected VPN box from five years ago.
+
+A huge part of prevention is also \textbf{account lifecycle discipline. }Old users? Disable and delete. Unused accounts? Deprovision them. Orphaned service accounts? Rotate, restrict, or remove. The longer an account sits unmonitored, the higher the risk it gets roasted.
+
+Want to take it a step further? Create a fake user account with preauth disabled on purpose. Make sure it’s honeytokened. Monitor every attempt to hit it. If anyone requests that user’s AS-REP, you’ve got an IOC (Indicator of Compromise) to act on immediately. It’s bait - and the moment it gets touched, you know someone is up to something.
+
+This is how you win as a defender: not by hoping it won’t happen, but by structuring your environment so that \textbf{if it ever does}, you know fast and can cut it off right then and there.
+
+\textit{As defenders, we want to always finish strong. Now that we have shut down AS-REP Roasting directly, it’s time to go a bit further - }\textit{\textbf{building a network that’s hardened across the board}}\textit{, not just against one technique. Because if an attacker cracks one credential, you need to make sure that access alone doesn’t turn into }\textit{\textbf{lateral movement, persistence}}\textit{, or }\textit{\textbf{domain control.}}
+
+\textbf{Beyond AS-REP: Building a Roasting-Resistant Network}
+
+AS-REP Roasting is just one technique in a long chain of abuses that rely on weak passwords, poor hygiene, and trust models that haven’t evolved. So your goal isn’t just to block roasting attempts - it’s to build a network that is resilient to those attempts so that even if an attacker cracks a credential, they hit a wall. Wall after wall after wall. That starts with \textbf{Kerberos hygiene}.
+
+First, tighten your \textbf{password policies}. Not just for end-users, but especially for service accounts and privileged users. Don’t rely on complexity alone. Complexity doesn’t stop roasting; length does. Use long, random passphrases that are impossible to guess and hard to crack - even offline. You want passwords that \textbf{never show up in any cracking dictionary, }even by accident. If it’s human-readable, it’s breakable.
+
+Next, fix your \textbf{account scoping}. Not every service account needs domain-wide access to function properly. Not every script needs to run as SYSTEM. Audit who has admin rights where and to what. Remove local administrator permissions from domain users. Limit which systems privileged accounts can log into using \textbf{login restrictions }in AD. You want to prevent a cracked account from being the key to 50 other machines.
+
+Then harden authentication protocols. Disable \textbf{NTLM} wherever possible. Enforce \textbf{Kerberos-only} authentication using Group Policy. NTLM is a goldmine for attackers because it’s replayable and hash-based. Kerberos, while not perfect, forces ticketing flows that are much easier to audit, log, and control. Every environment still running NTLM is vulnerable to more than just roasting - it’s open to relay attacks, Pass-the-Hash (PtH) attacks, and token abuse, plus more.
+
+Let’s talk \textbf{credential storage} for a minute. You can’t afford to have hashes sitting in memory. Enforce \textbf{Credential Guard }on Windows 10+ systems to protect LSASS. Block \textbf{unconstrained delegation} - this setting dumps users’ TGTs into memory where they can be stolen by anyone with admin access to the box. Move toward \textbf{Protected Users} groups for your high-valued targets. That blocks things like NTLM fallback, delegation abuse, and weak crypto use.
+
+Visibility matters too. Set up \textbf{SIEM correlation rules }that don’t just alert on anomalous logins, but track \textbf{authentication trends} across users. Are you seeing a user suddenly request Kerberos tickets from 15 different machines in an hour? That’s weird. Did a service account just log in interactively? Also weird. These are signs something got cracked - and the attacker’s now testing and probing for access entry points
+
+Most of all, assume you’ve already lost one credential. That’s not defeatist - that’s \textbf{realistic}. Every account should be treated like it might get compromised. So you isolate roles. You enforce segmentation. You deploy host-based firewalls. You log \textbf{everything} if it comes down to that. And then you \textit{actually read the logs.}
+
+\textit{Future-proofing} means \textbf{baking security into the infrastructure}, not duct-taping it on afterward. You need a \textit{CI/CD pipeline} that checks service account hygiene. You need password vault integration that prevents human-generated credentials. You need alerting that knows the difference between normal AS-REQ activities and someone probing the KDC with roasting tools.
+
+Because when AS-REP Roasting fails, the attacker pivots. To Kerberoasting. To token theft. To LLMNR poisoning. You’re not defending against techniques - you’re defending against people. The more obstacles you put between a cracked hash and domain-wide access, the more likely they’ll move on to an easier target.
+
+\textit{Let’s bring it home.}
+
+\textit{This final section isn’t about tools or protocols. It’s about the }\textit{\textbf{people}}\textit{ behind the keyboard—your team, your users, your admins—and how you build a }\textit{\textbf{security culture}}\textit{ that doesn’t just react to threats like AS-REP Roasting, but anticipates them, hardens against them, and keeps raising the bar.}
+
+\subsection{From Reactive to Proactive: Security Teams That Don’t Get Roasted}
+
+You can deploy every tool in the playbook—SIEM, EDR, MFA, vaulting, GPO lockdowns—but if your team is reactive, you’re still behind. Because attackers don’t wait. They don’t follow change control. They find gaps, they take shortcuts, and they move faster than most internal processes ever will. Your defense has to be \textbf{proactive}. That means building a team that thinks like attackers, not bureaucrats.
+
+It starts with \textbf{ownership}. Someone on your team needs to be accountable for Active Directory hygiene. Not “the security team” in general—\textbf{a name, a role, a person}. Someone who knows how to run Get-ADUser, who checks pre-auth flags regularly, who audits service accounts, and who understands why “Password1!” on an unused account isn’t just a misstep—it’s a foothold.
+
+Next, get serious about \textbf{internal red teaming}. If you haven’t tested your environment for AS-REP Roasting yourself, someone else will. Build a repeatable test. Use the Impacket toolkit. Use Rubeus. Try to request AS-REPs. Try to crack them. Try to access machines with cracked creds. If you can do it in under an hour, so can an attacker. And once you’ve got the results, use them to drive real change.
+
+That change isn’t just technical—it’s \textbf{cultural}. You need to educate your IT admins, helpdesk staff, and even app developers about what “roastable” accounts are and why they matter. Most pre-auth-disabled users weren’t created maliciously. They were created by someone in a rush. Someone troubleshooting. Someone who didn’t realize what that checkbox meant. Fix that. Embed security into the provisioning conversation. Bake it into all onboarding processes and procedures.
+
+You also need \textbf{policy enforcement with teeth}. It’s not enough to say, \textit{“Service accounts must have long passwords.”} You need automation that checks for it. Vaulting that enforces rotation. Scripts that shut down non-compliant accounts. Security isn’t about asking nicely. It’s about \textbf{removing the option to be insecure}.
+
+Visibility is your final weapon. You can’t block everything. But you can \textbf{see} what’s happening and respond fast. Make sure your logs are complete. Make sure you’re getting telemetry from your DCs, your vaults, your ticketing system. Build dashboards that show when weird authentication patterns show up. Correlate user behavior. Flag anomalies. Don’t wait for the attack to finish before you notice something’s wrong.
+
+And above all, understand this: security is about friction. The right kind, in the right places. You don’t want a network that’s perfectly smooth—because that’s a network where attackers move freely. You want a network that’s hardened, segmented, and annoyingly hard to navigate without tripping over controls. That’s how you make even a cracked password worthless.
+
+If you do this right, AS-REP Roasting becomes just another dead tool in the attacker’s kit. They’ll try it. They’ll get nothing. And they’ll move on—to someone else.
+
+Not you.
+
+\subsection{\textbf{Glossary}}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{A} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Assume Breach}
+
+"Assume breach" is a security principle and a mindset that dictates that a security system should be designed and operated under the assumption that a breach has already occurred or will inevitably occur. It emphasizes proactive measures to detect, respond to, and mitigate the impact of breaches rather than solely focusing on preventing them. This approach is a core component of Zero Trust Architecture, which aims to minimize the impact of potential breaches by limiting access and trust within the network.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{B} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Backdoor}
+
+A backdoor is a secret method of bypassing normal authentication or security measures to gain access to a computer system, network, or application. It's like a hidden entrance that allows attackers to bypass security controls and maintain persistent access.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{C} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Canary Tokens}
+
+Canary tokens are digital tripwires used in cybersecurity to detect unauthorized access to sensitive data or systems. They are essentially decoy files, URLs, or API keys strategically placed within a network or application, designed to trigger an alert when accessed by an attacker or malicious actor. This early warning system helps defenders identify potential breaches and respond quickly.
+
+\textbf{Credential Hygiene}
+
+Credential hygiene refers to the practices and processes involved in managing and protecting authentication credentials like passwords, tokens, and keys. It's crucial for maintaining security across various systems and applications, particularly in CI/CD pipelines and SaaS environments. Effective credential hygiene minimizes the risk of unauthorized access, data breaches, and other security incidents.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{D} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{E} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{External Trust}
+
+An external trust in Active Directory is a trust relationship established between two domains in different forests. It allows users in one domain to access resources in the other domain, even though the domains are not part of the same forest. This type of trust is often used when there is a need for resource sharing between organizations with separate Active Directory environments.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{F} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Forest Trust}
+
+Forest trusts in Active Directory are a type of trust relationship established between the root domains of two separate Active Directory forests. They allow users and resources in one forest to be accessed by users in the other forest, effectively creating a bridge between the two separate domains.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{G} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{H} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{HONEYTOKENS}
+
+Honeytokens are decoy elements, like fake data or credentials, strategically placed within a system to detect unauthorized access and malicious activity. They act as tripwires, triggering alerts when accessed by attackers, thus revealing their presence and methods. Unlike honeypots, which are entire systems, honeytokens are small, discrete components designed to be part of real systems.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{I} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Interdomain}
+
+Interdomain refers to something existing or occurring between two or more domains. In networking, it specifically relates to routing traffic between different autonomous systems (AS). It can also refer to courses that integrate knowledge from two different domains.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{J} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{K} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{L} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Local Security Authority (LSA)}
+
+The Local Security Authority (LSA) is a security subsystem within the Windows operating system that manages and enforces local security policies. It's responsible for crucial tasks like authenticating users during sign-in, verifying passwords, and handling access tokens. Essentially, the LSA acts as a gatekeeper, controlling access to resources and ensuring only authorized users and processes can interact with the system. 
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{M} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{N} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{NTDS.dit File}
+
+NTDS.dit, short for New Technology Directory Services Directory Information Tree, is the central database for Microsoft Active Directory Domain Services (AD DS). It's a critical component that stores all the information about objects within an Active Directory domain, including users, groups, computers, and their associated attributes, including password hashes. This file essentially powers authentication and authorization across an organization's network, processing requests, storing password information securely, and managing group policy settings.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{O} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{P} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Protocol Stack}
+
+A protocol stack, also known as a network stack, is a hierarchical set of communication protocols organized into layers. Each layer performs a specific function and relies on the services of the layer below it, while providing services to the layer above. This layered approach simplifies the design, implementation, and troubleshooting of complex network communication systems.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{Q} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{R} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{S} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Service Principal Name (SPN)}
+
+A Service Principal Name (SPN) is a unique identifier for a service instance, used in Active Directory for Kerberos authentication. It links a service to a specific service account, enabling clients to locate and authenticate the service. SPNs are crucial for services like SQL Server, IIS, and others that use Kerberos for secure communication.
+
+\textbf{Signature Validation}
+
+Kerberos signature validation is a crucial security mechanism within the Kerberos authentication protocol, ensuring the integrity and authenticity of messages and tickets exchanged during authentication and authorization processes. It involves verifying digital signatures on various Kerberos components, primarily the Privileged Attribute Certificate (PAC), to prevent malicious tampering and unauthorized privilege escalation.
+
+\textbf{Shadow Domain Admin}
+
+A shadow domain admin refers to a user account that possesses administrator-level privileges within a domain, but is not officially part of the designated domain administrator group. These accounts often go unnoticed by security teams because they don't appear in standard administrative listings, making them a potential security risk.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{T} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Total Domain Persistence}
+
+Total domain persistence refers to an attacker's ability to maintain long-term, uninterrupted control over a compromised network or domain, even in the face of detection and attempts to remove them.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{U} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{User and Entity Behavior Analytics (UEBA)}
+
+User and Entity Behavior Analytics (UEBA) is a cybersecurity solution that uses machine learning and data analytics to detect suspicious activities by analyzing the behavior of users and other entities within an organization's network. By establishing baseline behaviors, UEBA identifies anomalies that may indicate security threats, such as insider threats or compromised accounts.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{V} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{W} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{X} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{Y} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{Z} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+ 

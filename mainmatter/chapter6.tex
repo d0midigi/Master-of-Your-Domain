@@ -1,0 +1,102 @@
+%%%%%%%%%%%%%%%%%%%%% chapter.tex %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% sample chapter
+%
+% Use this file as a template for your own input.
+%
+%%%%%%%%%%%%%%%%%%%%%%%% Springer-Verlag %%%%%%%%%%%%%%%%%%%%%%%%%%
+%\motto{Use the template \emph{chapter.tex} to style the various elements of your chapter content.}
+\chapter{Analysis of Hacking Security Assessment Artifacts to Create Indicators of Compromise (IOCs) for Defensive Intrusion Detection}
+\label{intro} % Always give a unique label
+% use \chaptermark{}
+% to alter or adjust the chapter heading in the running head
+
+\abstract*{Network security systems are designed to identify and, if possible, prevent unauthorized access to computer and shared network resources. Today, most modern network security systems consist of hardware and software components that work in conjunction with one another to provide a layered line of defense against unauthorized intrusions. Software provides user interactive layers such as password authentication, and system-level layers for monitoring network activities. This chapter examines an application monitoring network that attempts to identify Indicators of Compromise (IOC) by extracting patterns in the network traffic which likely corresponds to unauthorized access. Typical network log data and construct indicators are analyzed to predict network intrusion. Based on these indicators, a fitted model will be created demonstrating which indicators best predict an intrusive event. The ultimate goal of this chapter is to provide network defenders with the guidance to analyze IOCs to make informed decisions to better predict an intrusion event by monitoring and studying recorded events, network traffic, and DNS events.}
+
+\section{Introduction}
+%\label{sec:1}
+Defending enterprise networks against unauthorized access requires layered security systems that continuously monitor for abnormal network activities, anomalous behaviors, and emerging threats. Modern network defense strategies that rely on a combination of hardware and software components operate together to detect, contain, and prevent intrusions. From a defender's view, software-based monitoring plays a critical role by providing both user-level controls, such as password authentication, and system-level visibility into network behaviors. This chapter explores the use of network traffic monitoring to identify Indicators of Compromise (IOCs), which serve as early warning signs of potential security breaches. By analyzing patterns in aggregated network logs-including newly observed connections, anomalous traffic, and suspicious DNS activity-this chapter aims to enhance the defender's ability to rapidly identify and respond to threats. Using machine learning techniques, particularly XGBoost, a model has been developed that highlights which IOCs are most predictive of an intrusion attempt. The findings reinforce the value of network-level telemetry in bolstering defensive operations and accelerating threat response workflows.
+
+\section{Thinking Like a Defender}
+
+As organizations face an increasingly aggressive threat landscape, the role of cybersecurity defenders has never been more critical. Adversaries continue to evolve their techniques, making it necessary for defenders to proactively detect and respond to unauthorized access attempts before they lead to data loss or operational disruption. In today's data-centric environment, information is one of the most valuable assets to both businesses and attackers alike. High-profile incidents such as the OPM data breach (2015) and the WannaCry ransomware attack (2017) highlight the devastating impacts of successful intrusions.
+
+Defensive strategies must therefore prioritize visibility, speed, and automation. While many organizations invest in advanced security platforms, these tools often require significant resources and expertise to manage-resources that many smaller organizations may lack. To address this challenge, this chapter focuses on leveraging standard network and system logs already present in most IT environments to detect Indicators of Compromise (IOC). By identifying predictive features in common log data, defenders can accelerate threat detection and reduce attacker dwell time. The goal is to enhance the ability for defenders to rapidly identify unauthorized activities, limit the damage of successful intrusions, and ultimately strengthen the security posture of their enterprise.
+
+\section{Identifying Indicators of Compromise Through Defensive Data Threat Modeling}
+%\label{sec:2}
+In modern cybersecurity operations, the ability to identify Indicators of Compromise (IOCs) is imperative to proactively defend networked systems against persistent and increasingly sophisticated cyberattacks. The approach explained herein emphasizes leveraging audit data already present within enterprise environments to extract meaningful and actionable insights. Specifically, this is achieved by either abstracting the raw audit data or applying classification models to aggregated log data to uncover patterns that align with known attack behavior alongside the Tactics, Techniques, and Procedures (TTPs) of an attacker.
+
+By modeling patterns associated with known intrusion vectors, this chapter provides defenders-such as security analysts, incident responders, and threat hunters-with intelligible and validated indicators that help prioritize investigations. The intent is not only to alert on potentially malicious activities but also to offer analysts a tactical advantage in knowing where to focus their attention within the flood of telemetry produced by complex systems. These indicators can be operationalized in detection systems or serve as enrichment in investigative workflows.
+
+One of the goals is to reduce the cognitive load on defenders by delivering context-aware insights derived from information systems they already manage. In other words, instead of requiring additional tooling, the utilization of existing logs and monitoring systems by building intelligence layers on top of them. This improves analyst efficiency and increases the chances of detecting intrusions early in the attack lifecycle.
+
+Effective intrusion detection is predicated on the identification and abstraction of malicious behavior into IOCs-discrete events or patterns that signal adversary activity; however, improperly configured detection rules or insufficient context can result in two major failures: false negatives (missed detections) and false positives (unnecessary alerts that waste time). To reduce these risks and to effectively avoid alert fatigue, this model factors in contextual signals such as:
+
+\begin{itemize}
+    \item The frequency and density of IOCs over short time windows
+    \item The criticality of the targeted asset or information system
+    \item Whether the event aligns with known threat behaviors or is anomalous in nature
+\end{itemize}
+
+While the term "IOC" might suggest a universal fingerprint for malicious activities, real-world breaches often reveal otherwise. Detection delays are common: according to IBMs research, the average time to identify a breach was 197 days, and 69 days to contain it. This lag can stem from many outstanding factors, such as insufficient staffing, knowledge capabilities of IT staff, uncorrelated telemetry, or missing evidence altogether.
+
+Many real-world breaches have stemmed from something as simple as human error such as a misconfiguration-an overlooked S3 bucket, an exposed publicly internet-facing server, or an unprotected database. For example, in 2017, over 123 million consumer records were exposed due to misconfigured Alteryx data repositories. Similarly, publicly accessible U.S. Department of Defense documents were found online, not because of a sophisticated breach, but due to poor configuration hygiene. While these configuration-based incidents are serious, they typically lack the persistence and post-exploitation sophistication of targeted intrusions by advanced adversaries; thereofre, this study focuses on attacks where the threat actor actively exploits access, maintains persistence, and seeks to laterally move across and throughout the network.
+
+Despite the uniqueness of each breach, attacker behavior often follows a common lifecycle. Referencing the NIST SP 800-115 (Technical Guide to Information Security Testing and Assessment), we focus on the two most relevant stages to defenders: Discovery (reconnaissance) and Attack. These phases represent the technical core of intrusions, where adversaries scan, probe, exploit, and entrench. Within the attack phase, NIST identifies key tactics such as:
+\begin{itemize}
+    \item Gaining initial access
+    \item Privilege escalation
+    \item System browsing
+    \item Installation of additional tooling
+\end{itemize}
+Modern intrusion detection is still, in many ways, more of an investigative art than a deterministic science. Analysts must sift and parse through extensive logs, correlate events across multiple systems, and differentiate between benign anomalies and true malicious behaviors. Federal information systems, and many regulated industries, follow NIST guidelines that specify how Intrusion Detection and Prevention Systems (IDPS) must function. These security systems are expected to monitor, analyze, and respond to security events in near-real-time.
+
+According to NIST, intrusion detection is defined as the monitoring of events in systems and networks and analyzing them for signs of possible security incidents. Prevention systems go one step further by actively interrupting malicious activities as they are unfolding; however, building reliable information systems from scratch requires not just reactive monitoring, but meaningful telemetry-and lots of it.
+
+Not to mention the volume of log data generated in a typical enterprise environment is immense. From endpoint security to network devices, authentication systems to DNS logs, the challenge is not a lack of data but making sense of it all. Many prior intrusion detection studies relied on datasets that had already undergone feature engineering-meaning someone manually processed the raw logs before threat modeling. That process, while useful for clean datasets, does not reflect the operational reality defenders face daily.
+
+Furthermore, the development of this model was constructed with constraint in mind. Instead of relying on pre-engineered features, it was built using detection logic from raw system log files that mirror what defenders encounter every day. The approach centers around a three-step methodology.
+
+\section{Methodology: From Raw Logs to Predictive IOC Models}
+Step 1: Data Ingestion and Feature Construction
+We begin by ingesting and parsing raw data logs and then constructing relevant features that will serve as candidate IOCs. These include-but are not limited to-repeated failed login attempts, anomalous DNS queries, unusual outbound connections, or high byte transfers. Data sources vary, so  feature generation is tailored to log type (e.g., firewall vs. authentication logs).
+
+Once features are constructed, we preprocess the dataset by:
+\begin{itemize}
+    \item Normalizing values for consistency
+    \item Handling missing or null values
+    \item Segmenting the dataset into training, validation, and testing sets to ensure the model generalizes to unseen data
+\end{itemize}
+Step 2: Threat Modeling
+We apply k-fold cross-validation, a technique defenders use for reducing bias and overfitting, by partitioning the data into multiple folds for training and verification. There are several classification algorithms for which a defender can choose, to include:
+\begin{itemize}
+    \item Logistic Regression
+    \item Random Forest
+    \item Support Vector Machines (SVM)
+    \item XGBoost (Extreme Gradient Boosting)    
+\end{itemize}
+Among these, XGBoost has proven and has demonstrated the highest accuracy and F1 score, making it the most effective for our intrusion detection use case. While logistic regression offers interoperability and SVMs provide solid performance, XGBoost's ability to handle noise, complex feature interactions, and large datasets gave it a decisive edge.
+
+Step 3: Evaluation and Interpretation
+The final stage involves running the best-fit model against our test dataset and interpreting its results. This is not just about predicting attacks-it is about understanding why those predictions occurred. The goal is to analyze feature importance to determine which IOCs have the strongest predictive power. This helps defenders to shift their focus to the most relevant indicators when building detection rules or responding to alerts.
+
+Examples of high-weight IOCs include:
+\begin{itemize}
+    \item Sudden surges in DNS lookups and zone transfers
+    \item Anomalous network traffic patterns between internal and external hosts
+    \item Never-before-seen login sources or privileged accounts
+\end{itemize}
+These findings not only reinforce known best practices in network defense but also highlight subtle patterns that defenders can proactively monitor.
+\section{Structure of This Chapter}
+\begin{itemize}
+    \item Section 2: Related Work-Review of prior efforts and datasets in IOC detection
+    \item Section 3: Intrusion Patterns-An exploration of attacker TTPs and signatures
+    \item Section 4: Data Sources-Overview of audit logs and how each contributes to feature generation
+    \item Section 5: Feature Construction-Deep dive into how indicators were engineered from raw logs
+    \item Section 6: Model Comparison-Evaluation of classification techniques using accuracy and metrics
+    \item Section 7: IOC Analysis-Interpretation of top-performing indicators and their significance
+    \item Section 8: Ethical and Societal Considerations-Discussion on data privacy, surveillance tasks, and responsible disclosure
+    \item Sections 9-10: Conclusions and Future Work-Simulating findings and proposing areas for continued research in automated threat detection and IOC generation
+    
+\end{itemize}

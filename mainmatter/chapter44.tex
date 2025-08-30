@@ -1,0 +1,515 @@
+
+\textbf{Golden Ticket Attacks}
+
+\textit{Owning the Kingdom by Forging the King’s Signature}
+
+Section 1: Attacker’s View
+
+\section{\textbf{Understanding Golden Ticket Attacks}}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{| l | l |}
+\hline
+\textbf{What It Is in Shortform:} & \textbf{Tools Used:} \\
+\hline
+\textit{Golden Ticket attacks use a forged Kerberos Ticket Granting Ticket (TGT) to gain unrestricted access or resources within an Active Directory domain.} &  \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\subsection{\textbf{Pass-the-Hash (PTH): How to Own a Network Without Cracking a Thing}}
+
+\textit{\textbf{Shortform: }}\textit{Reuse of stolen NTLM hashes to authenticate as a user without knowing their password.}
+
+\textbf{The Philosophy of Hashes Over Passwords}
+
+If you’re still chasing passwords, you’re thinking too small. Plaintext is flashy, sure. It looks good in a screenshot. But in the real game—the one played in enterprise networks under pressure and time constraints—\textbf{hashes are enough}. They’re keys. Tokens. Signatures of trust. And if you know how to use them, you can walk straight through a locked door and no one will stop you.
+
+Pass-the-Hash isn’t about breaking encryption. It’s about using the system exactly how it was built, just with someone else’s credentials. It works because NTLM, the authentication protocol baked into Windows for decades, doesn’t actually care whether you typed a password or just showed up with a valid hash. As long as the signature checks out, the handshake completes. You're in.
+
+And here’s the kicker: Windows stores these hashes \textbf{everywhere}. In memory. On disk. In LSASS. In SAM files. In registry hives. Every time someone logs in, their credential material sits in memory like a gift. Doesn’t matter if they’re local admin, domain admin, or just a regular user. Once you get on the box, you can pull it. No cracking needed. No guessing games. Just dump it and use it.
+
+So you compromise one system—maybe through phishing, a vulnerability, or a poisoned LLMNR request. Whatever. The point is, you land on a box. First thing you do? Dump credentials. Use Mimikatz, grab the NTLM hashes, sort them by privilege level. Who’s logged in? What group are they in? What else do they have access to? Doesn’t matter if you can’t see their password. You’ve got their hash. You’ve got access.
+
+That’s the power shift most defenders still don’t understand. They think passwords are the secret. They forget that in NTLM auth, the \textbf{hash is the password}. If I’ve got that, I don’t need to brute-force anything. I can just inject it into a session and pretend to be you.
+
+\textbf{Gaining the First Hash and Moving Fast}
+
+When you pop your first machine, everything slows down. You stop rushing. You take inventory. Because this is the turning point. That one system—the receptionist’s laptop, the domain-joined developer’s box, the exposed RDP server—might just be the path to everything. What matters isn’t the machine. It’s who touched it. What accounts cached there. What hashes still live in memory.
+
+Your first step is \textbf{LSASS dump}. If you have local admin, it’s easy. Use Mimikatz, Procdump, or a forked variant to avoid EDR triggers. Dump LSASS to disk or memory. Extract the NTLM hashes. If you're lucky, you’ll catch a domain admin who logged in six hours ago. If not, no problem. Regular users still have access elsewhere. It’s a foot in the door.
+
+You’re not stopping with one box. PtH is about \textbf{lateral movement}. You take that hash and use it to authenticate to other machines. SMB, WinRM, WMI—whatever’s open. Pass-the-Hash works across all of them. You run a tool like psexec, wmiexec, or Impacket’s smbexec with the hash. You’re not guessing credentials. You’re showing up at the door with the right badge.
+
+And it works. As long as the machine doesn’t enforce strict authentication policies—like blocking NTLM or requiring Kerberos with smartcards—you’re in. The system sees a valid hash, it validates it against its local or domain records, and you’re granted a shell. Now you own two boxes.
+
+From there, it’s recursive. Dump the second system. Gather more hashes. Check which ones are new. Which are reused. You’re building a graph—who logs into what, what paths overlap, where the hashes repeat. Lateral movement becomes exponential. Every machine you hit expands your reach. Every hash you capture opens a new door.
+
+You don’t even need internet access. This is all internal, living off the LAN. You’re not beaconing out. You’re not downloading malware. You’re just using credentials that already exist, with tools already on the system. That’s what makes PtH so devastating—it’s not just an attack. It’s an abuse of default behavior.
+
+So, now we go deeper. You’ve landed, dumped hashes, and moved laterally - but the real win comes when you start mapping \textbf{hash reuse}, identifying privilege boundaries, and climbing up the admin ladder without ever cracking a single password.
+
+\textbf{Hash Reuse and Real-World Privilege Escalation}
+
+The real beauty of Pass-the-Hash isn’t in how you start. It’s in how you \textbf{scale}. Networks aren't built to prevent lateral movement—they're built for functionality, for convenience. And that means hash reuse is everywhere. Once you understand how admins work—how helpdesk accounts touch 200 boxes a day, how sysadmins RDP from one DC to another—you realize something: their credentials are sprayed across the whole damn network.
+
+So what do you do with a regular user's hash? You test access. Use it to scan for SMB shares. Try it on RDP. Use Impacket’s smbclient.py or psexec.py to reach out to a few machines. Nine times out of ten, they won’t get you much. But if that same hash works on five other workstations, now you’ve got five more LSASS dumps coming your way. Five new attack surfaces. Five new chances at catching a higher-privilege token.
+
+Eventually, you hit a jackpot. Maybe a local admin account is reused across a department. That’s your pivot. You move laterally to every machine using that account. It doesn’t matter if it's disabled for logon or if the password is 20 characters of randomized nonsense. You don’t need to log in with it—you just need to pass the hash.
+
+And here’s where defenders screw up: they assume that just because an account has a strong password policy, it's secure. Wrong. PtH doesn't care how complex your password is if the hash has already been cached on a box. A 64-character passphrase and a 10-character default are \textbf{equally exploitable} once the hash is in memory. Complexity doesn’t stop lateral movement. Isolation does.
+
+Eventually, you’re in the server segment. Maybe you compromise a box running backup software. Maybe it's a jump host. Maybe it's just a dusty file server that happens to have Domain Admin credentials stored in memory. Once you’ve got \textbf{a DA hash}, the game changes. You can touch every system in the domain. Not because you guessed the right password—but because you have the right \textbf{token}.
+
+You don’t need to move fast. You move smart. Use secretsdump.py to extract credentials from the DC. Use dcsync with Mimikatz and replicate every user hash in the domain. You now have \textbf{every} password hash in the network. You don’t need to guess. You don’t need to ask. You own the authentication process itself.
+
+And here’s what’s wild—PtH attacks don’t trigger alerts in most environments. Because the system sees a valid NTLM challenge response. There’s no brute-force. No failed logons. Just successful authentication using credentials that, as far as Active Directory knows, are legitimate. That’s the whole scam. You’re not breaking rules. You’re using the rules \textbf{exactly as designed}.
+
+You’ve got domain-level access now, but a smart attacker doesn’t stop at domination - they build \textbf{persistence}, abuse trust relationships in AD, and embed themselves so deeply that even reimaging systems won’t fully shake them. This is where \textbf{Pass-the-Hash turns into full-spectrum control.}
+
+\textbf{From Persistence to Full Domain Control}
+
+Once you hold a Domain Admin hash, you're not an intruder anymore—you’re effectively IT. You can do anything: read group policy, push your own, reset passwords, create accounts, replicate data. But smart operators don’t scream. They whisper. You’re not here to lock accounts or deface the intranet. You’re here to build \textbf{invisible ownership}.
+
+First move: extract every hash in the domain using secretsdump.py or a dcsync call via Mimikatz. With the right privileges, you don’t need to compromise every machine—just the \textbf{domain controller}. DCSync gives you the NTLM hashes of every user, including krbtgt—the Kerberos \textit{Ticket Granting Ticket (TGT)} key. That key is your skeleton key. With it, you can forge golden tickets that give you \textbf{indefinite, unkillable access}.
+
+Think about that. You're not using stolen sessions. You're \textbf{minting your own}—admin-level Kerberos tickets that look real, last forever, and don’t require touching the victim’s credentials again. Golden tickets are the ultimate abuse of trust in AD, and Pass-the-Hash is what got you there. No cracking. No phishing. Just native protocol abuse and reused credential material.
+
+But you're not stopping there. Next step? Backdoors that don’t get noticed. You create new users—maybe a low-privilege account with a clever name: “svc\_netmon” or “audit\_reader”—something that won’t raise flags in a crowded directory. Then you give it \textbf{delegated rights}. Add it to Domain Admins temporarily, do your damage, then remove it from the group. The audit trail looks clean to anyone who isn’t watching closely.
+
+You can also \textbf{implant hashes directly}. Using Mimikatz's pass-the-hash features, or tools like pth-winexe, you can initiate connections and impersonate accounts without ever storing a credential. That means you’re not dropping artifacts on disk. You’re not adding persistent binaries. You’re just living in memory and using the environment against itself.
+
+Smart attackers automate this. They build scripts to crawl the environment, test every hash against every host, and map out the privilege boundaries silently. They don't guess. They \textbf{query Active Directory}—because once you’re authenticated, AD will happily tell you who has access to what. You’re using legitimate tools. Legitimate access. That’s what makes this dangerous. Most SOCs won’t even know where to look.
+
+And if the blue team resets passwords? Doesn’t matter if you already pulled the krbtgt hash. You can mint golden tickets for \textbf{years} unless they reset that account twice, properly, and lock it down afterward. That one credential—the domain's crown jewel—lets you generate administrative access at will. It’s not a backdoor. It’s a master key.
+
+At this point, you’re not just inside the network. You’re beneath it. You’re in the bloodstream. And unless someone pulls the whole system apart, root and stem, you're not going anywhere.
+
+\subsubsection{\textbf{   Tools}}
+
+\begin{itemize}
+    \item Mimikatz
+
+    \item Impacket (psexec.py, wmiexec.py)
+
+    \item CrackMapExec
+
+\end{itemize}
+
+\subsubsection{\textbf{  Attack Code}}
+
+psexec.py -hashes :aad3b435b51404eeaad3b435b51404ee:cc36cf7a8514893efccd332446158b1a Administrator@192.168.1.5
+
+\subsubsection{\textbf{  Defense}}
+
+\textbf{Pass-the-Hash: What It Looks Like When You Lose to Trust}
+
+\textbf{The Attack That Shouldn’t Work - But Still Does}
+
+Let’s start with the uncomfortable truth: Pass-the-Hash attacks are still winning because most networks are built to trust too much. PtH is not some novel zero-day. It’s not exotic. It’s been around since the early 2000s—and it’s still here because the architecture it abuses hasn’t fundamentally changed. If your systems store reusable authentication material in memory, and if that material can be passed without cracking, attackers will exploit it. End of story.
+
+You can install an EDR, run weekly vulnerability scans, mandate complex passwords—and none of that will stop PtH. Because PtH doesn’t break your passwords. It doesn’t break your encryption. It doesn’t trigger alarms unless you’re watching for the exact right behavior. It walks through the front door with credentials your system believes are real. And the terrifying part? From the system’s point of view, they \textbf{are} real.
+
+That’s the first defensive failure: treating credentials as secrets instead of \textbf{keys}. Secrets are meant to be hidden. Keys are meant to be presented and accepted. In Windows authentication, the NTLM hash acts as both. Once an attacker steals it—even if they never see the actual password—they own the ability to impersonate that user anywhere NTLM authentication is allowed. And in most orgs, that’s everywhere.
+
+It doesn’t matter how complex the original password is. The hash is deterministic. Same password, same hash. You can’t change that. And once a user logs into a machine, their hash sits in memory—especially if they have admin rights. LSASS will hold it. Mimikatz or any number of modern forks will pull it. You can put all the antivirus in the world on that box. If it doesn't prevent LSASS dumping, you lose.
+
+Worse, defenders are still thinking in silos. They monitor perimeter threats, phishing emails, malware payloads—but they don’t monitor \textbf{token abuse}, \textbf{lateral authentication}, or \textbf{reused hashes moving from host to host}. They miss the PtH attack because it doesn’t come wrapped in a flashy exploit. It doesn’t upload files. It doesn’t beacon out. It uses built-in tools to move silently inside the network.
+
+That’s what makes it deadly. It’s invisible to tools that only look for malware. PtH is malware-agnostic. It's protocol abuse. It's architectural betrayal. And unless you're watching authentication logs like a hawk—and correlating login behavior across systems—you won’t catch it. By the time you realize someone’s moving laterally, it’s already too late.
+
+So if you’re serious about defending against PtH, you have to shift your mindset. You’re not defending against "hackers." You’re defending against \textbf{your own system’s default behavior} being used against you. Your own trust model is the attack surface. And the only way you fight that is by changing what you trust, how you store it, and where it’s allowed to go.
+
+\textbf{Why Complex Passwords Won’t Save You}
+
+Ask most security teams how they’re defending against credential theft, and you’ll hear the same broken response: “We enforce strong passwords.” Minimum length. Special characters. Regular resets. The usual checklist theater. And while password strength is important for resisting online brute-force attacks, it does \textbf{nothing} to stop Pass-the-Hash. Why? Because once that hash is in memory, it's a reusable \textbf{access token}, not a secret.
+
+Let’s be crystal clear: Pass-the-Hash doesn't guess the password. It doesn't care what the password is. It doesn't need to know it. All it needs is the \textbf{hash}, and that hash is generated \textbf{predictably and identically} every time the user logs in with the same password. So even if a password is 30 characters long and randomly generated, the resulting NTLM hash is still a static value. If that hash gets pulled from LSASS, it can be used over and over again.
+
+This is where defenders start falling behind. They focus on complexity when they should be focused on \textbf{hash exposure}. The problem isn’t that your passwords are guessable. The problem is that they’re \textbf{sitting in memory}, on every machine a user logs into, waiting to be stolen by anyone with local admin rights. This is privilege escalation by design, not accident.
+
+And guess what? Those long, complex passwords you’re forcing users to memorize? They’re encouraging \textbf{password reuse}. That sysadmin who has to jump between 200 servers a week? He’s going to reuse the same password across every endpoint. Which means that same NTLM hash is sitting in memory across hundreds of systems. Compromise one, and an attacker now owns them all. That’s not a password policy win. That’s a lateral movement pipeline.
+
+Here’s what defenders get wrong: they assume strong passwords equal strong identity. They think difficulty to guess equals difficulty to abuse. But in the world of token replay attacks like PtH, the attack doesn’t care how hard it was to \textbf{create} the hash. It only cares that the hash is \textbf{valid}. And as long as the system accepts it, the attacker walks right through.
+
+If you want to defend against PtH, you have to \textbf{kill the idea of static secrets} living in memory. Start by reducing where hashes are stored. Don’t let privileged accounts log in to workstations. Don’t let regular users have local admin rights. Don’t cache credentials unless absolutely necessary. Don’t allow shared accounts. Every one of those behaviors multiplies hash exposure—and gives attackers more chances to steal and replay tokens.
+
+You also need to start inspecting authentication logs for patterns that passwords alone won’t protect you from. Look for lateral authentication from unexpected sources. Look for service accounts authenticating from workstations. Look for interactive logons using hashes instead of Kerberos tickets. These are the fingerprints of token abuse—and no password complexity policy in the world will stop them.
+
+Password strength is not protection against memory scraping, token replay, or native protocol abuse. It might slow down an attacker who’s guessing from the outside—but once they’re inside, all it does is give you a false sense of security.
+
+\textbf{Why EDRs Often Miss PtH}
+
+If you’ve got EDR in your environment, good. But don’t get cocky. PtH attacks aren’t just surviving modern detection—they’re slipping under it, because they aren’t doing anything most tools were trained to stop. And that’s the flaw: too many defenders rely on EDRs to catch everything, without understanding what those tools actually see—and what they \textbf{don’t}.
+
+EDRs are great at catching \textbf{payloads}. They detect malware. They log behavioral anomalies. They catch PowerShell abuse, fileless attacks, rogue binaries, and persistence implants. But PtH doesn’t need any of that. It doesn’t download malware. It doesn’t spawn unusual processes. It doesn’t write to disk. It uses \textbf{native Windows authentication protocols}—SMB, WinRM, WMI—and logs in with credentials your system thinks are valid.
+
+That’s the core reason most EDRs miss it. There’s no binary. No shellcode. No exploit. Just an authentication request that looks exactly like a normal user trying to access another host. The attacker might be using psexec, smbexec, wmiexec, or Impacket tools to trigger the connection—but as long as the hash is valid, the system allows the handshake. The EDR sees an authenticated session and doesn’t blink.
+
+Even more problematic: most EDRs don’t correlate behavior \textbf{across systems}. So if an attacker uses a captured hash on one box to access five others in sequence, and dumps LSASS on each one using native tools or memory-safe methods, the alerts don’t connect. You might get an LSASS dump flag. Maybe. But you won’t see the \textbf{lateral movement pattern} unless you're correlating it manually or using a SIEM with serious cross-host visibility.
+
+Some attackers bypass detection completely by \textbf{injecting hashes directly into memory} instead of calling psexec or dropping tools. Mimikatz allows this. You can take a captured hash, load it into the current session, and use that session to interact with remote systems. It’s not a new process. It’s not a new user. It’s the same session—but now it’s authenticated as someone else. Good luck detecting that without deep behavioral baselining.
+
+Here’s the uncomfortable part: most blue teams treat EDR alerts as gospel. If it didn’t trigger an alert, they assume the system’s clean. That mindset is poison. EDR isn’t a guarantee—it’s a camera pointed at the road. If the attacker drives on the shoulder, the camera doesn’t catch them. And PtH is all about the shoulder. It operates in the shadows, just outside the detection box.
+
+Want to detect PtH? Don’t wait for flashy alerts. Watch for \textbf{subtle behavior drift}. SMB sessions from unexpected sources. Logon types that don’t match expected patterns. Accounts authenticating to machines they don’t normally touch. Interactive logons using NTLM instead of Kerberos. These are the signals. But most EDRs aren’t tuned for them. You have to \textbf{ask the right questions}, or you’ll miss everything.
+
+EDRs are part of the equation, but they aren’t a silver bullet. You don’t stop Pass-the-Hash with antivirus logic. You stop it by \textbf{understanding how authentication works}, where tokens are stored, and how attackers abuse those mechanics without breaking anything. That’s the kind of visibility no boxed product gives you out of the gate.
+
+\subsection{\textbf{Glossary}}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{A} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Assume Breach}
+
+"Assume breach" is a security principle and a mindset that dictates that a security system should be designed and operated under the assumption that a breach has already occurred or will inevitably occur. It emphasizes proactive measures to detect, respond to, and mitigate the impact of breaches rather than solely focusing on preventing them. This approach is a core component of Zero Trust Architecture, which aims to minimize the impact of potential breaches by limiting access and trust within the network.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{B} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Backdoor}
+
+A backdoor is a secret method of bypassing normal authentication or security measures to gain access to a computer system, network, or application. It's like a hidden entrance that allows attackers to bypass security controls and maintain persistent access.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{C} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Canary Tokens}
+
+Canary tokens are digital tripwires used in cybersecurity to detect unauthorized access to sensitive data or systems. They are essentially decoy files, URLs, or API keys strategically placed within a network or application, designed to trigger an alert when accessed by an attacker or malicious actor. This early warning system helps defenders identify potential breaches and respond quickly.
+
+\textbf{Credential Hygiene}
+
+Credential hygiene refers to the practices and processes involved in managing and protecting authentication credentials like passwords, tokens, and keys. It's crucial for maintaining security across various systems and applications, particularly in CI/CD pipelines and SaaS environments. Effective credential hygiene minimizes the risk of unauthorized access, data breaches, and other security incidents.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{D} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{E} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{External Trust}
+
+An external trust in Active Directory is a trust relationship established between two domains in different forests. It allows users in one domain to access resources in the other domain, even though the domains are not part of the same forest. This type of trust is often used when there is a need for resource sharing between organizations with separate Active Directory environments.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{F} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Forest Trust}
+
+Forest trusts in Active Directory are a type of trust relationship established between the root domains of two separate Active Directory forests. They allow users and resources in one forest to be accessed by users in the other forest, effectively creating a bridge between the two separate domains.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{G} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{H} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{HONEYTOKENS}
+
+Honeytokens are decoy elements, like fake data or credentials, strategically placed within a system to detect unauthorized access and malicious activity. They act as tripwires, triggering alerts when accessed by attackers, thus revealing their presence and methods. Unlike honeypots, which are entire systems, honeytokens are small, discrete components designed to be part of real systems.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{I} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Interdomain}
+
+Interdomain refers to something existing or occurring between two or more domains. In networking, it specifically relates to routing traffic between different autonomous systems (AS). It can also refer to courses that integrate knowledge from two different domains.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{J} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{K} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{L} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Local Security Authority (LSA)}
+
+The Local Security Authority (LSA) is a security subsystem within the Windows operating system that manages and enforces local security policies. It's responsible for crucial tasks like authenticating users during sign-in, verifying passwords, and handling access tokens. Essentially, the LSA acts as a gatekeeper, controlling access to resources and ensuring only authorized users and processes can interact with the system. 
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{M} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{N} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{NTDS.dit File}
+
+NTDS.dit, short for New Technology Directory Services Directory Information Tree, is the central database for Microsoft Active Directory Domain Services (AD DS). It's a critical component that stores all the information about objects within an Active Directory domain, including users, groups, computers, and their associated attributes, including password hashes. This file essentially powers authentication and authorization across an organization's network, processing requests, storing password information securely, and managing group policy settings.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{O} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{P} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Protocol Stack}
+
+A protocol stack, also known as a network stack, is a hierarchical set of communication protocols organized into layers. Each layer performs a specific function and relies on the services of the layer below it, while providing services to the layer above. This layered approach simplifies the design, implementation, and troubleshooting of complex network communication systems.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{Q} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{R} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{S} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Service Principal Name (SPN)}
+
+A Service Principal Name (SPN) is a unique identifier for a service instance, used in Active Directory for Kerberos authentication. It links a service to a specific service account, enabling clients to locate and authenticate the service. SPNs are crucial for services like SQL Server, IIS, and others that use Kerberos for secure communication.
+
+\textbf{Signature Validation}
+
+Kerberos signature validation is a crucial security mechanism within the Kerberos authentication protocol, ensuring the integrity and authenticity of messages and tickets exchanged during authentication and authorization processes. It involves verifying digital signatures on various Kerberos components, primarily the Privileged Attribute Certificate (PAC), to prevent malicious tampering and unauthorized privilege escalation.
+
+\textbf{Shadow Domain Admin}
+
+A shadow domain admin refers to a user account that possesses administrator-level privileges within a domain, but is not officially part of the designated domain administrator group. These accounts often go unnoticed by security teams because they don't appear in standard administrative listings, making them a potential security risk.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{T} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Total Domain Persistence}
+
+Total domain persistence refers to an attacker's ability to maintain long-term, uninterrupted control over a compromised network or domain, even in the face of detection and attempts to remove them.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{U} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{User and Entity Behavior Analytics (UEBA)}
+
+User and Entity Behavior Analytics (UEBA) is a cybersecurity solution that uses machine learning and data analytics to detect suspicious activities by analyzing the behavior of users and other entities within an organization's network. By establishing baseline behaviors, UEBA identifies anomalies that may indicate security threats, such as insider threats or compromised accounts.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{V} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{W} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{X} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{Y} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{Z} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+ 

@@ -1,0 +1,534 @@
+%%%%%%%%%%%%%%%%%%%%% chapter.tex %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% sample chapter
+%
+% Use this file as a template for your own input.
+%
+%%%%%%%%%%%%%%%%%%%%%%%% Springer-Verlag %%%%%%%%%%%%%%%%%%%%%%%%%%
+%\motto{Use the template \emph{chapter.tex} to style the various elements of your chapter content.}
+\chapter{Introduction to Ethical Hacking}
+\label{intro} % Always give a unique label
+% use \chaptermark{}
+% to alter or adjust the chapter heading in the running head
+
+\begin{abstract}
+Hacking refers to the act of exploiting vulnerabilities in computer networks and information security systems, devices, or applications to gain unauthorized access or control. In malicious contexts, these activities are carried out for personal gain, disruption, or other harmful purposes. Ethical hacking, by contrast, applies the same skills, tools, and methodologies in a lawful and authorized manner to identify and remediate weaknesses before they can be exploited by threat actors.
+\end{abstract}
+
+\section{Hackers, Crackers, and Attackers}
+In our modern, interconnected digitized world, cybersecurity has become a critical concern for organizations, governments, intelligence agencies, to mid-sized businesses alike. Businesses rely on the Internet for a vast range of activities, including e-commerce, marketing, remote collaboration, and database access; however, the same digital connectivity introduces risks to the confidentiality, integrity, and availability of data and systems. Addressing these risks requires proactive security assessments, one of which is ethical hacking.
+
+Ethical hackers-sometimes called "white hat" hackers, blue teamers, or penetration testers-operate under defined Rules of Engagement (ROE), ensuring their work strengthens security rather than undermines it. This is in stark contrast to malicious "black hat" hackers, crackers, and attackers, whose intent is to cause harm, and "gray hat" hackers, who operate in a legal or ethical "gray" area.
+
+Hacking activities can be broadly classified into three categories:
+
+\begin{itemize}
+    \item \textbf{White Hat:} Authorized security professionals who identify and fix vulnerabilities.
+    \item \textbf{Black Hat:} Malicious attackers seeking unauthorized access for personal or financial gain.
+    \item \textbf{Gray Hat:} Individuals who may exploit vulnerabilities without malicious intent but also without permission or explicit authorization, still risking legal consequences.
+\end{itemize}
+
+Ethical hacking typically follows structured penetration testing methodologies, moving through phases such as reconnaissance, network scanning, exploitation, privilege escalation, lateral movement, post-exploitation, and exit strategies. By simulating real-world cyberattacks, these tests provide actionable and meaningful insights into an organization's security posture, enabling targeted remediation efforts.
+
+\section{The Role of Ethical Hacking in Modern Cybersecurity}
+As the frequency and sophistication of cyberattacks increase, so does the demand for highly skilled information security professionals with expertise in network penetration testing and ethical hacking. While many courses claim to teach these skills, only a few deliver practical, real-world readiness. One example is SANS SEC560: \textit{Network Penetration Testing and Ethical Hacking,} which prepares participants to conduct professional penetration testing engagements from start to finish. The training emphasizes proper planning, scoping, and reconnaissance, followed by deep dives into network scanning, exploitation, password attacks, and assessments of wireless networks and web applications. Learners conclude with a hands-on \textit{Capture the Flag (CTF)} exercise simulating a full penetration test against a sample organization-reinforcing technical skills, methodology, and operational discipline.
+
+Ethical hacking fits naturally into the broader security lifecycle as a specialized form of security assessment. From a technical perspective, it provides a snapshot of an organization's current security posture. Like other audits or assessments, an ethical hack is a sample-based evaluation-passing it does not guarantee the absence of security issues. The final deliverable is a comprehensive report detailing identified vulnerabilities, along with a statement of whether a skilled attacker, operating within a defined timeframe, scope, and sometimes under a Non-Disclosure Agreement (NDA), could compromise systems or access sensitive information.
+
+The growing reliance on the Internet by both private organizations and government entities amplifies the importance of proactive security measures. Today, systems are used for critical functions such as e-commerce, marketing, online banking, and distributed database management. This reliance increases the potential impact of data breaches, which could expose highly sensitive information such as credit card numbers, personal addresses, telephone numbers, and bank account credentials.
+
+Historically, computer access was limited to authorized personnel; however, unauthorized users-whether driven by curiosity, ego, or financial incentive-have consistently challenged access controls. They may bypass authentication, steal passwords, or exploit system vulnerabilities to gain elevated privileges. While malicious actors (black hats) aim to disrupt, steal, or profit, ethical hackers (white hats) employ similar techniques to strengthen defenses, often exposing flaws before they can be exploited in the wild.
+
+\section{From Early Intrusions to Modern Ethical Hacking}
+In the early days of computing, most intrusions were relatively benign-often the result of curiosity rather than malice; however, as networked systems became more common and valuable, these intrusions evolved into serious security threats. Less skilled or careless intruders sometimes caused accidental damage, corrupting or deleting files and forcing system administrators to restore systems from backups. In other cases, when denied access, attackers responded with intentional acts of sabotage aimed at harming organizations.
+
+As destructive intrusions became more frequent, they began to draw public attention, gaining coverage in mainstream media. Rather than using terms such as "computer criminal," journalists popularized the label "hacker," describing individuals who broke into others' systems for motives ranging from fun to revenge to financial gain. Initially, "hacker" was considered a compliment-a term for someone highly skilled in programming and systems knowledge. To differentiate malicious actors from technically adept problem-silvers, the cybersecurity community introduced new terms such as \textit{"cracker,"} or \textit{"intruder"} for those using their skills for harmful purposes.
+
+\subsection{Emergence of Ethical Hackers and Red Teams}
+Organizations soon recognized that the best way to defend against intrusions was to think like an attacker. They began employing trained professionals to attempt authorized breaches of their own systems, identifying weaknesses before malicious actors could exploit them. These teams, known as \textit{ethical hackers} or \textit{Red Teams}, use the same tools, techniques, and processes as adversaries-but with the clear intent to improve security. Their role is to uncover vulnerabilities, document findings, and ensure sensitive information remains confidential.
+
+The key distinction lies in \textbf{intent:} while malicious attackers seek exploitation, hackers aim to protect; however, if an ethical hacker were ever to abandon their code of conduct, their insider knowledge could make them a formidable threat.
+
+\section{Case Study; The Multics Security Evaluation}
+An early, notable example of organized ethical hacking was conducted by the United States Air Force (USAF), which carried out a structured "security evaluation" of the \textbf{Multics} operating system for use in a two-level (Secret / Top Secret) environment. The evaluation revealed that, while Multics was significantly more secure than its contemporaries, it still had exploitable weaknesses in hardware, software, and operational procedures.
+
+Multics (Multiplexed Information and Computing Service) was a pioneering time-sharing operating system jointly developed in the 1960s by MIT, Bell Labs, and General Electric (GE), later maintained by Honeywell. It was one of the earliest systems designed with security as a core architectural goal, featuring mechanisms such as hierarchical file storage, fine-grained access controls, and ring-based privilege separation. These design choices were revolutionary for the time, intended to support multiple users concurrently while protecting sensitive data. 
+
+Despite its reputation for robust security, Multics was never assumed to be impenetrable. The USAF contracted a formal penetration test to verify whether the system could adequately safeguard classified information at the \textbf{Secret} and \textbf{Top Secret} levels.
+
+\subsection{Scope of the Evaluation}
+The USAF tasked a specialized Red Team of security professionals-many of whom were early computer security researchers-to assess a Multics configuration deployed in a classified environment. The evaluation was both \textbf{technical} and procedural, aiming to uncover weaknesses in:
+\begin{enumerate}
+    \item \textbf{Hardware Security:} Processor-level protections, memory segmentation, and ring-based privilege enforcement.
+    \item \textbf{Software Security:} Kernel protections, Access Control Lists (ACLs), and privilege separation in the operating system.
+    \item \textbf{Procedural Security:} Operational procedures, user account management, and administrative workflows.
+\end{enumerate}
+
+The goal was not only to identify vulnerabilities but also to determine whether realistic adversaries with defined capabilities could compromise the confidentiality or integrity of classified information stored on the system.
+
+\subsection{Testing Methodology}
+The evaluation applied early forms of penetration testing-long before the term was widely used-following a process very similar to modern Red Team operations:
+\begin{enumerate}
+    \item \textbf{Reconnaissance:} Gathering system documentation, user account structures, and operational procedures.
+    \item \textbf{Exploitation:} Attempting to bypass access controls, escalate privileges, and access protected data.
+    \item \textbf{Persistence Testing:} Determining if access could be maintained without detection.
+\end{enumerate}
+
+The testers exploited weaknesses that today ,might be considered both design flaws and misconfigurations, including:
+\begin{itemize}
+    \item Incomplete enforcement of ring-based privilege separation.
+    \item Weaknesses in input validation routines that allowed unauthorized execution pathways.
+    \item Overly permissive ACL configurations left in place for user convenience.
+    \item Insufficient logging to detect certain types of low-level probing.
+\end{itemize}
+
+\subsection{Findings and Revelations}
+While Multics outperformed most contemporary systems in terms of security, the evaluation uncovered multiple vulnerabilities.
+\begin{itemize}
+    \item Certain hardware-level protections could be bypassed through carefully crafted machine code sequences.
+    \item Kernel bugs allowed for privilege escalation from a standard user account to full administrative control (ring 0).
+    \item Operational practices sometimes undermined the technical security model-for example, shared administrative accounts and unsecured console sessions.
+\end{itemize}
+
+The report concluded that Multics could not fully guarantee protection of Top Secret information without significant enhancements, but that it was still significantly more secure than its peers.
+
+\subsection{Impact on Ethical Hacking Practices}
+The Multics evaluation was one of the first documented, government-sanctioned penetration tests, setting precedents that shaped future ethical hacking methodologies.
+\begin{itemize}
+    \item The need to test hardware, software, and human procedures together.
+    \item The importance of adversarial simulation rather than purely checklist-based audits.
+    \item The value of having independent Red Teams with no operational stake in the system's successes or failures.
+\end{itemize}
+
+These principles still form the backbone of modern ethical hacking security engagements and Red Teaming, especially in high-assurance environments such as defense, finance, and critical infrastructure.
+
+\subsubsection{Multics Weaknesses in Modern Terms}
+
+\begin{table}
+    \centering
+    \begin{tabular}{ccc}
+         Historical Finding&  Modern Vulnerability Category& Example in Today's Context (2025)\\
+         Hardware-level protections bypassed via crafted machine code&  Privilege Escalation (Hardware / Firmware Exploit)& Exploiting CPU microcode or speculative execution flaws (e.g., Meltdown, Spectre) to bypass isolation.\\
+         Kernel bugs allowed elevation from normal user to system admin (ring 0)&  Local Privilege Escalation (Kernel Vulnerability)& Exploiting a Windows kernel driver vulnerability to gain SYSTEM privileges.\\
+         Overly permissive Access Control Lists (ACLs)&  Misconfiguration / Excessive Privileges& Cloud IAM role granting unintentional admin rights; NTFS folder with "Everyone Full Control"\\
+         Weak input validation allowing unauthorized execution&  Injection / Access Control Bypass& Command injection or path traversal attack in a modern web app or API\\
+         Lack of comprehensive logging for low-level activities&  Insufficeint Logging and Monitoring& Missing security event logs in SIEM; inability to detect lateral movement in near-real-time.\\
+         Shared administrative accounts&  Poor Identity \& Access Management Practices	& Single admin account reused by multiple staff, reducing accountability and traceability.\\
+    \end{tabular}
+    \caption{Caption}
+    \label{tab:placeholder}
+\end{table}
+
+\subsubsection{Why This Matters for Modern Ethical Hacking:}
+
+Today, when ethical hackers assess a system, they still look for the same types of weaknesses—just in modern architectures. Privilege escalation, misconfigurations, insufficient logging, and improper identity management are still top-tier risks, whether in an operating system from the 1970s or a cloud platform in 2025.
+
+
+
+
+
+
+
+
+
+
+During testing, ethical hackers performed a variety of penetration tests-including reconnaissance, information gathering, and controlled exploitation-to identify threats that could compromise system integrity. This structured approach set the stage for modern penetration testing methodologies and underscored the importance of proactively assessing system defenses.
+
+II. ABOUT HACKING  
+Hacking is a brainchild of curiosity. As a result of 
+curiosity, the hacker always wants to know more about 
+information, depending upon his taste. A hacker is a person 
+who enjoys learning the details of computer systems and 
+enhances his capabilities. He is a computer enthusiast and 
+extremely proficient in programming languages, computer 
+systems and networks. Popularly, hackers are referred to 
+someone who penetrates into computer network security 
+systems. It is the hackers who built Internet and make www 
+to work. The operating system UNIX is a gift from hackers 
+too. Originally, the term hacking was defined as-“ A person 
+who enjoys learning the details of computer systems and 
+how to stretch their capabilities-as opposed to most users of 
+computers, who prefer to learn only the minimum amount 
+necessary. One who programs enthusiastically or who 
+enjoys programming rather than just theorizing about 
+programming”.  
+They does not break into systems without authorization 
+rather they are the experts who safeguard the networks of 
+an organization. They attack the organizations’ systems to 
+identify any loopholes, if any, in the security, all while 
+staying within the legal limits. Ethical hacking[5] is also 
+known as “Penetration Hacking” or “Intrusion Testing” or 
+“Red Teaming”. Malicious hacking[2] is the unauthorized 
+use of computer and network resources. Malicious hackers 
+use software programs such as Trojans, malware and 
+spyware, to gain entry into an organization’s network for 
+stealing vital information. It may result to identity theft, 
+loss of confidential data, loss of productivity, use of 
+network resources such as bandwidth abuse and mail 
+flooding, unauthorized transactions using credit or debit 
+card numbers, selling of user’s personal details such as 
+phone numbers, addresses, account numbers etc. In general 
+public view, they are the “Criminals of the Cyber World”, 
+who has a malicious desire to destroy and harm someone 
+others’ network and data. Malicious Hackers are also 
+known as “Crackers”. Hackers, be the ethical or malicious, 
+have in depth knowledge of their skills but the only 
+difference that makes them diverse is the intension.  
+Ethical hackers are very patient. They only demand 
+time and persistence to intrude into the system and find the 
+loopholes in the security. This vital trait of patience can 
+also be seen in malicious hacker as he too would keep the 
+patience and would monitor the target system for weeks or 
+may be for months, and would wait for an opportunity to 
+attack the target. The difference is that an ethical hacker 
+would keep patience to test the target against any security 
+breech while the malicious hacker would keep patience so 
+as to gather information and find an opportunity that is 
+relevant to attack the target system. It may be observed that 
+all techniques and skills employs to both ethical and 
+malicious hackers. It is only the intension of the hackers 
+that makes them diverse. An ethical hacker would always 
+use these techniques and skills to find the weaknesses of 
+the target system and how to deal against any malicious 
+attacks, whereas the malicious hacker would always try to 
+use the techniques and skills to attack the target so as to 
+harm and destroy it for some personal interest like money. 
+It may be said that the ethical hackers’ job is tough as 
+compared to malicious one. This is because an ethical 
+hacker would have to identify and understand the changes 
+done in the network by the malicious hacker. 
+
+III. TYPES OF HACKING/HACKERS 
+The hacking can be classified in three different categories, according to the shades or colors of the “Hat”. The word Hat has its origin from old western movies where the color of Hero’s’ cap was “White” and the villains’ cap was “Black”. It may also be said that the lighter the color, the 
+less is the intension to harm. White Hat Hackers are authorized and paid person by the companies, with good intends and moral standing. They are also known as “IT Technicians”. Their job is to safeguard Internet, businesses, computer networks and systems from crackers. Some companies pay IT professionals to attempt to hack their own servers and computers to test their security. They do hacking for the benefit of the company. They break security to test their own security system. The white Hat Hacker is also called as an Ethical Hacker[6]. In contrast to White Hat Hackers, the intension of Black Hat Hackers is to harm the computer systems and network. They break the security and intrude into the network to harm and destroy data in order to make the network unusable. They deface the websites, steal the data, and breach the security. They crack the programs and passwords to gain entry in the unauthorized network or system. They do such things for their own personal interest like money. They are also 
+known as “Crackers” or Malicious Hackers.eak computer security to save the organization from intrusion attacks. They never reveal the facts and information about the organization. But at any moment of time, if there intensions get sidetracked; they would be the one who would harm the most. This method of recognizing any intrusions into the network and systems was also used by United States Air Force. They conducted a “security evaluation” of the Multics operating systems for a two-level (secret/top secret) system. Their evaluation found that while Multics was ignificantly better than other conventional systems, it also had loopholes in hardware, software and procedural security. .The hackers performed various penetration tests[4] such as information-gathering, to identify any threat that might damage its integrity.  
+
+II. ABOUT HACKING  
+Hacking is a brainchild of curiosity. As a result of curiosity, the hacker always wants to know more about information, depending upon his taste.  hacker is a person who enjoys learning the details of computer systems and enhances his capabilities. He is a computer enthusiast and extremely roficient in programming languages, computer systems and networks. Popularly, hackers are referred to someone who penetrates into computer network security systems. It is the hackers who built Internet and make www to work. The operating system UNIX is a gift from hackers too. Originally, the erm hacking was defined as-“ A person who enjoys learning the details of computer systems and how to stretch their capabilities-as opposed to most users of 
+computers, who prefer to learn only the minimum amount 
+necessary. One who programs enthusiastically or who 
+enjoys programming rather than just theorizing about 
+programming”.  
+They does not break into systems without authorization 
+rather they are the experts who safeguard the networks of 
+an organization. They attack the organizations’ systems to 
+identify any loopholes, if any, in the security, all while 
+staying within the legal limits. Ethical hacking[5] is also 
+known as “Penetration Hacking” or “Intrusion Testing” or 
+“Red Teaming”. Malicious hacking[2] is the unauthorized 
+use of computer and network resources. Malicious hackers 
+use software programs such as Trojans, malware and 
+spyware, to gain entry into an organization’s network for 
+stealing vital information. It may result to identity theft, 
+loss of confidential data, loss of productivity, use of 
+network resources such as bandwidth abuse and mail 
+flooding, unauthorized transactions using credit or debit 
+card numbers, selling of user’s personal details such as 
+phone numbers, addresses, account numbers etc. In general 
+public view, they are the “Criminals of the Cyber World”, 
+who has a malicious desire to destroy and harm someone 
+others’ network and data. Malicious Hackers are also 
+known as “Crackers”. Hackers, be the ethical or malicious, 
+have in depth knowledge of their skills but the only 
+difference that makes them diverse is the intension.  
+Ethical hackers are very patient. They only demand 
+time and persistence to intrude into the system and find the 
+loopholes in the security. This vital trait of patience can 
+also be seen in malicious hacker as he too would keep the 
+patience and would monitor the target system for weeks or 
+may be for months, and would wait for an opportunity to 
+attack the target. The difference is that an ethical hacker 
+would keep patience to test the target against any security 
+breech while the malicious hacker would keep patience so 
+as to gather information and find an opportunity that is 
+relevant to attack the target system. It may be observed that 
+all techniques and skills employs to both ethical and 
+malicious hackers. It is only the intension of the hackers 
+that makes them diverse. An ethical hacker would always 
+use these techniques and skills to find the weaknesses of 
+the target system and how to deal against any malicious 
+attacks, whereas the malicious hacker would always try to 
+use the techniques and skills to attack the target so as to 
+harm and destroy it for some personal interest like money. 
+It may be said that the ethical hackers’ job is tough as 
+compared to malicious one. This is because an ethical 
+hacker would have to identify and understand the changes 
+done in the network by the malicious hacker. 
+III. TYPES OF HACKING/HACKERS 
+The hacking can be classified in three different categories, 
+according to the shades or colors of the “Hat”. The word 
+Hat has its origin from old western movies where the color 
+of Hero’s’ cap was “White” and the villains’ cap was 
+“Black”. It may also be said that the lighter the color, the 
+less is the intension to harm. White Hat Hackers are 
+authorized and paid person by the companies, with good 
+intends and moral standing. They are also known as “IT 
+Technicians”. Their job is to safeguard Internet, businesses, 
+computer networks and systems from crackers. Some 
+companies pay IT professionals to attempt to hack their 
+own servers and computers to test their security. They do 
+hacking for the benefit of the company. They break security 
+to test their own security system. The white Hat Hacker is 
+also called as an Ethical Hacker[6]. In contrast to White 
+Hat Hackers, the intension of Black Hat Hackers is to harm 
+the computer systems and network. They break the security 
+and intrude into the network to harm and destroy data in 
+order to make the network unusable. They deface the 
+websites, steal the data, and breach the security. They crack 
+the programs and passwords to gain entry in the 
+unauthorized network or system. They do such things for 
+their own personal interest like money. They are also 
+known as “Crackers” or Malicious Hackers.
+
+ Other than white hats and black hats, another form of 
+hacking is a Grey Hat. As like in inheritance, some or all 
+properties of the base class/classes are inherited by the 
+derived class, similarly a grey hat hacker inherits the 
+properties of both Black Hat and White Hat. They are the 
+ones who have ethics. A Grey Hat Hacker gathers 
+information and enters into a computer system to breech 
+the security, for the purpose of notifying the administrator 
+that there are loopholes in the security and the system can 
+be hacked. Then they themselves may offer the remedy. 
+They are well aware of what is right and what is wrong but 
+sometimes act in a negative direction. A Gray Hat may 
+breach the organizations’ computer security, and may 
+exploit and deface it. But usually they make changes in the 
+existing programs that can be repaired. After sometime, it 
+is themselves who inform the administrator about the 
+company’s security loopholes. They hack or gain 
+unauthorized entry in the network just for fun and not with 
+an intension to harm the Organizations’ network. While 
+hacking a system, irrespective of ethical hacking (white hat 
+hacking) or malicious hacking (black hat hacking), the 
+hacker has to follow some steps to enter into a computer 
+system, which can be discussed as follows. 
+IV. HACKING PHASES 
+Hacking Can Be Done By Following These Five Phases. 
+ Phase 1: Reconnaissance Can Be Active Or Passive: In 
+Passive Reconnaissance[4] The Information is gathered 
+regarding the target without Knowledge of targeted 
+company (Or Individual). It could be done simply by 
+Searching Information Of The Target On Internet Or 
+Bribing An Employee Of Targeted Company Who Would 
+Reveal And Provide Useful Information To The Hacker. 
+This Process Is Also Called As “Information Gathering”. In 
+This Approach, Hacker Does Not Attack The System Or 
+Network Of The Company To Gather Information. 
+Whereas In Active Reconnaissance, The Hacker Enters Into 
+The Network To Discover Individual Hosts, Ip Addresses 
+And Network Services. This Process Is Also Called As 
+“Rattling The Doorknobs”. In This Method, There Is A 
+High Risk Of Being Caught As Compared To Passive 
+Reconnaissance. 
+Phase 2: Scanning: In Scanning Phase, The Information 
+Gathered In Phase 1 Is Used To Examine The Network. 
+Tools LikeDiallers, Port Scanners Etc. Are Being Used by 
+the Hacker to Examine the Network So As To Gain Entry 
+in the Company’s System And Network.  
+Phase 3: Owning The System: This Is The Real And 
+Actual Hacking Phase. The Hacker Uses The Information 
+Discovered In Earlier Two Phases To Attack And Enter 
+Into The Local Area Network(Lan, Either Wired Or 
+Wireless), Local Pc Access, Internet Or Offline. This Phase 
+Is Also Called As “Owning The System”. 
+Phase 4: Zombie System: Once the hacker has gained the 
+access in the system or network, he maintains that access 
+for future attacks (or additional attacks), by making 
+changes in the system in such a way that other hackers or 
+security personals cannot then enter and access the attacked 
+system. In such a situation, the owned system (mentioned 
+in Phase 3) is then referred to as “Zombie System”.  
+Fig. 2  Hacking Phases 
+Phase 5: Evidence Removal: In this phase, the hacker 
+removes and destroys all the evidences and traces of 
+hacking, such as log files or Intrusion Detection System 
+Alarms, so that he could not be caught and traced. This also 
+saves him from entering into any trial or legality. Now, 
+once the system is hacked by hacker, there are several 
+testing methods available called penetration testing to 
+discover the hackers and crackers. 
+V. TESTING STRATAGIES 
+• External testing strategy. External testing refers to attacks 
+on the organization's network perimeter using procedures 
+performed from outside the organization's systems, that is, 
+from the Internet or Extranet. This test may be performed 
+with non-or full disclosure of the environment in question. 
+The test typically begins with publicly accessible 
+information about the client, followed by network 
+enumeration, targeting the company's externally visible 
+servers or devices, such as the domain name server (DNS), 
+e-mail server, Web server or firewall. 
+•Internal testing strategy. Internal testing is performed from 
+within the organization's technology environment. This test 
+mimics an attack on the internal network by a disgruntled 
+employee or an authorized visitor having standard access 
+privileges. The focus is to understand what could happen if 
+the network perimeter were successfully penetrated or what 
+an authorized user could do to penetrate specific 
+information resources within the organization's network. 
+The techniques employed are similar in both types of 
+testing although the results can vary greatly. 
+•Blind testing strategy. A blind testing strategy aims at 
+simulating the actions and procedures of a real hacker. Just 
+like a real hacking attempt, the testing team is provided  with only limited or no information concerning the 
+organization, prior to conducting the test. The penetration 
+testing team uses publicly available information (such as 
+corporate Web site, domain name registry, Internet 
+discussion board, USENET and other places of 
+information) to gather information about the target and 
+conduct its penetration tests. Though blind testing can 
+provide a lot of information about the organization (so 
+called inside information) that may have been otherwise 
+unknown, for example, a blind penetration may uncover 
+such issues as additional Internet access points, directly 
+connected networks, publicly available 
+confidential/proprietary information, etc. But it is more 
+time consuming and expensive because of the effort 
+required by the testing team to research the target. 
+•Double blind testing strategy. A double-blind test is an 
+extension of the blind testing strategy. In this exercise, the 
+organization's IT and security staff are not notified or 
+informed beforehand and are "blind" to the planned testing 
+activities. Double-blind testing is an important component 
+of testing, as it can test the organization's security 
+monitoring and incident identification, escalation and 
+response procedures. As clear  from the objective of this 
+test, only a few people within the organization are made 
+aware of the testing. Normally it's only the project manager 
+who carefully watches the whole exercise to ensure that the 
+testing procedures and the organization's incident response 
+procedures can be terminated when the objectives of the 
+test have been achieved. 
+•Targeted testing strategy. Targeted testing or the lights
+turned-on approach as it is often referred to, involves both 
+the organization's IT team and the penetration testing team 
+to carry out the test. There is a clear understanding of the 
+testing activities and information concerning the target and 
+the network design. A targeted testing approach may be 
+more efficient and cost-effective when the objective of the 
+test is focused more on the technical setting, or on the 
+design of the network, than on the organization's incident 
+response and other operational procedures. Unlike blind 
+testing, a targeted test can be executed in less time and 
+effort, the only difference being that it may not provide as 
+complete a picture of an organization's security 
+vulnerabilities[7] and response capabilities. While there are 
+several available methodologies for you to choose from, 
+each penetration tester must have their own methodology 
+planned and ready for most effectiveness and to present to 
+the client. 
+Table 1 
+Comparative Study Of Penetration Testing W.R.T The 
+Perspectives 
+The chart is prepared based for the categories involved on 
+the data involved considering the presence as 1 and absence 
+as 0. Also the chart for the testing method as penetration 
+test involves for the category. The chart is shown in Fig.3 
+and Fig.4 
+Fig. 3 Categories as Total Outsider, Semi-Outsider and 
+Valid user 
+Fig. 4  Testing Methods involved with types hacking 
+According to the table described above, the valid user is a 
+hacker who has access to every piece of information and 
+data of the organization, using any testing methods as 
+compared to other two categories of total or outsider user. 
+Semi outsiders have access to data by all methods accept 
+the physical entry method. The total outsider is involved 
+less as compared to the other two as they cannot access 
+data using some methods like remote dial-up network, 
+Local network and physical entry. This study reveals that a 
+valid user is boon for organization till his intensions are 
+clear; otherwise he is the one who can harm the most as he 
+has the access to every information and data. The semi 
+outsider comes after the valid user. And the total outsider 
+user is of least concern.  
+Here are my top five strategies for network pen testing. 
+A. Test all the things 
+In many environments that I’ve worked in, the IT security 
+group is primarily concerned with their most sensitive data 
+stores when it comes to penetration tests. This can create 
+huge gaps in the vulnerability identification (and 
+remediation) process that could allow an attacker to easily 
+pivot to sensitive systems. Make sure you hit your sensitive  data stores, but pay close attention to the other hosts on 
+your domain that could be compromised and used to get to 
+sensitive data stores. 
+B. Networks, networks, networks 
+I see network layer protocol issues on almost every 
+network penetration test. From ARP spoofing (old) to 
+NBNS and LLMNR[7] spoofing (newer), network issues 
+typically play a huge role in a penetration test. Most of 
+these issues put an attacker in a man-in-the-middle position 
+that’s perfect for capturing credentials (unencrypted and 
+hashes) and relaying credentials. Additional network issues 
+that should be tested include VLAN hopping (tag spoofing) 
+and DTP spoofing. These issues can grant an attacker 
+access to sensitive VLANs and/or all of the traffic headed 
+to and from those VLANs. 
+C . Brute Force All the Seasons 
+If you’re testing internally, I can’t stress this enough. Do 
+routine audits (weekly, monthly, and/or quarterly) of weak 
+passwords. This can be as simple as doing a quick one 
+password check (Winter2014), to dumping and cracking 
+your domain hashes. If you’re going the dump and crack 
+method, make sure you are taking extra precautions to 
+protect those hashes during and after cracking. Any users 
+identified with a weak password should get a friendly 
+notification email, followed by a forced password reset, if 
+they don’t change it by the end of the day. If you want to 
+incentivize users, inform users of the plan to audit 
+passwords and have some small prize for users that are on 
+the good list. 
+Interested in building your own cracking system for 
+internal password auditing? Come see Eric Gruber and me 
+at our “GPU Cracking, On the Cheap” talk on Wednesday 
+(9:45 AM). 
+D. Automated Scanners – Trust, but Verify 
+You can typically trust (most) automated scanners, but they 
+can be filled with false positives. Even worse, they may 
+cause you to miss critical (entry point) vulnerabilities that 
+show up in the lower severities. Take memcached for 
+instance. The Nessus plugin[4] shows up as a medium, 
+however I’ve seen memcached store database and local 
+administrator credentials in cached data. This has resulted 
+in immediate local administrator access to systems. Do 
+your best to fully vet out listening services, even if there’s 
+no scan data indicating serious vulnerabilities. 
+E. Check Your Web Apps 
+We frequently use web applications as entry points during 
+internal penetration tests. For external testing, web apps are 
+an extremely common entry point. Even light testing on 
+internal apps can expose critical vulnerabilities, like 
+directory traversal and SQL injection. Making sure you test 
+your applications along with a network test will help cover 
+your bases. 
+CONCLUSION 
+Hacking[1] has both its benefits and risks. Hackers are very 
+diverse. They may bankrupt a company or may protect the 
+data, increasing the revenues for the company. The battle 
+between the ethical or white hat hackers and the malicious 
+or black hat hackers is a long war, which has no end. While 
+ethical hackers[5] help to understand the companies’ their 
+security needs, the malicious hackers intrudes illegally and 
+harm the network for their personal benefits.An Ethical[5] 
+and creative hacking is significant in network security, in 
+order to ensure that the company’s information is well 
+protected and secure. At the same time it allows the 
+company to identify, and in turn, to take remedial measures 
+to rectify the loopholes that exists in the security system, 
+which may allow a malicious hacker to breach their 
+security system. They help organizations to understand the 
+present hidden problems in their servers and corporate 
+network. The study also reveals that the valid users are the 
+ethical hackers, till their intensions are clear otherwise they 
+are a great threat, as they have the access to every piece of 
+information of the organization, as compare to total and 
+semi outsiders. 
+This also concludes that hacking is an important aspect of 
+computer world. It deals with both sides of being good and 
+bad. Ethical hacking[5]plays a vital role in maintaining and 
+saving a lot of secret information, whereas malicious 
+hacking can destroy everything. What all depends is the 
+intension of the hacker. It is almost impossible to fill a gap 
+between ethical and malicious hacking[5] as human mind 
+cannot be conquered, but security measures can be tighten. 

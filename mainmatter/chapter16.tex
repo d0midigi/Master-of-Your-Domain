@@ -1,0 +1,56 @@
+\chapter{Attacking Active Directory with DCSync}
+
+In this section, we will be focusing on abusing the Directory Replication Services within Active Directory. For clarity and brevity, we will first discuss the Directory Services Replication feature of Active Directory and then will have a comprehensive walkthrough both covering the theoretical and practical aspects of this abusive attack.
+
+Note: The DCSync attack is listed as an "Enterprise Credential Dumping" technique in the MITRE ATT\&CK Framework, bearing the ID of 1003.006.
+
+What is AD Replication?
+In most cases, it's a good idea to have multiple domain controllers per domain not only for redundancy reasons, but to control and manager AD Objects, such as attributes and permissions, in the environment. To keep these multiple domain controllers in sync with each other, Microsoft introduced the Directory Replication Service in Active Directory, which can be abused to obtain password hashes of vulnerable user accounts in the Active Directory Users and Computers container.
+Any Domain User with the following permissions set can request for replication of objects in the AD infrastructure, including the NTLM hashes of vulnerable users to eventually dump the NTDS.dit file from a DC:
+
+`CN: DS-Replication-Get-Changes (GUID: 1131f6ad-9c07-11d1-f79f-00c04fc2dcd2)`
+`CN: DS-Replication-Get-Changes-All (GUID: 1131f6ad-9c07-11d1-f79f-00c04fc2dcd2)`
+CN: DS-Replication-Get-Changes-In-Filtered-Set (GUID: 89e95b76-444d-4c62-991a-0facbeda640c)`
+
+By default, members of the Administrators, Domain Admins, Enterprise Admin groups and Computer Objects within the domain controller(s) all have AD Replication rights assigned.
+
+How the DCSync Attack Works
+The attacker first compromises a vulnerable users and establishes a toehold (e.g., foothold) on a vulnerable Windows machine in the network and discovers a domain controller in the specified domain name. Next, the attacker discovers that the compromised user bears replication rights. The attacker is able to request to the DC to replicate user credentials via the `GetNCChanges` command which leverages the Directory Replication Service Remote Protocol. The attacker then sends an `IDL\_DRSGetNCChanges` request to the target domain controller to replicate AD objects from the server NC (Naming  Context) Replica to the client NC Replica. The response from the server contains the set of updates that the attacker has just requested.
+<img src="https://miro.medium.com/v2/resize:fit:700/1*wXUXEbclnsJGtSnBn\_eniw.png"/>
+
+Practical Demonstration of a DCSync Attack
+Following the Assumed Breach methodology, we have access to a user's Windows machine within an Active Directory domain environment. Our next step is to do some enumeration tasks to see what privileges our vulnerable users has assigned. Enumerating group memberships reveals to use that our vulnerable users is simply a Domain User.
+<img src="https://miro.medium.com/v2/resize:fit:700/1*KLAn-ipJGqILCL86YPTvWQ.png"/>
+> WHOAMI /all
+
+Using the PowerView tool, we can check to see if our vulnerable user has permissions to replicate directory services by executing the following command within the PowerView terminal:
+
+`> Get-ObjectACL -Identity "DC=dcell,DC=local"`
+<img src="https://miro.medium.com/v2/resize:fit:700/1*9ME7fs1iVSTcTDXILaaR9g.png"/>
+
+Since our vulnerable users has Directory Services Replication privileges, we once again use Mimikatz to request and dump NTLM hashes from the domain controller by executing the below command:
+
+lsadump::dcsync /domain:DCELL.local /user:krbtgt
+<img src="https://miro.medium.com/v2/resize:fit:700/1*EX5cAjkodXwQCixZ5gB1iA.png"/>
+
+lsadump::DCSync /domain:DCELL.local /user:administrator
+<img src="https://miro.medium.com/v2/resize:fit:700/1*I3nSxXevfYeksnHlVXpX6A.png"/>
+
+Alternatively, this can also be done using the tool Impacket. Within this tool is a Python script labeled `secretsdump.py.`
+
+ python secretsdump.py
+dcell.local/dcell1:'Uer1123'@192.168.138.130
+<img src="https://miro.medium.com/v2/resize:fit:700/1*W10tn\_7Zb7L-8MQWi2eu9Q.png"/>
+
+If an attacker is able to obtain Domain Admin privileges, first say goodbye to your domain as you will probably be locked out of it, and all backdoors or secret admin pathways you created for emergency use only will most likely be sniffed out and modified as well. Using this following PowerShell script command, we can push the Directory Services Replication as such:
+> Add-ObjectACL -PrincipalIdentity Attacker -Rights DCSync
+
+Detecting a DCSync Attack
+It is important for defenders to monitor domain controllers frequently. Monitor for replication requests  by filtering for Event ID 4662. Also, keep a watchful eye for network protocols rarely used and for unknown IP addresses that are all of a sudden requesting AD Replication.
+<img src="https://miro.medium.com/v2/resize:fit:700/1*7jb6prtmpomKSADB-xfbaA.png"/>
+
+Defending Against a DCSync Attack
+- Ensure that strong and complex passwords are set and strong Password policies are enforced with all employee and staff members adhering to their established procedures.
+- Apply Access Control Lists (ACLs) for Replicating Directory Changes and other properties associated with AD Replication tasks.
+- Ensure that users or domain admin accounts are not stored within the local administrators group.
+

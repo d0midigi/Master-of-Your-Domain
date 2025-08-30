@@ -1,0 +1,74 @@
+\chapter{How to Mitigate Mimikatz WDigest Cleartext Credential Theft}
+
+Ethical hackers and malicious adversaries often focus on using the easiest attack vector to achieve objectives. One common attack vector that has been around for several years is to use a tool called Mimikatz and steal cleartext credentials from memory of compromised Windows systems.
+
+Systems Affected
+
+Windows 7 and Windows Server 2008 (legacy OS's are also vulnerable).
+Newer versions such as Windows 11 and Windows Server 2019 are not vulnerable by default, but can be reconfigured (via a quick Registry modification) to be vulnerable if an attacker has SYSTEM-level privileges.
+
+Impact
+An attacker that has administrative privileges can steal credentials from the memory of compromised systems. Credentials in memory are stored in cleartext and various hash formats.
+
+Description
+Starting with Windows XP, Microsoft added support for a protocol known as WDigest. The WDigest protocol is used for clients to send cleartext credentials to Hypertext Transfer Protocol (HTTP) and Simple Authentication Security Layer (SASL) applications based on RFC 2617 and 2831. Windows stores the password in memory for convenience of the user when they login to their local workstation.
+
+Lab Configuration
+In our lab environment, we have the following systems setup:
+`10.10.10.4` Windows Server 2008 R2
+`10.10.10.6` Windows 7
+
+Our domain controller is running Windows 2013 R2.
+
+To attack, we will be using the CrackMapExec tool to demonstrate how we can steal credentials from some test systems. This works by using PowerShell to execute Mimikatz first on both target systems. The stolen credentials are shown below:
+$$<img src="https://www.praetorian.com/wp-content/uploads/2024/06/5cdc3206a4217f2425167266_image00.png"/>$$
+
+Recommendations
+Microsoft released KB 2871997 to address this issue specifically and several other related issues. This patch includes making another Registry change that is necessary in preventing credentials from being stored in memory. For a single system, this can be done via the following PowerShell command:
+
+Please take note that some IIS servers may be configured to use WDigest authentication. We recommend testing this fix in a lab environment, of course, before rolling out to production.
+To verify the change was effective, we can use the following command and inspect the output:
+
+req query HKLMSYSTEMCurrentControlSetControlSecurityProvidersWDigest /v UseLogonCredential
+
+This should return the following result:
+
+HKEY\_LOCAL\_MACHINESYSTEMCurrentControlSetControlSecurityProvidersWDigest UseLogonCredential REG\_DWORD 0x0
+
+Most administrators prefer to use Group Policy to make a registry change and automatically roll out to affected systems since its a centralized approach. This can be done using the following steps as shown below:
+
+1. Open the Group Policy Management Console (GPMC). Right-click the Group Policy Object (GPO) that should contain the new preference item, and then click Edit.
+%<img src="https://www.praetorian.com/wp-content/uploads/2024/06/5cdc3206f26ba4ff9f48fb3e_image06.png" alt="group policy management edit"/>
+
+In the console tree under Computer Configuration or User Configuration, expand the Preferences folder, and then expand the Windows Settings folder. Right-click the Registry node, point to New, and then select Registry Item.
+%<img src="https://www.praetorian.com/wp-content/uploads/2024/06/5cdc32064b4cafb30a5edcfc_image03.png" alt="group policy management editor"/>
+
+In the New Registry Item dialog box, select and Create for Group Policy to perform. Now, enter the following settings:
+
+Action: Create
+Hive: HKEY\_LOCAL\_MACHINE
+Key Path: SYSTEMCurrentControlSetControlSecurityProvidersWDigest
+Value Name: UseLogonCredential
+Value Type: REG\_DWORD
+Value Data: 0
+Base: Decimal
+%<img src="https://www.praetorian.com/wp-content/uploads/2024/06/5cdc3206bc4a3829217e4ec6_image04.png"/>
+
+After everything looks good, click OK. The new preference item now appears in the Details pane. Now, instead of waiting for the default 90 minutes Group Policy replication interval to kick in, we can get a head start by forcing GPO enforcement upon the container in which we just configured the Registry change for. This can be done by running the following command on a Windows system that is part of an Active Directory-managed domain:
+
+gpupdate /force
+
+Next, verify that the changes have taken place, and test for any unforeseen anomalies this change may have caused.
+Below, we can see that everything looks good on our Windows 7 system.
+%<img src="https://www.praetorian.com/wp-content/uploads/2024/06/5cdc32062df07064ea4f9cd2_image05.png" alt="use logon credential"/>
+
+Next, we will verify that everything looks good to go on the Windows Server 2008 R2 system:
+%<img src="https://www.praetorian.com/wp-content/uploads/2024/06/5cdc3207f26ba44ac648fb3f_image01.png"/>
+
+Now, we will go ahead and reboot both of these systems and then login using the same domain credentials we had used previously. The Registry change does not always require a reboot, but it's best practices and since the credentials are stored in memory, the best way to flush them is just to do a quick reboot.
+Finally, we'll rerun CrackMapExec to verify that the change was effective. After reboot, the cleartext credentials should no longer be stored in memory; however, NTLM hashes can still be retrieved. As a result, strong passwords and two-factor authentication remain important to safeguard against password cracking attacks. Equally as important is ensuring a strong defensive strategy to Mitigate Pass-the-Hash (PtH) attack vectors. Microsoft has several resources on this topic which can be found below at the following locations.
+
+https://www.microsoft.com/pth
+https://download.microsoft.com/download/7/7/A/77ABC5BD-8320-41AF-863C-6ECFB10CB4B9/Mitigating-Pass-the-Hash-Attacks-and-Other-Credential-Theft-Version-2.pdf
+
+Attackers are still able to revert the Registry changes on any system in which they can achieve SYSTEM-level rights. The Registry change does NOT require a reboot. Defenders should monitor the Registry for unauthorized changes.

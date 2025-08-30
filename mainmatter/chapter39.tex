@@ -1,0 +1,63 @@
+%% ---------------- Chapter 39 ---------------- %%
+\chapter{Active Directory Certificate Services (AD CS) Exploitation}
+
+Active Directory Certificate Services (AD CS) is a cornerstone of enterprise Public Key Infrastructure (PKI). It provides certificate issuance, lifecycle management, and trust within an Active Directory environment. However, when misconfigured, AD CS can expose critical vulnerabilities that adversaries exploit to escalate privileges or persist within a network. In this chapter, we explore the mechanisms of AD CS, examine common misconfigurations, and dissect real-world attack techniques that leverage weak certificate template permissions, stolen Certificate Authority (CA) keys, and the infamous “ESC” class of vulnerabilities.
+
+\section{Understanding AD CS in Enterprise Environments}
+
+AD CS integrates with Active Directory to issue X.509 certificates, enabling authentication, encryption, and digital signatures. Certificates serve as trust anchors, binding user or machine identities to cryptographic key pairs. The Certificate Authority (CA), central to AD CS, validates requests, signs certificates with its private key, and distributes them across the domain.
+
+Certificate templates streamline this process. They define the rules governing certificate issuance: who may request them, what purposes they serve, and how their identities (subjects and SANs) are constructed. Properly configured templates enforce strict identity mapping. Poorly configured templates, however, may allow low-privileged users to request powerful certificates, effectively bypassing traditional authentication barriers.
+
+\section{The Role of Certificate Templates}
+
+Certificate templates in AD CS dictate:
+
+- The intended purposes of certificates (e.g., client authentication, smart card logon).
+- Validity periods and renewal policies.
+- Subject naming formats and whether users can supply alternative subject names.
+- Permissions that control who can read, enroll, or modify the template.
+
+These templates are themselves Active Directory objects, protected by Access Control Lists (ACLs). When ACLs are too permissive, they open the door to abuse. For instance, if a regular user can modify a template’s properties, they may grant themselves the right to request certificates that map to privileged accounts.
+
+\section{Golden Certificate Attack}
+
+One of the most devastating AD CS exploitation techniques is the \textbf{Golden Certificate attack}. Much like the “Golden Ticket” in Kerberos, this technique grants an attacker nearly unlimited authentication power across the forest.
+
+The attack hinges on theft of the CA’s private key. By default, this key is protected by the Data Protection API (DPAPI) and is marked exportable. Any local administrator on the CA server can extract it using management consoles or offensive tools like Mimikatz and SharpDPAPI.
+
+Once stolen, the CA’s private key allows the adversary to issue their own certificates offline. These forged certificates are indistinguishable from legitimate ones because they are signed by the trusted CA key. With them, the attacker can impersonate any user—including domain administrators—without leaving traces in Active Directory logs. Worse, this persistence lasts as long as the CA’s certificate remains valid, often years.
+
+\section{Template Permissions in Practice}
+
+In secure deployments, certificate templates should be tightly restricted. Unfortunately, in real-world penetration tests and assessments, misconfigured templates are common. During one Cyber Command Readiness Inspection (CCRI), I was tasked to operate as a non-privileged user. Instead of looking for flashy exploits, I focused on enumerating certificate services.
+
+To my surprise, I quickly discovered a template I could modify as a regular user. Its permissions allowed me to alter sensitive properties, including enrollment rights and the subject alternative name (SAN) flag. With these misconfigurations, I could craft a certificate impersonating privileged accounts. What defenders might view as a minor oversight became my entry point into the organization’s most sensitive assets.
+
+This experience highlights why permissions hygiene is vital. Every overly permissive ACE or unnecessary flag compounds risk. A single misconfiguration can collapse the security boundary between a standard employee and a domain administrator.
+
+\section{Finding Vulnerable Templates}
+
+Adversaries rely on reconnaissance to uncover weak certificate configurations. Several tools streamline this process:
+
+\begin{verbatim}
+# Using Certify to enumerate templates
+Certify.exe find /vulnerable
+
+# Or with Certipy (Python-based)
+certipy find -u user@domain.local -p Password123 -dc-ip 192.168.1.10
+\end{verbatim}
+
+These tools enumerate all published certificate templates and highlight those with risky configurations—such as \texttt{ENROLLEE\_SUPPLIES\_SUBJECT} or templates allowing authentication EKUs. Once identified, an attacker tests whether a low-privileged account has enrollment or write permissions, opening the door to escalation.
+
+\section{Why This Matters}
+
+Every AD CS misconfiguration represents more than just a technical oversight—it is an operational blind spot. Many organizations invest heavily in patching operating systems, monitoring authentication logs, and hardening firewalls, but they overlook PKI governance. Certificates often live for years, and if abused, they provide stealthy, persistent, and nearly invisible avenues for compromise.
+
+The SpecterOps research that introduced ESC1 through ESC16 demonstrates the scale of the issue. These classifications provide defenders a taxonomy for AD CS abuses, but they also give attackers a roadmap. If administrators fail to audit templates and CA protections, adversaries will exploit them.
+
+\section{Conclusion}
+
+Active Directory Certificate Services is both a backbone of enterprise trust and a potential Achilles’ heel. Properly configured, it ensures secure authentication and encryption across vast environments. Misconfigured, it hands adversaries the keys to the kingdom. Through techniques like Golden Certificates and template abuse, attackers can bypass passwords, persist indefinitely, and impersonate any identity they choose.
+
+The path forward is vigilance: auditing template permissions, restricting CA key access, and continuously monitoring certificate issuance. Anything less leaves the door wide open to the kinds of abuses detailed in this chapter.

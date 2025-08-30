@@ -1,0 +1,120 @@
+\documentclass{article}
+\usepackage{blindtext}
+\usepackage{titlesec}
+\title{Reconnaissance, Information Gathering, and Footprinting in Active Directory Environments}
+\author{Yvonne Silva-Ewry}
+\date{ }
+\begin{document}
+
+\maketitle
+This chapter focuses on cybersecurity Reconnaissance, Information Gathering, and Footprinting and is Active Directory-specific. OSINT is integrated explicitly, and contains subsections and subsubsections that directly related to AD hacking and security assessments. This Table of Contents blends generic footprinting with AD-focused recon, giving both red and blue team perspectives.
+     
+
+\tableofcontents
+
+\section{Introduction to Active Directory Footprinting}
+\subsection{Definition and Scope of Footprinting in AD Security}
+\subsection{Role of Footprinting in the Cyber Kill Chain (CKC) and MITRE ATT\&CK}
+\subsection{Offensive vs. Defensive Perspectives}
+\subsection{Ethical and Legal Considerations in Reconnaissance}
+\section{Core Terminologies and Concepts}
+\subsection{Reconnaissance}
+\subsection{OSINT (Open-Source Intelligence}
+\subsection{Passive vs. Active Information Gathering}
+\subsection{Infrastructure vs. Human Intelligence (HUMINT)}
+\subsection{Attack Surface Mapping for Active Directory Environments}
+\section{Understanding Footprinting in Active Directory (AD) Infrastructure}
+\subsection{Defining Footprinting in Active Directory}
+\subsection{Objectives of AD Footprinting}
+\subsubsection{Identifying Domain Infrastructure}
+\subsubsection{Mapping Trust Relationships}
+\subsubsection{Locating High-Valued Targets}
+\subsection{Potential Threats Involved in Footprinting Activities}
+\subsection{Indicators of Reconnaissance Activities for Defenders}
+\section{OSINT for Active Directory Environments}
+\subsection{Public Sources for AD Infrastructure Clues}
+\subsubsection{Public IP and ASN Databases}
+\subsubsection{Domain Registration Records}
+\subsubsection{Cloud Service Provider Metadata}
+\subsection{Social Media Intelligence (SOCMINT)}
+\subsubsection{Employee LinkedIn Profiling for AD Role Discovery}
+\subsubsection{GitHub Code Repository Leaks of Internal Domains}
+\subsubsection{Social Media Image Metadata (EXIF Analysis)}
+\subsection{Breach Data Intelligence}
+\subsubsection{Credential Dumps Containing AD Accounts}
+\subsubsection{Password Reuse Between Internet Services and AD}
+\subsection{Threat Intelligence (TI) Feeds and Dark Web Sources}
+\section{Tools}
+\subsection{OSINT Automation Tools}
+\subsubsection{Maltego}
+\subsubsection{SpiderFoot}
+\subsubsection{Recon-ng}
+\section{Identifying Company Web and Domain Presence}
+\subsection{Locating a Company's Primary and AD-Integrated URLs}
+\subsection{Finding Internal URLs and SharePoint / OWA / Teams Endpoints}
+\subsection{Differentiating Public vs. Restricted Web Resources}
+\subsection{Detecting Federated Authentication Portals (ADFS, Azure AD)}
+\section{Gathering Company and Infrastructure Information}
+\subsection{Searching for Company Infrastructure in AD Context}
+\subsubsection{Identifying Domain Controllers Exposed via NetBIOS and SMB}
+\subsubsection{Discovering AD-Integrated Services}
+\subsection{Tools for Extracting Company Data}
+\subsubsection{FOCA}
+\subsubsection{theHarvester}
+\section{Collecting Location-Based and Physical Infrastructure Data}
+\subsection{Mapping Office Locations and Data Centers}
+\subsection{Viewing Satellite Imagery for Physical Security Perimeter Assessment}
+\subsection{Identifying Physical Entry Points for Network Access}
+\section{People Search for AD Key Roles}
+\subsection{Identifying Domain Admins (DAs) and IT Staff via OSINT}
+\subsection{Using People Search Engines}
+\subsubsection{pipl.com}
+\subsubsection{Hunter.io}
+\subsection{Analyzing Public PGP Keys for Internal Email Patterns}
+\subsection{Social Engineering Pretexting Opportunities from Profiles and Dossiers}
+\section{Financial, Job Market, and IT Procurement Intelligence}
+\subsection{Financial Disclosures that Reveal IT Investments}
+\subsection{Job Postings Revealing AD and Security Technology Stack}
+\subsection{Vendor Contract Announcements for Network and AD Equipment}
+\section{Active Monitoring and Alerts for AD-Based Reconnaissance}
+\subsection{Google Alerts and Social Media Monitoring for AD Keywords}
+\subsection{DNS Change Tracking for Domain Controllers and Service Records}
+\subsection{Monitoring Public GitHub for AD Config File Leaks}
+\section{Competitive Intelligence and AD Security}
+\subsection{Identifying Organizational Structure of IT Operations}
+\subsection{Mapping AD Trusts Between Subsidiaries or Partners}
+\subsection{Reviewing Analyst Reports for IT Environment Clues}
+\subsection{Using Competitive Intelligence Tools for Network Mapping}
+\section{Domain and Network Information Gathering (\texttt{WHOIS} / DNS) for Active Directory}
+\subsection{Performing \texttt{WHOIS} Lookups to Identify Registered AD Domains}
+\subsection{Analyzing \texttt{WHOIS} Data for Technical Contacts and Name Servers}
+\subsection{Using \texttt{WHOIS} and DNS to Identify AD-Integrated Email Gateways}
+\subsection{Extracting DNS SRV Records for AD Services}
+\subsubsection{\texttt{\_ldap} }
+\subsubsection{\texttt{\_kerberos}}
+\subsection{Tools for DNS Interrogation}
+\subsubsection{\texttt{dnsenum}}
+\subsubsection{\texttt{dnsrecon}}
+\subsubsection{\texttt{fierce}}
+\section{Locating the Network Range(s) for AD}
+\subsection{ASN Enumeration for Corporate IT Space}
+\subsection{Reverse DNS for Domain Controller IP Identification}
+\subsection{Identifying VPN Gateways and RDP Endpoints}
+
+
+
+
+
+This is the first section.
+
+\blindtext
+
+\addcontentsline{toc}{section}{Unnumbered Section}
+\section*{Unnumbered Section}
+
+\blindtext
+
+\section{Second Section}
+
+\blindtext
+\end{document}

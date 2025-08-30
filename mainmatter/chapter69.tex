@@ -1,0 +1,96 @@
+\chapter{External Reconnaissance and Enumeration Principles in Active Directory}
+
+\begin{abstract}
+    External reconnaissance establishes the attack surface for an Active Directory (AD)-backed enterprise without touching internal systems. This chapter presents a disciplined, passive-first workflow to enumerate public assets and derive actionable hypotheses for initial access. Using OSINT and low-impact probing, you will map IP space and hosting providers, resolve domains and subdomains, correlate TLS certificates and CT logs, and fingerprint internet-facing services. You will also infer username / email schemas, mine document metadata and code repositories for disclosures, and enrich findings with breach corpora to enable credential-based attacks (e.g., VPN / SSO spraying). Outputs include a prioritized inventory of targets, validated user lists, technology stacks, and defensive clues (SIEM/EDR/MFA). These artifacts feed directly into subsequent phases-targeted authentication attacks, phishing pretext design, and external service exploitation-while giving blue teams concrete guidance on what to remove, harden, or monitor. The approach emphasizes legality, OPSEC, repeatability, and clear decision points so that reconnaissance efforts remain efficient, evidence-driven, and auditable.
+\end{abstract}
+\section{Introduction}
+Before you attempt to touch a domain controller, you need to first understand what the organization exposes to the internet and what that exposure implies. External reconnaissance is where you turn public signals into operational leverage: who owns which address space, which domains resolve where, which portals accept credentials, and which mistakes in documents or code reveal internal naming schemes and credentials.
+
+A passive-first stance keeps noise-and risk-low. Start by scoping: confirm your target's legal entity names, brands, and known domains and subdomains. Attribute IP ranges and hosting to the organization, including cloud service providers and CDNs / WAFs. Correlate DNS, registration data, and certificate transparency logs to expand subdomains and discover forgotten services. Fingerprint technologies to anticipate authentication flows (e.g., SSO, legacy protocols) and likely detections.
+
+Next, move to identities. Obtain username and email formats from public addresses, press releases, or job postings. Harvest document metadata and public repositories for intranet URLs, internal hostnames, share paths, and accidentally exposed secrets. Enrich with breach data to identify reused or weak credentials and to build validated user lists for controlled password spraying against VPN, OWA / Exchange, SSO, or remote admin portals.
+
+Throughout, it is imperative that you maintain a high level of OPSEC and legality: record sources, timestamps, and hypotheses, and avoid intrusive actions until explicitly in scope. The artifacts you collect will drive your first access attempts and inform defensive recommendations.
+
+The next section enumerates the concrete data points-IP space, domains and services, username / email schema, public disclosures, breach data, and defensive clues-that convert reconnaissance into an actionable plan.
+
+\section{What Are We Looking For?}
+During external reconnaissance, your goal is to inventory everything the organization exposes (intentionally or not) and turn it into leverage. Much of this is publicly accessible or discoverable through passive means. If you stall during a penetration test, revisiting passive recon-breach data alone can be enough to access a VPN, SSO, or another internet-facing service and get you moving forward again.
+
+\subsection{Target Data (External Reconnaissance)}
+\begin{itemize}
+    \item \textbf{IP Space and Hosting Footprint:}
+    \begin{itemize}
+        \item Valid ASNs
+        \item Public netblocks
+        \item Cloud ranges
+        \item DNS A / AAAA records
+        \item CDNs and WAFs
+        \item Hosting providers
+\textit{These sources help bound the attack surface and pick high-valued edges.
+}    \end{itemize}
+\item \textbf{Domains and Exposed Services:}
+\begin{itemize}
+    \item DNS Registrars
+    \item WHOIS lookups
+    \item RDAP data
+    \item \textbf{Subdomain Identifiers of Interest:}
+    \begin{itemize}
+        \item Mail Exchange (MX)
+        \item Name Server (NS)
+        \item WWW
+        \item Virtual Private Network (VPN)
+        \item Single Sign-On (SSO)
+        \item Outlook Web Access (OWA)
+        \item Simple Mail Transfer Protocol (SMTP)
+        \item SMTP-AUTH
+        \item TLS certificates
+        \item CT logs and headers that hint at defensive tech (e.g., WAF, CDN, email security)
+    \end{itemize}
+\end{itemize}
+\end{itemize}
+\textit{These components guide service-specific attacks and inform the likely detections.}
+\begin{itemize}
+    \item \textbf{Username and Email Schema:} Email patterns (e.g., \texttt{first.last}, \texttt{flast}), UPN / SAM formats, and any hint of password policies i place; enables building of valid user lists for password spraying, credential stuffing, and brute-force attempts against Internet-facing auth.
+    \item \textbf{Public Data Disclosures:} Documents and repositories (.pdf, .pptx, .docx, .xlsx code on GitHub / GitLab) and their \textit{metadata} (intranet URLs, share paths, internal hostnames, software, and hardware names). Often reveals internal naming schemes and credentials accidentally committed.
+    \item \textbf{Breach Data:} Publicly leaked usernames and passwords or hash sets. Fuels targeted spraying, SSO / VPN access attempts, and password reuse pivoting.
+    \item \textbf{Defensive Clues (inferred):} Job postings, headers, and banners that indicate SIEM/EDR/AV/IDS/IPS, email security, or MFA providers; helps you plan evasion and choose workable attack chains.
+\end{itemize}
+
+\section{Turning Findings into Actionable Plans}
+By now, you have identified \textbf{what} to collect: IP spaces and hosting, domains and exposed services, username and email schema, public disclosures, breach data, and defensive clues. Package these into working artifacts-a seeded list of \textit{Fully Qualified Domain Names (FQDN)} and netblocks, a prioritized service inventory (with tech stack notes), a validated user list, and a shortlist of candidate credentials. Tie each item with a source and timestamp for auditability. This becomes your \textbf{first-access plan:} which portals to test (VPN/SSO/OWA), which identities to target (spray vs. credential-stuff), and which services to fingerprint more deeply-all bounded by scope and OPSEC.
+
+If something is missing, do not guess. Loop once through passive recon again, tighten hypotheses, and only then consider low-impact active probes that are explicitly in scope.
+
+Moving on, you know what to harvest; now you need \textbf{ places} to harvest this information. In the next section, you will map each data point to concrete sources and collection methods, such as, but not limited to:
+\begin{itemize}
+    \item Authoritative Registries: WHOIS/RDAP, RIRs (ARIN/RIPE/APNIC), ASN/BGP views, PeeringDB.
+    \item DNS and Certificates: Forward/Reverse DNS, passive DNS, zone artifacts (robots.txt / sitemaps), Certificate Transparency logs.
+    \item Exposure Scanners: Shodan, Censys, and search engine operators for service fingerprints.
+    \item Identities and Metadata: Public email patterns, staff directories, job posts, social networks, code repositories, and document metadata.
+    \item Disclosures and breaches: Public repos, pastebins, vendor portals, advisories, and breach corpora.
+    \item Defensive Breadcrumbs: Headers, banners, and listings that imply SIEM/EDR/MFA.
+\end{itemize}
+
+We will turn this into a repeatable collection pipeline, with deduplication, ownership validation, and confidence tagging-so that every finding is actionable and defensible.
+
+\section{Where Are We Looking?}
+You now know \textbf{what} to collect; next is \textbf{where}to collect it. External reconnaissance is a passive first sweep across registries, DNS / cert telemetry, exposure scanners, corporate web properties, social/press, code and cloud footprints, and breach corpora. The goal is to validate ownership, expand coverage to include domains, netblocks, and subdomains, and extract identity and technology signals-without leaving noisy fingerprints.
+
+
+\begin{table}
+    \centering
+    \begin{tabular}{cc}
+         Resource& Examples\\
+         ASN / IP Registrars& IANA, ARIN for searching the Americas; RIPE for searching in Europe; BGP Toolkit\\
+         Domain Registrars \& DNS& Domaintools, PTRArchive, ICANN, manual DNS record requests against the domain in question or against well-known DNS servers, such as 8.8.8.8.\\
+         Social Media& Searching LinkedIn, Twitter, Facebook, your region's major social media sites, news articles, and any relevant information you can find about the target organization.\\
+         Public-Facing Company Websites& Often, the public websites for a corporation will have relevant information embedded. News articles, embedded documents, and the "About Us" and "Contact Us" pages can also be gold mines.\\
+         Cloud and Dev Storage Spaces& GitHub AWS S3 buckets, Azure Blob storage containers, Google Dorks\\
+         Breach Data Sources& HaveIBeenPwned to determine if any corporate email accounts appear in public breach data. Dehashed to search for corporate emails with cleartext passwords or hashes you can try and crack offline. We can try these passwords against any exposed login portals (Citrix, RDS, OWA, O365, VPN, VMware Horizon, custom applications) that may use AD authentication.\\
+    \end{tabular}
+    \caption{Caption}
+    \label{tab:placeholder}
+\end{table}
+\subsection{OPSEC and Scope}
+Collect passively by default, record sources and timestamps, and only pivot to low-impact active checks if explicitly in scope.

@@ -1,0 +1,165 @@
+\chapter{Attacking and Abusing Active Directory Certificate Services (AD CS)}
+
+\begin{abstract}
+This chapter explores critical cybersecurity vulnerabilities in \textit{Active Directory Certificate Services (AD CS)}, emphasizing key attack vectors and defense strategies within enterprise networks. It examines known exploitation techniques classified as \textbf{ESC1--ESC11}, as well as the high-profile \textbf{CERTIFRIED} vulnerability \textit{(CVE-2022-26923)}. To validate findings, a controlled lab environment was created using VMware Workstation 17.5, integrating Kali Linux for offensive operations and Windows Server systems to simulate a realistic AD CS deployment.
+
+Simulated attacks conducted using the \textbf{Certipy-ad} toolkit demonstrate the serious risks of AD CS misconfigurations, showing how attackers can escalate privileges and achieve full domain compromise. A Purple Team methodology—combining offensive (red) and defensive (blue) teams—enabled real-time detection, rapid feedback on exploitation effectiveness, and continuous improvement of detection and response strategies.
+
+The chapter proposes a defensive framework focused on hardening certificate templates, enforcing strict Certificate Authority (CA) privilege boundaries, and deploying continuous monitoring tools such as \textbf{Wazuh SIEM}, complemented by comprehensive Windows Event Log analysis.
+
+Findings show that iterative Purple Teaming significantly enhances detection capabilities, reduces mean time to respond (MTTR), and increases organizational resilience against AD CS-related threats. This chapter provides practical guidance for defenders tasked with securing enterprise PKI and preventing Active Directory exploitation.
+\end{abstract}
+
+\section{AD CS Security: Vulnerabilities, Exploits, and Defenses}
+
+Active Directory Certificate Services (AD CS) plays a foundational role in enterprise cybersecurity by enabling secure communications, authentication, and access control through digital certificates. However, due to the complexity of managing a robust Public Key Infrastructure (PKI), AD CS is often misconfigured, leaving organizations vulnerable to various attack vectors. This section outlines those vulnerabilities, common exploitation paths, and defensive strategies to secure AD CS environments.
+
+\subsection{AD CS: A Foundational but Vulnerable Component}
+
+AD CS is essential for issuing and managing digital certificates, allowing secure access to resources, mutual authentication, and encrypted communication across enterprise networks. It uses public/private key pairs, digital signatures, and cryptographic algorithms to validate identities and protect data.
+
+Despite its importance, AD CS is frequently mismanaged. Common issues include:
+\begin{itemize}
+    \item Overly permissive certificate templates
+    \item Misconfigured Certificate Authority settings
+    \item Weak access controls on enrollment permissions
+    \item Legacy or deprecated cryptographic protocols
+\end{itemize}
+
+These misconfigurations are often introduced because administrators prioritize ease of deployment and troubleshooting over security best practices, inadvertently exposing critical identity infrastructure.
+
+\subsection{Categories of AD CS Attacks}
+
+AD CS attacks typically fall into four categories:
+\begin{enumerate}
+    \item \textbf{Certificate Theft}: Attackers steal existing certificates to impersonate users or systems.
+    \item \textbf{Privilege Escalation via Misconfigured Templates}: Attackers enroll in certificates with elevated privileges.
+    \item \textbf{Persistence via Forged Certificates}: Attackers maintain long-term access through stealthy certificate abuse.
+    \item \textbf{Domain Compromise via ESC Vulnerabilities}: Techniques like ESC1--ESC11 exploit enrollment or issuance paths for full domain takeover.
+\end{enumerate}
+
+\subsubsection{Certificate Theft Techniques}
+
+Attackers use the following methods to exfiltrate and abuse certificates:
+\begin{itemize}
+    \item Exporting certificates via the CryptoAPI if private keys are marked as \texttt{exportable}.
+    \item Decrypting certificates using \textbf{Data Protection API (DPAPI)} to retrieve private keys from compromised systems.
+    \item Searching for certificate files on disk, such as:
+    \begin{itemize}
+        \item \texttt{.pfx}, \texttt{.p12}, and \texttt{.pem} files
+        \item Windows certificate store entries
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Exploitation of PKINIT in Kerberos}
+
+If improperly configured, PKINIT (Public Key Cryptography for Initial Authentication) in Kerberos can leak NTLM hashes via Privilege Attribute Certificates (PACs). This enables credential theft and potential relay attacks.
+
+\section{Account Persistence in AD CS}
+
+Persistence refers to an attacker’s ability to maintain access within an environment after initial compromise. In the context of Active Directory, attackers use certificates to:
+\begin{itemize}
+    \item Maintain stealthy long-term access
+    \item Re-authenticate using valid, trusted credentials
+    \item Avoid detection by standard security tools
+\end{itemize}
+
+AD CS offers multiple paths for persistence if improperly hardened:
+\begin{itemize}
+    \item Enrolling certificates on behalf of others (ESC1)
+    \item Exploiting \texttt{ENROLL} or \texttt{AUTOENROLL} permissions
+    \item Using \texttt{SubjectAltName} spoofing to request certificates for other users
+    \item Forging \texttt{Certificate Authority (CA)} chains to bypass revocation
+\end{itemize}
+
+Persistence is resilient against:
+\begin{itemize}
+    \item Password resets
+    \item User account deletions (if linked to external certs)
+    \item System reboots or updates
+\end{itemize}
+
+\section{Common AD CS Exploitation Paths (ESC1--ESC11)}
+
+The ESC (Enterprise Security Certificate) attack paths, popularized by the SpecterOps research team, categorize real-world vulnerabilities found in AD CS deployments.
+
+\begin{itemize}
+    \item \textbf{ESC1:} Misconfigured Certificate Template allows low-privileged users to enroll for certificates as other users.
+    \item \textbf{ESC2--ESC3:} Certificate Authority misconfigurations allow enrollment or issuance abuse.
+    \item \textbf{ESC4--ESC5:} Misconfigured \texttt{SubjectAltName} or enrollment agent templates.
+    \item \textbf{ESC6--ESC7:} Weak or missing certificate chain validation.
+    \item \textbf{ESC8--ESC11:} Exploitation of certificate renewal, key usage flags, or CA chain manipulation.
+\end{itemize}
+
+\section{Case Study: CERTIFRIED (CVE-2022-26923)}
+
+CERTIFRIED is a high-impact vulnerability in AD CS disclosed in 2022. It allows attackers with low privileges to escalate to domain admin by exploiting certificate enrollment processes.
+
+\textbf{Summary:}
+\begin{itemize}
+    \item Affects environments where computers are auto-enrolled in certificates
+    \item Exploits flawed validation in the certificate request process
+    \item Enables attackers to impersonate Domain Controllers
+\end{itemize}
+
+\section{Attack Simulation Lab Setup}
+
+A controlled lab was created using:
+\begin{itemize}
+    \item \textbf{VMware Workstation 17.5}
+    \item \textbf{Windows Server 2022} with AD CS and domain services
+    \item \textbf{Kali Linux 2024.1} with offensive tooling
+    \item \textbf{Certipy-ad} and \textbf{Impacket} for enumeration and exploitation
+\end{itemize}
+
+\subsection{Offensive Workflow}
+
+\begin{enumerate}
+    \item Enumerate AD CS using \texttt{certipy find}
+    \item Identify vulnerable templates and ESC paths
+    \item Request certificates using impersonated identities
+    \item Authenticate to domain services using \texttt{PKINIT} and \texttt{Kerberos}
+    \item Perform lateral movement or escalate privileges
+\end{enumerate}
+
+\section{Detection and Defense}
+
+\subsection{Detection Techniques}
+
+Monitoring and logging are critical for early detection of AD CS abuse. Recommended practices include:
+\begin{itemize}
+    \item Enabling advanced Windows Event Logging (e.g., Event ID 4886, 4887, 4899)
+    \item Tracking certificate enrollment and template usage
+    \item Detecting anomalous Subject Alternative Name (SAN) fields
+    \item Using tools like \textbf{Sysmon}, \textbf{Wazuh}, or \textbf{Elastic SIEM}
+\end{itemize}
+
+\subsection{Defensive Controls}
+
+Key defenses include:
+\begin{itemize}
+    \item Hardening certificate templates (remove \texttt{ENROLL} for domain users)
+    \item Limiting certificate issuance to only trusted users and groups
+    \item Removing legacy or unused templates
+    \item Enforcing administrative separation for CA management
+    \item Enabling CRL (Certificate Revocation Lists) and OCSP
+\end{itemize}
+
+\section{Purple Teaming Methodology}
+
+Purple Teaming bridges offensive and defensive operations:
+\begin{itemize}
+    \item Red team tests exploitability and lateral movement using real attacks
+    \item Blue team tunes detection, logs, and alerts in response
+    \item Shared insights improve tooling and procedures iteratively
+\end{itemize}
+
+In this chapter’s lab, Purple Teaming dramatically improved visibility into certificate abuse and led to better SIEM detection tuning for Event IDs and unusual certificate request patterns.
+
+\section{Conclusion}
+
+Active Directory Certificate Services (AD CS) is a powerful but often overlooked component of enterprise identity infrastructure. Misconfigurations in templates, CAs, or permissions can lead to privilege escalation, domain compromise, or undetected persistence.
+
+Through offensive simulation and defensive analysis, this chapter demonstrates the real-world risks posed by AD CS vulnerabilities and offers guidance for building a more secure PKI infrastructure. Tools like \textbf{Certipy-ad}, when used by adversaries or defenders, reveal the gaps between intention and implementation in certificate-based authentication systems.
+
+Security teams must treat AD CS with the same rigor as Domain Controllers—applying hardening, segmentation, auditing, and monitoring to ensure it cannot be abused as a backdoor into the heart of the domain.

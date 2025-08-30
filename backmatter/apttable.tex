@@ -1,0 +1,77 @@
+%%%%%%%%%%%%%%%%%%%%% chapter.tex %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% sample chapter
+%
+% Use this file as a template for your own input.
+%
+%%%%%%%%%%%%%%%%%%%%%%%% Springer-Verlag %%%%%%%%%%%%%%%%%%%%%%%%%%
+%\motto{Use the template \emph{chapter.tex} to style the various elements of your chapter content.}
+\chapter{Chapter Heading}
+\label{intro} % Always give a unique label
+% use \chaptermark{}
+% to alter or adjust the chapter heading in the running head
+
+\abstract*{APT Table Summary}
+
+\abstract{APT Table Summary.
+\newline\indent
+Please use the 'starred' version of the new \texttt{abstract} command for typesetting the text of the online abstracts (cf. source file of this chapter template \texttt{abstract}) and include them with the source files of your manuscript. Use the plain \texttt{abstract} command if the abstract is also to appear in the printed version of the book.}
+
+\section{Introduction to Active Directory Backdoors: Myth or Reality?}
+
+\section{Table 1: In-Depth Characteristics of Advanced Persistent Threats (APTs)}
+% For tables use
+%
+\begin{table}[!t]
+\caption{Please write your table caption here}
+\label{tab:1}       % Give a unique label
+%
+% For LaTeX tables use
+%
+\begin{tabular}{p{2.4cm}p{2.4cm}p{4.9cm}}
+\hline\noalign{\smallskip}
+%Attribute & Main Features & Description & crap \\
+\noalign{\smallskip}\svhline\noalign{\smallskip}
+%Nomenclature Meaning & Advanced & \\
+%Nomenclature Meaning & Persistent & These adversaries are focused on long-term access, often maintaining a toehold in target networks for months or even years to complete multi-staged attack objectives.\\
+%Nomenclature Name & Threat &  APTs are often associated with nation-state actors or state-sponsored groups with substantial funding, strategic and tactical motivations, and coordinated operations.\\
+%Signs & Players & APTs are typically conducted by well-known groups such as APT28, OilRig, and Deep Panda, who are linked to geopolitical or economic objectives supported by external entities.\\
+%Signs & Goals & The attackers aim to collect intelligence, exfiltrate data, or undermine the operations of targeted organizations, often to benefit national or corporate interests.
+%Signs & Timeliness  & Attacks are carefully timed and prolonged. Attackers often return periodically to reinforce control, update malware, or harvest additional data from compromised systems. & crap
+%Signs & Resources & APT campaigns demand significant investments in infrastructure, tool development, and personnel. These attacks often involve custom malware and dedicated Command and Control (C2) infrastructure.
+%Signs & Risk Tolerance & APT actors prefer stealthy, calculated strikes with minimal noise. They avoid detection like the plague by blending into legitimate network traffic and maintaining a low operational footprint.
+%Signs & Methods  & Techniques include rootkits, zero days, DNS tunneling, rogue access points, and social engineering, often deployed in combinations tailored to the target environment.
+%Signs & Attack Source  & Attackers usually begin with thorough active or passive reconnaissance. Entry points of interest may be selected after mapping vulnerabilities via passive or active footprinting of the organization's layout.
+%Signs & Attack Value  & APTs typically focus their sights on high-value targets such as governments, educational facilities and institutions (academia), healthcare providing agencies, hospitals, financial organizations, multinational corporations, and critical infrastructure rather than opportunistic mass attacks.
+%Signs & Go-Around Detection Tools & These actors deploy evasion tactics like fileless malware, Living-Off-The-Land Binaries (LOLBins), and encrypted and covert C2 communications channels to bypass signature-based and anomaly detection tools.
+%Lifecycle Phases & Initial Reconnaissance & The attacker collects information about the target's network architecture, personnel, and external-facing systems to plan the intrusion.
+%Lifecycle Phases & Initial Compromise & Gaining initial access via spearphishing campaigns, credential theft, or exploiting unpatched vulnerabilities in public-Internet-facing applications or endpoints.
+%Lifecycle Phases & Initial Toehold / Foothold & The attacker implants or embeds malware or backdoors to retain access even if the initial vector is closed. Persistence mechanisms include scheduled tasks and service modifications.
+%Lifecycle Phases & Escalate / Elevate Privileges & Adversaries use tools and techniques, such as Mimikatz, and token impersonation to gain administrative privileges and move toward domain control.
+%Lifecycle Phases & Lateral Movement & Using stolen credentials, remote desktop access, or SMB shares, attackers spread through the network to reach their objective(s).
+%Lifecycle Phases & Maintain Presence &Ensures long-term access by deploying stealthy tools, updating implants, and leveraging trusted services (e.g., WMI, PsExec).\\
+%Lifecycle Phases & Complete Mission &Final stage involving data theft, system disruption, or surveillance. Data is often exfiltrated over encrypted or covert C2 communications channels back to the attacking rig for analysis.\\
+%Techniques & Social Engineering & Psychological manipulation of users to bypass security-often through pretexting, baiting, or impersonation.\\
+%Techniques & Spearphishing & Highly targeted phishing attacks specifically crafted to target a particular individual using insider knowledge in hopes to lure the specific individual into divulging credentials or downloading malware via a Trojan Horse, or other means.\\
+%Techniques & Watering Hole & Compromise of websites frequently visited by the target group(s). Once accessed, this site delivers malware tailored to and for the unsuspecting visitors of the infected webpage.\\
+%Techniques & Drive-By Download & Malicious content is installed automatically when a user visits a compromised website-often with zero user interaction.\\
+%Target Types & Government and Public Sector & Targeted for espionage, policy manipulation, or strategic disruption. Breaches can lead to national security risks or political embarrassment.
+%Target Types & Information Technology (IT) Sector & Attacks can disable AD and network-related critical infrastructure, leak proprietary tools, or corrupt operational technologies.
+%Target Types & Financial and Banking Sector & Focused on accessing transactional data, customer records, and internal decision-making structures, often resulting in major financial losses.
+%Target Types & Energy and Utilities Sector & Disrupting critical cybersecurity infrastructure such as power grids, gas pipelines, water treatment and waste processing facilities can have catastrophic implications for civilian life and national stability.
+%Target Types & Medical and Healthcare Sector & Breaches can expose sensitive patient data or disable emergency and first responder systems, potentially risking lives and violating data privacy protection laws.
+%Target Types & Traffic, Transportation, and Logistics Sector & Interruptions in supply chains, shipping, or transport coordination systems can cause widespread economic and operational disturbances.
+%Target Types & Manufacturing Sector & Industrial espionage and sabotage of production processes, including theft of designs, theft of intellectual property, trade secrets, brand name, patents, and/or copyrights breaches.\\
+%Malware Comparison & Definition & APTs are strategic and focused, unlike generic malware which is often automated and indiscriminate in its impact and reach.\\
+%Malware Comparison & Attacker & APTs involve trained teams with organizational support; malware may be developed by hobbyists or profit-seeking individuals.\\
+%Malware Comparison & Target & APT s aim at institutions of strategic value; malware typically affects users indiscriminately.\\
+%Malware Comparison & Purpose & APTs seek long-term objectives like influence, espionage, or control; malware often serves short-term financial gain or notoriety.\\
+%Malware Comparison & Attack Lifecycle & APTs evolve and adapt over time; malware generally ends when detected and removed.\\
+%Detection and Protection & Email Screening & Filtering emails for malicious links and attachments is essential in countering phishing-the most common initial APT vector.
+%Detection and Protection & Endpoint Security & EDR solutions monitor near-real-time behaviors on endpoints, flag anomalies, and prevent malware from gaining persistence or executing malicious payloads.
+%Detection and Protection & Access Control & Least privilege principles, multi-factor authentication, and rigorous account auditing reduce attack surfaces lessening the opportunity conduct privilege escalation.
+%Detection and Protection & Monitoring User and Entity Behavior & Analyzing logs for unusual access patterns, privilege abuse, or data transfers helps identity APT movement and exfiltration activities.
+%\noalign{\smallskip}\hline\noalign{\smallskip}
+\end{tabular}
+*Table foot note (with superscript)
+\end{table}

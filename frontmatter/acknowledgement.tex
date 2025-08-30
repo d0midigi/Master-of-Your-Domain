@@ -1,0 +1,29 @@
+%%%%%%%%%%%%%%%%%%%%%%acknow.tex%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% sample acknowledgement chapter
+%
+% Use this file as a template for your own input.
+%
+%%%%%%%%%%%%%%%%%%%%%%%% Springer %%%%%%%%%%%%%%%%%%%%%%%%%%
+\extrachap{Acknowledgements}
+
+Use the template \emph{acknow.tex} together with the document class SVMono (monograph-type books) or SVMult (edited books) if you prefer to set your acknowledgement section as a separate chapter instead of including it as last part of your preface.
+
+\lipsum*[1]
+
+\mybox{bash}{gray!20}{gray!40}{\texttt{python Responder.py -I eth0 -rdvw}}
+
+%\mybox{Summary 1}{green!40}{green!10}{This is a very different box... Well, ok, just the colour.}
+
+\lipsum*[2]
+
+
+\tipbox{
+\subsection{PowerView and SharpView}
+PowerView and its .NET counterpart, SharpView, are reconnaissance tools designed to provide situational awareness in Active Directory environments. Functionally, they act as powerful replacements for many traditional Windows \texttt{net*} commands, but with far greater flexibility and depth. \par
+
+Both tools allow you to enumerate users, groups, computers, shares, and access rights throughout the domain. In many ways, the data you collect with either tool overlaps with what BloodHound provides; however, unlike BloodHound-which automatically builds visual relationship graphs-you will need to manually interpret and correlate the results to uncover meaningful attack pathways.\par
+These tools are especially useful when testing new credentials, since they allow you to quickly determine what additional access is unlocked by a new account. They also enable targeted queries against specific users or systems, ultimately helping you to identify "quick wins" such as accounts that are vulnerable to Kerberoasting or AS-REP Roasting attacks}
+
+
+\tipbox {PowerView
+and its .NET counterpart, \textbf{SharpView}, are reconnaissance tools designed to provide situational awareness in Active Directory environments. Functionally, they act as powerful replacements for many traditional Windows \texttt{*net} commands, but with far greater flexibility and depth. Both tools allow you to enumerate users, groups, computers, shares, and access rights throughout the domain, and in many ways, the data you collect with either tool will overlap with what BloodHound provides you; however, unlike BloodHound-which automatically builds visual relationship graphs-you must manually interpret and correlate the results to uncover meaningful attack paths. These tools are especially useful when testing new credentials, since they allow you to quickly determine what additional access is unlocked by a new account. They also enable targeted queries against specific users or systems, helping you to identify "quick wins" such as accounts vulnerable to Kerberoasting or AS-REPRoasting attacks.}

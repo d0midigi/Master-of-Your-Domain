@@ -1,0 +1,31 @@
+\chapter{Active Directory \texttt{SIDHistory} Abuse Attack Techniques}
+
+\begin{abstract}
+{\textit{Why \texttt{SIDHistory} Abuse Is a Favorite Among Attackers}}
+Imagine you have just infiltrated a domain-maybe through spearphishing, a misconfiguration, or a vulnerable service. You have low-level credentials, but not Domain Admin. Instead of going down noisy privilege escalation routes like Kerberoasting or Pass-the-Hash (PtH), you want something stealthy. This is where \texttt{SIDHistory} abuse excels.
+\end{abstract}
+\section{Introduction}
+\texttt{SIDHistory} was built for Active Directory mitigations, allowing users moved between domains to retain access through the use of old SIDs. For an attacker, it is a hidden privilege escalator. By adding a privileged SID (such as Domain Admins) to a low-level account's \texttt{SIDHistory}, you instantly inherit all the rights of that SID-without touching group membership. No group change logs, no membership alerts, no obvious forensic trails.
+
+Detecting this abuse is difficult because you are not adding yourself to a privileged group; you are just making it look like your account has always had those rights. The only trace is a change to the \texttt{SIDHistory} attribute, something many organizations do not audit. Once injected, the SID grants access to file servers, admin shares, GPOs, and even domain controllers-all under the guise of a normal user account.
+
+\section{1. Why Attackers Use \texttt{SIDHistory} Abuse}
+An attacker with a compromised low-privilege account can use \texttt{SIDHistory} injection to gain high-value privileges without noisy exploitation. The beauty of this technique is that it looks legitimate to Active Directory (AD). It does not require replication rights or domain controller compromise-just permission to write to one attribute on one object. After that, the account can request service tickets, access domain controllers, and modify ACLs while appearing completely normal.
+
+\section{2. Prerequisites for \texttt{SIDHistory} Injection}
+Before using this attack, an attacker needs the right target, permissions, and environment.
+Identify a Vulnerable Account
+
+ Look for a low- or mid-tier user account that isn’t already privileged, has recent logon activity, and isn’t heavily monitored (e.g., service accounts).
+\begin{itemize}
+    \item \textbf{Check Write Permissions on SIDHistory}
+
+ The attacker must have \verb|WriteProperty| permission on the SIDHistory attribute for the target account.
+    \item \textbf{Gather the Target SID}
+
+ The most common are:
+    \begin{itemize}
+        \item Domain Admins (…-512)
+        \item Enterprise Admins (…-519)
+        \item Any group the attacker wants to impersonate
+    \end{itemize}

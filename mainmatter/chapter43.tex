@@ -1,0 +1,283 @@
+
+\textbf{Active Directory Privilege Escalation Attack }
+
+\subsection{\textbf{Key Terminology}}
+
+\textbf{Active Directory Schema:}
+
+\textit{The Active Directory schema is a blueprint that defines the structure and rules for objects and their attributes within an Active Directory forest. It specifies what types of objects can be created (like users, computers, groups) and the properties (attributes) that each object can have. Essentially, it dictates how information is organized and stored in the Active Directory database.}
+
+\textbf{Azure Active Directory (Azure AD):}
+
+\textit{Azure Active Directory (Azure AD), now known as Microsoft Entra ID, is a cloud-based identity and access management service. It allows organizations to manage users, groups, and access to resources in the cloud and on-premises. Essentially, it acts as a directory service and an identity provider, enabling secure access to various Microsoft and third-party applications.}
+
+\textbf{C-Suite:}
+
+\textit{In cybersecurity, the "C-suite" refers to the highest level of executives within an organization, typically including positions like CEO, CFO, CIO, and CISO. These leaders play a crucial role in cybersecurity by setting the strategic direction, allocating resources, and ensuring that security is integrated into the overall business strategy. Their involvement is essential for establishing a strong security posture and mitigating risks.}
+
+\textbf{DCSync:}
+
+\textit{DCSync is a technique used in cybersecurity attacks to impersonate a Domain Controller (DC) and request replication data, including sensitive credentials, from other DCs in an Active Directory (AD) environment.}
+
+\textbf{Domain Replication:}
+
+\textit{Domain replication is the process of copying and synchronizing directory data across multiple domain controllers (or other servers) within a network. This ensures that all domain controllers have the same information, improving reliability, performance, and data consistency. Essentially, any changes made to the directory on one domain controller are automatically replicated to all others.}
+
+\textbf{Group Policy Object (GPO):}
+
+\textit{In Active Directory (AD), a Group Policy Object (GPO) is a virtual collection of settings that allows administrators to manage and configure user and computer settings within an AD environment. GPOs are fundamental for centrally controlling and standardizing settings across an organization's network, ensuring consistency and security.}
+
+\textbf{Impersonation:}
+
+\textit{In cybersecurity, impersonation refers to a malicious tactic where an attacker pretends to be a trusted individual, organization, or system to deceive a target into taking actions that benefit the attacker. This often involves social engineering to manipulate victims into revealing sensitive information, transferring funds, or granting access to systems.}
+
+\textbf{Password Hashes:}
+
+\textit{Password hashing is a security measure that converts passwords into irreversible, fixed-length strings of characters (hashes) using a one-way function. This prevents the storage of passwords in plain text, making them unreadable even if a database is compromised. Instead of storing the actual password, a system stores its hash, which can be compared to a user's input during login, ensuring authentication without exposing the original password.}
+
+\textbf{Principle of Least Privilege (PoLP):}
+
+\textit{PoLP stands for the Principle of Least Privilege. It's a cybersecurity concept that dictates users, applications, and systems should only have the minimum necessary access rights to perform their intended tasks. This approach minimizes the potential damage from compromised accounts and reduces the attack surface for malicious actors.}
+
+\textbf{Role-based Access Control (RBAC):}
+
+\textit{Role-Based Access Control (RBAC) is a security approach that restricts system access based on a user's role within an organization. Instead of granting permissions directly to users, RBAC assigns permissions to roles, and then users are assigned to those roles. This helps manage access effectively and ensures users only have the resources they need.}
+
+\textbf{Security Event and Information Management (SIEM):}
+
+\textit{SIEM, which stands for Security Information and Event Management, is a cybersecurity solution that aggregates and analyzes security data from various sources within an IT environment. It helps organizations detect, investigate, and respond to security threats in real-time. Essentially, SIEM systems collect logs and event data, correlate that information, and provide a centralized view of security incidents, enabling faster and more effective threat detection and response.}
+
+\subsection{Introduction}
+
+\subsubsection{\textit{The Quiet Power at the Core of Enterprise}}
+
+Today, the security of any large organization depends on the hidden architecture that determines who can access what, when, and how. At the center of this architecture is Active Directory (AD)—the system that orchestrates user identities, computer accounts, and access permissions across nearly every Windows-based network on the planet. While defenders spend countless hours crafting security strategies, the uncomfortable truth is that most of these plans remain untested; after all, few teams find the time for full-scale tabletop exercises or real-world simulations. But in reality, defenders should prioritize regular walkthroughs of their incident response playbooks, runbooks, and policies, so that when an attack does occur, the team is equipped to respond effectively and decisively. While conventional strategies often prioritize endpoint defense, sensitive data protection, or malware detection, the real backbone of enterprise security lies in rigorously managing access controls and permissions within Active Directory.
+
+Yet, a few realize just how devastating it can be when attackers exploit weaknesses in ADs privilege assignments. A single act of privilege escalation in Active Directory can transform a minor breach into a catastrophic incident - giving an adversary the power to bypass security controls, impersonate critical users, disrupt essential services, and seize control of the organization’s most valuable resources within minutes.
+
+Surprisingly, few appreciate how catastrophic it can be when attackers find and exploit weaknesses in AD’s privilege assignments. A single privilege escalation event in Active Directory can escalate a minor incident into a full-blown crisis, granting adversaries the ability to sidestep security controls, impersonate key personnel, disrupt critical services, and seize the organization’s crown jewels in mere minutes. Grasping how privilege escalation works in Active Directory—and why it’s such a serious threat—isn’t just a technical checkbox; it’s essential to organizational survival.
+
+Understanding exactly how privilege escalation happens in Active Directory, and why it poses such a critical threat, is not only a technical necessity but also a matter of business survival.
+
+In the following section, we’ll break down the powerful actions available to attackers after they gain elevated privileges in AD, examine the far-reaching impact of those actions, and show why defenders who overlook administrative access tracking are at risk of catastrophic consequences. Each scenario will include practical code samples and defensive tactics to equip learners and practitioners with real-world, actionable knowledge.
+
+\subsection{\textbf{Active Directory: The Nerve Center of Enterprise Security}}
+
+Within any modern enterprise, Active Directory (AD) serves as the backbone for identity, access, and privilege management across entire IT ecosystems. Because so many critical resources and workflows depend on AD, any successful privilege escalation within it can have consequences that are both immediate and severe. Attackers who manage to escalate their privileges in Active Directory gain the ability to perform actions that fundamentally compromise the security, confidentiality, and availability of an organization’s assets.
+
+\subsection{\textbf{Privilege Escalation in AD: The Gateway to Total Compromise}}
+
+\subsubsection{Attack Tactic}
+
+The seriousness of privilege escalation in AD becomes apparent when considering the range of devastating tasks an attacker can perform. Suppose an attacker fired up their copy of Mimikatz and launched a \textit{DCSync }to a target’s AD domain controllers, that attacker can very well simulate the behavior of a legitimate domain controller and extract password hashes for all domain users, including privileged accounts. Using Mimikatz, attackers can launch a DCSync against target DCs by running:
+
+```
+
+\begin{table}
+\centering
+
+\begin{tabular}{l}
+lsadump::dcsync /domain:corp.local /user:Administrator \\
+
+\end{tabular}
+
+\end{table}
+
+```
+
+\begin{table}
+\centering
+
+\begin{tabular}{l l}
+\hline
+   \& \textbf{NOTE:}\textit{This Mimikatz command retrieves the NTLM hash for the domain’s Administrator account which can be used for Pass-the-Hash (PtH) attacks or to forge Kerberos service tickets.} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\subsubsection{Defense Tactic}
+
+To detect DCSync attempts, configure your \textit{Security Information and Event Management (SIEM)} to alert on Event ID 4662 for directory replication operations. Below, a PowerShell command defenders can use to monitor for incoming or ongoing attacks:
+
+\texttt{Get-WinEvent -LogName Security | Where-Object \{ \$\_.Id -eq 4662 -and \$\_.Properties -match "Replicating Directory Changes" \}}
+
+\textbf{NOTE:}\textit{This command scans the Windows Security event log for potential DCSync activities.}\subsection{High-Impact Actions Enabled by Privilege Escalation}
+
+{High-Impact Actions Enabled by Privilege Escalation}
+
+Resetting the password of any privileged user—such as members of the \textit{C-suite} or IT administrators—enables attackers to log in directly as those individuals, accessing confidential information, email, and protected systems.
+
+\subsubsection{Attack Tactic}
+\texttt{Set-ADAccountPassword -Identity "ceoUser" -NewPassword (ConvertTo-SecureString "NewP@ssw0rd!" -AsPlainText -Force) -Reset}
+
+NOTE:\textit{This PowerShell command resets the password of the CEOs account, allowing the attacker to impersonate them.}
+
+\subsubsection{Defense Tactic}
+Below is another PowerShell command that can be used by defenders to audit event logs, looking and combing through them for any suspicious log entries:
+
+\texttt{Get-EventLog -LogName Security -InstanceId 4724}
+
+\texttt{\textbf{NOTE:}\textit{The PowerShell command above checks for “An attempt was made to reset an account’s password” events, critical for incident response.}}
+
+\subsection{Beyond Users and Groups: Exploiting Trusts, Schema, and Policies}
+
+Attackers with escalated privileges can modify trust relationships or change the \textit{Active Directory schema}, both of which have domain-wide impact. Manipulating \textit{Group Policy Objects (GPOs)} can allow mass malware deployment or total administrative workstation takeover.
+
+Below is an attack example of a GPO (Group Policy Object) hijacking attack.
+
+\subsubsection{Attack Tactic}
+
+
+\begin{table}
+\centering
+
+\begin{tabular}{l}
+\\
+
+\end{tabular}
+
+\end{table}
+
+```
+
+\begin{table}
+\centering
+
+\begin{tabular}{l l}
+\hline
+   & \textbf{NOTE:}\textit{The command above attaches a malicious Group Policy Object (GPO) to the Admins Organizational Unit (OU), allowing the attacker-crafted policies to be pushed out to all administrative computers within the domain. To speed up the attack and to avoid having to wait the default 90-minute domain replication (}\textit{domrepl}\textit{) delay, the attacker then runs the }\textit{gpupdate }\textit{/force}\textit{ command from the Windows command-line interface (CLI), immediately triggering group policy updates to the targeted administrative machines. This ensures that the malicious changes take effect right away, significantly reducing the time needed to compromise the environment.} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\subsubsection{Defense Tactic}
+
+Restrict GPO management privileges and audit GPO links for unauthorized changes. Below is a PowerShell example that defenders can use to audit GPO changes.
+
+```
+
+\begin{table}
+\centering
+
+\begin{tabular}{l}
+Get-GPO -All | ForEach-Object \{ Get-GPInheritance -Target \$\_.DisplayName \} \\
+
+\end{tabular}
+
+\end{table}
+
+```
+
+\begin{table}
+\centering
+
+\begin{tabular}{l l}
+\hline
+   & \textbf{NOTE:}\textit{This command lists GPO inheritance and links, helping administrators and defenders detect suspicious changes within the domain structure.} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\subsection{Delegated Administration: The Hidden Danger}
+
+\textit{Delegation} in AD allows granular assignment of admin tasks but, if misconfigured, can silently introduce major risk. Attackers who gain control over delegated permissions (such as \textit{AdminSDHolder}) can perpetuate their access indefinitely.
+
+\subsubsection{Attack Tactic (AdminSDHolder ACL Manipulation)}
+
+```
+
+\begin{table}
+\centering
+
+\begin{tabular}{l}
+\$acl = Get-Acl "AD:\textbackslash{}CN=AdminSDHolder,CN=System,DC=corp,DC=local"\# Attacker modifies the \$acl to include their SID, then:Set-Acl -Path "AD:\textbackslash{}CN=AdminSDHolder,CN=System,DC=corp,DC=local" -AclObject \$acl \\
+
+\end{tabular}
+
+\end{table}
+
+```
+
+\begin{table}
+\centering
+
+\begin{tabular}{l l}
+\hline
+   & \textbf{NOTE:}\textit{This code gives persistent privileged access by updating protected groups’ permissions.} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\subsubsection{Defense Tactic}
+
+Regularly audit AdminSDHolder ACLs and alert on any changes.
+
+\textbf{PowerShell Example:}
+
+```
+
+\begin{table}
+\centering
+
+\begin{tabular}{l}
+(Get-Acl "AD:\textbackslash{}CN=AdminSDHolder,CN=System,DC=corp,DC=local").Access | Format-List \\
+
+\end{tabular}
+
+\end{table}
+
+```
+
+\begin{table}
+\centering
+
+\begin{tabular}{l l}
+\hline
+   & \textbf{NOTE:}\textit{Use the code above to verify only authorized accounts have permissions on AdminSDHolder.} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\subsection{Denial of Service (DoS) and Service Disruption}
+
+With domain-level privileges, attackers can launch \textit{denial of service} attacks on AD-integrated services, such as \textit{Azure AD Connect}, by modifying or deleting critical configuration.
+
+Attack Tactic
+
+```
+
+Remove-ADSyncConnector -Name "AzureADConnector"
+
+```
+
+\begin{table}
+\centering
+
+\begin{tabular}{l l}
+\hline
+   & \textbf{NOTE:}\textit{This command would disrupt cloud synchronization, cutting off hybrid identity services.} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\subsubsection{Defense Tactic}
+
+To safeguard critical directory integration points - such as synchronization connectors for Azure
+
+\subsection{Conclusion: Securing the Core}
+
+Privilege escalation in Active Directory can be catastrophic if left unchecked. Through real attack and defense examples, it is clear that every aspect of AD—from account management to schema and GPO control—must be tightly monitored, regularly audited, and limited to only those who absolutely need it. By understanding both the methods attackers use and the defensive tools available, defenders and security professionals can take informed, practical steps to secure their foundational directory services—and, by extension, the entire enterprise.
+
+ 

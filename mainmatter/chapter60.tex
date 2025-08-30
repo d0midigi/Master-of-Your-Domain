@@ -1,0 +1,135 @@
+Active Directory Exploitation: Techniques and Defenses
+
+Active Directory Exploitation and Lateral Movement Briefing
+1. Introduction to Active Directory
+Active Directory (AD) is a hierarchical directory service developed by Microsoft that stores information about network objects such as user accounts, computers, and shared resources. It provides methods for storing and making this data available to network users and administrators, offering centralized user and rights management. AD is crucial for organizations of all sizes, allowing for better control over computer and user configurations, and enhancing network security by integrating logon authentication and access control. However, due to its complexity and granular management layer, Active Directory also presents a "very large attack surface."
+
+2. Active Directory Enumeration
+Active Directory enumeration is the initial phase in security assessments and penetration testing, where attackers gather information about the AD infrastructure. This process aims to extract valuable data such as user accounts, group memberships, system configurations, and other relevant network information, which is critical for understanding the network's structure and identifying potential attack vectors.
+
+2.1. Enumeration Techniques and Tools
+Enumeration can be performed manually or with automated tools. Key types of enumeration include:
+
+User Enumeration: Identifying valid user accounts. This can involve brute-force attacks, exploiting differential system responses to valid vs. invalid usernames, or using publicly available user lists. Successful user enumeration can lead to "privilege escalation, phishing and social engineering," and "lateral movement."
+Computer Enumeration: Discovering and cataloging active computers, their configurations, and services. This helps understand the network structure and identify potential targets.
+Share Enumeration: Identifying and cataloging shared resources (files, folders) and their permissions. Improperly configured shares can expose sensitive data and offer unauthorized entry points.
+LDAP Enumeration: Utilizing the Lightweight Directory Access Protocol to query Active Directory for users, groups, computers, and privileged accounts. LDAP enumeration tools can scan for LDAP services, list user accounts, and extract domain details.
+Common Tools for Enumeration:
+
+Nmap: A versatile network scanner for identifying active hosts, open ports, and services.
+Enum4linux: A Linux tool for enumerating Windows Active Directory and SMB services, including LDAP.
+PowerView.py: A Python script for Active Directory reconnaissance, enabling detailed enumeration of users, groups, and computers.
+CrackMapExec (CME): A post-exploitation tool for network enumeration and lateral movement.
+Kerbrute: A tool for Kerberos pre-authentication brute-forcing and user enumeration.
+Impacket: A collection of Python classes for programmatic access to network protocols, providing tools for enumeration and exploitation.
+Windapsearch: A Python script that uses LDAP queries for enumerating users, groups, computers, and privileged accounts.
+Ldapsearch: A command-line tool for performing LDAP queries.
+Rpcclient: A command-line tool for interacting with Microsoft RPC services, useful for enumerating domain users and groups.
+BloodHound: A powerful Active Directory reconnaissance tool that visualizes trust relationships, group memberships, and potential attack paths, helping identify privilege escalation opportunities. Its Python ingestor, bloodhound.py, collects AD data for analysis in the BloodHound GUI.
+2.2. Risks and Mitigation of Enumeration Attacks
+While legitimate for administrative purposes, unauthorized enumeration can lead to:
+
+Unauthorized Information Disclosure: Revealing sensitive data about the network infrastructure.
+Privilege Escalation: Exposing high-privilege accounts and administrative groups that attackers can target.
+Amplification of Attack Surface: Providing attackers with a clear roadmap of potential high-value targets.
+Impact on Network Security: Facilitating various attacks like spear-phishing and lateral movement.
+Mitigation Strategies:
+
+Strict Access Controls: Limit enumeration activities to authorized personnel only.
+Network Segmentation: Isolate critical systems to reduce the potential impact of a successful enumeration.
+Regular Audits: Continuously identify and remediate vulnerabilities and misconfigurations that could be exposed.
+Incident Response Plan: Have a well-defined plan to address and mitigate unauthorized enumeration incidents quickly.
+Anonymity in Error Messages: Return generic error messages (e.g., 401 or 404) for both non-existent and unauthorized resources to avoid confirming account existence.
+Avoid Sequential IDs: Use GUIDs (Globally Unique Identifiers) instead of predictable sequential IDs for resources to make guessing harder.
+Never Trust the Frontend: All validation and business logic should be handled on the backend, as frontend data can be easily manipulated by attackers.
+3. Privilege Escalation Techniques
+Once initial access or enumeration yields valuable information, attackers often aim to escalate privileges to gain higher levels of control within the domain.
+
+3.1. AS-REP Roasting
+AS-REP Roasting targets user accounts that do not require Kerberos pre-authentication. In this attack, an attacker requests a Ticket Granting Ticket (TGT) from the Key Distribution Center (KDC) without knowing the user's password. If pre-authentication is disabled for the user, the KDC issues a TGT encrypted with the user's NTLM hash. The attacker can then capture this TGT and "crack the user's password hash offline" using tools like hashcat or John the Ripper to recover the plaintext password.
+
+Mitigation: Ensure pre-authentication is enabled for all user accounts in Active Directory, implement strong password policies, and monitor authentication logs for suspicious activities.
+
+3.2. Kerberoasting
+Kerberoasting is an attack technique to obtain Ticket Granting Service (TGS) tickets for service accounts and then crack them offline to retrieve the service account's password hash. Service tickets are encrypted with the service account's NTLM hash, and the KDC does not verify the user's identity when issuing these tickets. Attackers can request service tickets for services (e.g., Microsoft SQL Server) that use service accounts, capture the encrypted TGS, and crack the hash offline to gain the plaintext password.
+
+Mitigation: Use strong, complex passwords for service accounts and regular rotation of these passwords.
+
+3.3. NTLM Relay Attacks
+NTLM relay attacks involve an attacker intercepting NTLM authentication messages between a client (victim) and a server (target) and relaying them to another server to establish a session or perform actions on behalf of the victim. NTLM is a legacy protocol that remains widely used, and "relay attacks are the easiest way to compromise domain-joined hosts nowadays, paving a path for lateral movement and privilege escalation."
+
+Key Concepts:
+
+NTLMv1 vs. NTLMv2: NTLMv1 is susceptible to rainbow table attacks and easier hash recovery due to weaker encryption and lack of salting. NTLMv2 is more secure, incorporating HMAC-MD5 and additional information like timestamps and client challenges to prevent rainbow table attacks.
+LmCompatibilityLevel: A registry value controlling NTLM version support. Misconfigurations (e.g., enabling NTLMv1 as a client on DCs) can have severe consequences.
+Authentication Coercion: Techniques like the Printer Bug (abusing Print Spooler service) and PetitPotam (abusing Encrypting File System service) can force a victim machine to authenticate to an attacker-controlled host without user interaction. Attackers can also drop specially crafted files (e.g., .url, .lnk) in strategic file shares to trigger authentication attempts when a user browses the folder.
+Relay Targets:
+
+SMB (Port 445): SMB servers do not support channel binding with NTLM, making them vulnerable to relay attacks even if the victim negotiates signing. Attackers can gain access to shares (C$, ADMIN$), dump LSA secrets, or move laterally via Service Control Manager.
+ADCS (Certificate Authority Web Enrollment): If ADCS web enrollment is available over HTTP or HTTPS with EPA (Enhanced Protection for Authentication/channel binding) disabled, an attacker can relay NTLM authentication to obtain a certificate for the victim, then use it for authentication (e.g., PKINIT) to impersonate the victim.
+LDAP/LDAPS: While more complex, LDAP/LDAPS can be targeted. The Web Client service, when running, can trigger WebDAV traffic, which doesn't negotiate signing, making it compatible with relaying to LDAP. This can allow for Resource-Based Constrained Delegation (RBCD) or Shadow Credentials attacks.
+Mitigation for NTLM Relay: Enforce SMB signing, enable EPA/channel binding for services running over TLS (LDAPS, HTTPS), and ensure privileged users are part of the Protected Users security group (which restricts NTLM usage and prevents caching of NT hashes in LSA memory).
+
+3.4. SQL Server Exploitation
+SQL Server instances can be exploited for privilege escalation. Attackers can brute-force SQL server logins, and if xp\_cmdshell is enabled (or can be enabled by an attacker with sufficient privileges), they can execute arbitrary commands on the underlying operating system. If SeImpersonatePrivilege is enabled for the SQL service account (common for OS service accounts), tools like PrintSpoofer.exe can be used to elevate to a SYSTEM shell. SQL Server databases configured as "Trustworthy" (TRUSTWORTHY property set to ON) are also vulnerable, as this can allow sysadmin privilege escalation through malicious assemblies.
+
+3.5. Domain Trust Exploitation
+Active Directory domains can have trust relationships (e.g., parent-child trusts, forest trusts) that allow users from one domain to access resources in another. Attackers can leverage these trusts for lateral movement and privilege escalation by impersonating users or groups with foreign group membership. For example, if a user from a trusted domain is a member of a BUILTIN\textbackslash{}Administrators group in the trusting domain, they can be used to gain administrative access across the trust.
+
+3.6. Resource-Based Constrained Delegation (RBCD)
+RBCD is a Kerberos feature that allows a service account to impersonate users to access resources on behalf of that user, but with specific constraints. An attacker who gains control over a computer object can modify its msDS-AllowedToActOnBehalfOfOtherIdentity attribute to add a controlled (fake) computer account to the target's trust list. This enables the fake computer account to impersonate users to the target, leading to potential system compromise on the target server.
+
+3.7. Printer Bug Flaw (SpoolSample.exe)
+The Printer Bug (MS-RPRN protocol flaw) allows any domain user to force a print server to authenticate to an arbitrary host controlled by the attacker over SMB. This can be combined with unconstrained delegation to force a Domain Controller to authenticate to an attacker-controlled host, potentially allowing the capture of TGTs for privileged users that log on.
+
+3.8. LLMNR and NBNS Poisoning
+Link-Local Multicast Name Resolution (LLMNR) and NetBIOS Name Server (NBNS) are name resolution services used when DNS is unavailable. They broadcast queries to all devices on a local network, and if a device has the hostname, it responds with its IP. These protocols are insecure because they transmit usernames and password hashes, making them vulnerable to poisoning attacks where an attacker can impersonate a requested host and capture authentication attempts.
+
+4. Active Directory Persistence
+Attackers aim to maintain access to a compromised Active Directory environment.
+
+4.1. Golden Ticket Attack
+The Golden Ticket attack allows attackers to forge and sign Ticket Granting Tickets (TGTs) using the krbtgt account's password hash. These forged tickets are considered valid by AD servers, enabling an attacker to impersonate any user, including a Domain Administrator, even if the user does not exist. This provides persistent administrative access to the domain.
+
+Required Elements: Domain Name, Domain SID, Username to Impersonate, krbtgt's hash.
+
+4.2. Silver Ticket Attack
+The Silver Ticket attack uses a machine account's NTLM hash (the hash of the SYSTEM account) to forge Ticket Granting Service (TGS) Kerberos tickets. Unlike Golden Tickets, which grant access to the entire domain, Silver Tickets grant access to specific services on a single machine. This attack bypasses the Domain Controller, making it stealthier as it leaves fewer logs.
+
+4.3. AdminSDHolder and ACL Attack
+Active Directory uses the AdminSDHolder object and the Security Descriptor propagator (SDProp) process to protect privileged accounts and groups. AdminSDHolder has a unique Access Control List (ACL) that acts as a template for permissions on built-in privileged AD groups. SDProp runs every 60 minutes (by default) to ensure consistency, overwriting any unauthorized modifications to these protected objects' ACLs with the AdminSDHolder's ACL.
+
+Abuse: Attackers can poison AdminSDHolder's ACL by injecting a backdoor into it. This grants specific permissions (e.g., GenericAll, Reset Password, DCSync) to a chosen user, and these permissions are then propagated to all protected groups, effectively providing persistent access to domain administration. This method is stealthier than directly adding a user to a Domain Admins group.
+
+5. Incident Response and Prevention
+Effective cybersecurity requires proactive measures and a robust incident response plan.
+
+5.1. Windows Hardening Best Practices
+Hardening Windows systems reduces vulnerabilities and the attack surface. Key practices include:
+
+Firewall Configuration: Enable all profiles, disable inbound by default, and only enable inbound/outbound rules for necessary services. Be wary of remote access protocols like Telnet, SSH, and RDP.
+Service Management: Disable unnecessary services and executables that run on startup/logon.
+User Account Control (UAC): Enable Admin Approval Mode for administrators.
+Patch Management: Promptly apply all appropriate patches, hotfixes, and service packs.
+Antivirus: Ensure Windows Defender Antivirus is enabled and up to date.
+Password Policy: Implement strong password policies (min 8-64 chars, complexity, max age 90 days, no reversible encryption).
+Account Lockout Policy: Configure account lockout duration and thresholds for failed attempts.
+Network Access Restrictions: "Do not allow anonymous enumeration of SAM accounts" and "shares" (restrictanonymous, restrictanonymoussam registry keys).
+LAN Manager Authentication Level: Set to "Send NTLMv2 response only. Refuse LM \& NTLM" (lmcompatibilitylevel registry key value 5).
+Disable Admin Autologon: Prevent automatic login for administrative accounts.
+Disable PlainTextPassword: Prevent plain text password storage.
+Disable IPv6: If not needed, disable IPv6.
+Disable Remote Desktop Protocol (RDP): If not needed.
+5.2. Incident Response Plan
+An incident response plan outlines the steps an organization takes to identify, contain, mitigate, and recover from cybersecurity incidents. It involves:
+
+Preparation: Developing and maintaining a plan, assigning roles (e.g., legal, technical teams), and establishing clear communication protocols.
+Detection \& Analysis: Identifying suspicious activities using log sources (host event logs, authentication logs, network traffic), threat intelligence feeds, and proactive monitoring measures (NIDS, network flow monitoring, endpoint monitoring, vulnerability scanning). Threat modeling helps identify potential attack paths.
+Containment: Rapidly isolating affected systems and networks to prevent further spread. This includes capturing forensic images, updating firewalls, blocking unauthorized access, closing specific ports, and rotating credentials.
+Eradication: Eliminating the root cause of the incident and removing all malicious components.
+Recovery: Restoring affected systems and services to normal operation.
+Post-Incident Activity: Conducting a post-mortem analysis to identify lessons learned and improve future response capabilities.
+Key Distinction: Incident Response (IR) vs. Digital Forensics (DF)
+
+IR: "Immediate and aimed at stopping threats and reducing impact during an incident to resume normal business operations." Highly time-sensitive.
+DF: "About precision—collecting, preserving, and analyzing evidence for legal or potential legal matters (civil or criminal)." Focuses on strict chain of custody and legal admissibility standards.

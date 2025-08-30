@@ -1,0 +1,1899 @@
+
+\section{\textbf{Active Directory LDAP Reconnaissance Techniques}}
+
+Abstract
+
+\subsection{\textbf{LDAP Reconnaissance}}
+
+\textit{\textbf{Shortform:}}\textit{ Querying LDAP to gather information about users, groups, computers, and trust relationships.}
+
+\textbf{Introduction to LDAP Recon + Why Attackers Love It}
+
+\textbf{This segment establishes the mindset, motivations, and strategic rationale behind LDAP-based recon - then we get tactical.}
+
+If you’re inside a Windows domain, and you’re not doing LDAP reconnaissance, you’re walking blind. Period. Active Directory is a goldmine, and LDAP is your proverbial shovel. It doesn’t matter how you got in at this point - phishing, misconfigured services, stolen credentials. The moment you land on a domain-joined machine, LDAP is your roadmap. Who’s in charge. Who’s logged in. What groups have power. What machines are exposed. All of it. And the best part? It’s not stealthy. It’s\textit{ expected behavior.}
+
+LDAP, or Lightweight Directory Access Protocol, is how Windows domains store and retrieve identity data. It’s not some obscure, niche service. It’s core to how Windows works. When users log in, get Group Policy, or resolve user information - LDAP is doing the legwork behind the scenes. Which means your queries blend in with the background noise of legitimate operations. The domain doesn’t blink when you poke it.
+
+As an attacker, that’s the dream. You’re not breaking in anymore. You’re \textit{enumerating. }Planning. Calculating. You’re taking stock of the battlefield. And LDAP gives you full access to Active Directory metadata without needing privileged credentials. As long as you remain authenticated (and you usually are if you’ve compromised a workstation or user account), LDAP will answer each and every one of your questions.
+
+What kind of questions, you ask? Everything from \textit{“Who are the domain admins?” }to \textit{“Which machines do they log into?” }to \textit{“What are the SPNs I can roast?” }to \textit{“Where’s that juicy file share?” }You get the context. And context turns an opportunistic compromise into domain domination.
+
+It gets better. LDAP access isn’t logged by default. You can spray the entire directory with `ldapsearch`, PowerView, or even simple scripts and no one would be the wiser - unless they’ve gone out of their way to configure auditing for that specific LDAP traffic. Spoiler Alert: Most environments have not. If there’s no reason to monitor for that type of traffic, there’s no point in creating monitoring policies or configurations for it.
+
+Let’s make something clear, however: LDAP reconnaissance isn’t “hacking” in the traditional sense. You’re not dropping any payloads. You’re not exploiting vulnerabilities. You’re asking questions. Politely. Using Microsoft’s own protocol. And if you know the right questions to ask, the answers can tell you exactly where to go next - and who to take with you.
+
+So what’s the plan? First, we gather targets: users, groups, computers, services, ports, protocols, applications, the whole gamut. Then we look for escalation paths: privileged accounts, misconfigured ACLs, vulnerable GPOs. Finally, we identify the routes: which workstations are open, who’s logged in where, what tickets are available for abuse. That’s LDAP recon in a nutshell. It’s not just scanning. It’s \textit{planning a takeover.}
+
+In this next section, we’ll start with \textit{user enumeration: }how to pull user lists, analyze attributes, and identify who matters. I’ll show you what to look for and how to script it - with tools like PowerView, `ldapsearch`, and raw queries.
+
+\textbf{Enumerating Domain Users - Who’s Here and Who Matters}
+
+In this section, we get tactical. This section is all about \textit{user enumeration} - the foundation of LDAP recon. Because once you know who the users are, you know who to watch, who to phish, who to impersonate, who to charm, and most importantly, \textit{who holds the keys to the castle.}
+
+Once you’re inside a domain, the first question you need to ask yourself and answer is simple: \textit{“who’s in the directory?” }Every domain user - real, dormant, disabled, admin, low-privilege - is cataloged in Active Directory. And guess what? By default, any authenticated user can query for them. You don’t need elevated permissions. All you need is basic access. If you’re already on a domain-joined workstation with a user token, you’re good to go!
+
+Why start with users? Why not go for the gusto? Because in a Windows domain, everything pivots around identity. File shares, permissions, GPOs, RDP access - they’re all granted based on who you are and what groups you belong to. If you want to move laterally or escalate, you need to \textit{know your targets. }And LDAP gives you a full contact list.
+
+Let’s talk tools for a brief moment. If you’re on Windows and using  , PowerView is your best friend. It’s part of \textbf{PowerSploit}, and it lets you enumerate users with ease. Here’s the most basic command to list all users:
+
+Get-DomainUser
+
+This command will dump every user object in the domain. Want to make it useful? Start filtering:
+
+Get-DomainUser -Properties samaccountname,description,lastlogon |
+
+%    Where-Object \{ \$_.lastlogon -gt 0 \} |
+    Sort-Object lastlogon -Descending
+
+Now you’re seeing who is \textbf{active. }These are the people you care about. The ones logging in actively. The ones worth tracking.
+
+Looking for privileged accounts? Parse for naming conventions like `admin,` `svc`, `backup`, or `DA.` You can also look for specific attributes like `adminCount = 1`, which makes accounts protected by the `AdminSDHolder` process. That’s gold.
+
+Get-DomainUser -LDAPFilter "(adminCount=1)"
+
+The command above gives you every user that’s part of a protected group (Domain Admins, Enterprise Admins), even if the group membership was removed but the flag remained. Think of it like digital residue - evidence that the account was, or still might be, dangerous.
+
+Prefer command-line tools from a *nix box or Cygwin shell? You’ve got `ldapsearch`. Here’s how to use it:
+
+%ldapsearch -x -H ldap://dc.corp.local -D "corp\textbackslash{}\lowprivuser" -w 'Password123!' -b "dc=corp,dc=local" "(objectClass=user)"
+
+That pulls every user object. What it cleaner?
+
+%ldapsearch -x -H ldap://dc.corp.local -D "corp\textbackslash{}\lowprivuser" -w 'Password123!' -b "dc=corp,dc=local" "(objectCategory=person)" sAMAccountName displayName description
+
+That gives you usernames, real names, and descriptions. Those descriptions? Often goldmines. Admins love to write things like:
+
+\begin{itemize}
+    \item `”Backup account for DCs”`
+    \item `”Service account for SQL Server”`
+    \item `”Temporary Domain Admin”`
+\end{itemize}
+
+Read them. Flag them. Hunt them.
+
+You can even pull password policy information to find accounts that \textit{don’t expire passwords:}
+
+%ldapsearch -x -H ldap://dc.corp.local -D "corp\textbackslash{}%\lowprivuser" -w 'Password123!' -b "dc=corp,dc=local" "(!userAccountControl:1.2.840.113556.1.4.803:=65536)"
+
+That’s how you find accounts with the \texttt{DON'T\_EXPIRE\_PASSWORD} flag set. Perfect for persistence.
+
+If you are using C\# or .NET payloads, use \texttt{System.DirectoryServices} to script it. For example, using \texttt{System.DirectoryServices;}
+
+\texttt{DirectoryEntry entry = new DirectoryEntry("LDAP://DC=corp,DC=local");
+DirectorySearcher searcher = new DirectorySearcher(entry);
+searcher.Filter = "(objectClass=user)";
+foreach (SearchResult result in searcher.FindAll()) \{
+    Console.WriteLine(result.Properties["samaccountname"][0]);
+\}}
+
+Does it look clean? Yes. Will it be flagged? Probably not. It’s all native API use.
+
+Now from here. your goal is simple: build a short list. List who are the high-value users. Who are the loud admins? Who runs scheduled tasks or owns GPOs? You will use this list to guide your every move that comes here and after.
+
+\textbf{Enumerating Groups - Mapping the Power Structures in AD}
+
+In this section, we move from individual accounts to \textit{group structures} - because in Active Directory, \textit{power hides in groups. }Admin rights. RDP access. GPO ownership. You don’t always get it by being a domain admin either. Sometimes you inherit it from a group no one has looked at in years.
+
+Once you have pulled the list of users, your next move is to \textbf{map out the groups}. Groups in Active Directory control almost everything: file share access, script deployment, firewall rules, registry permissions, GPO application—you name it. But more important, groups also contain \textbf{nested privilege}. A user might look harmless on the surface, but if they’re buried in a group that inherits from Administrators, they’re sitting on a gold mine.
+
+Start with PowerView. It makes this easy:
+
+\texttt{Get-DomainGroup}
+
+This pulls all groups from AD. But raw data is just noise. What you want is \textbf{signal}. Start looking for high-privilege groups:
+
+%Get-DomainGroup | Where-Object \{ \$_.Name -match "admin|schema|enterprise|domain|backup" \}
+Some targets to watch:
+\begin{itemize}
+    \item \textbf{Domain Admins} — obvious.
+
+    \item \textbf{Enterprise Admins} — god mode across the forest.
+
+    \item \textbf{Administrators} — Built-in local admin access on DCs.
+
+    \item \textbf{Backup Operators} — often overlooked, but can back up (and restore) sensitive data.
+
+    \item \textbf{Account Operators} — can create users or modify groups.
+
+    \item \textbf{Server Operators} — often can restart services or access consoles.
+
+\end{itemize}
+Next, pull group members. For example:
+
+Get-DomainGroupMember -Identity "Domain Admins"
+
+Want to get recursive? Check nested groups with:
+
+
+Get-DomainGroupMember -Recurse -Identity "Administrators"
+
+This shows you the real privilege path. An attacker doesn’t care if svc-sql isn’t a DA. If it’s a member of a group that’s a member of a group that’s a DA—it’s a DA. That’s what you look for.
+
+In ldapsearch, here’s how you pull group objects:
+
+
+%ldapsearch -x -H ldap://dc.corp.local -D "corp\textbackslash{}\lowprivuser" -w 'Password123!' -b "dc=corp,dc=local" "(objectClass=group)" cn member
+
+This gives you group names (cn) and their members. To trace group membership, you’ll often see memberOf attributes on user objects, like this:
+
+ldapsearch -x -H ldap://dc.corp.local -D "corp\textbackslash{}%\lowprivuser" -w 'Password123!' -b "dc=corp,dc=local" "(sAMAccountName=john.doe)" memberOf
+
+Sometimes, these memberships are nested five, ten layers deep. That’s where \textbf{BloodHound} comes in. You can use \textbf{SharpHound} to dump group relationships in bulk:
+
+SharpHound.exe -c GroupMembership
+
+Import it into the BloodHound GUI, and you get visual graphs that show how low-privilege users inherit access to sensitive resources via group nesting. One click, and you see, for example, that svc-printer01 is effectively a domain admin because of a convoluted group chain.
+
+Looking for GPO-related privilege? Use this:
+
+Get-DomainObjectAcl -SearchBase "OU=Domain Controllers,DC=corp,DC=local" -ResolveGUIDs | 
+
+%Where-Object \{ \$_.IdentityReference -match "Domain Users" -and \$_.ActiveDirectoryRights -match "GenericAll|WriteDACL" \}
+
+This tells you if a group like "Domain Users" has write rights to an OU that applies to critical systems. If that’s true, any member of that group can \textbf{backdoor GPOs}—which means compromise.
+
+You can also hunt for \textbf{unusual groups}. Think ones with five members, obscure names, or descriptions like “OldAdminOverride” or “OpsOverride2020.” Admins love to make temporary groups that become permanent. And no one audits them.
+
+Another trick? Find groups with no descriptions. These are often hidden gems that no one remembers exist:
+
+%Get-DomainGroup | Where-Object \{ \$_.Description -eq \$null \}
+
+Now cross-reference these with group members, and you’ll find users who have privilege but don’t look privileged.
+
+Why does all this matter? Because the real privilege in AD isn’t always obvious. It’s buried in \textbf{group nesting}, \textbf{delegation rights}, and \textbf{access control lists}. LDAP gives you the blueprint to dig it all up.
+
+\textbf{Enumerating Computers - Picking the Machines That Matter}
+
+In this section, we shift focus to \textit{computer enumeration - }because understanding who has access is only half the battle. Now you need to know \textit{where} they access. Not every machine is created equal, and LDAP tells you which ones are \textit{stepping stones}, which are \textit{targets, }and which are just pure noise.
+
+Once you’ve mapped users and groups, it’s time to plot your route across the domain. That starts with \textbf{enumerating the machines}. You don’t need Nmap. You don’t need to touch the network. LDAP can tell you everything: hostname, OS version, when it last authenticated, which users log in often, and even if it’s running as a DC. Think of it as passive recon with surgical precision.
+
+Using \textbf{PowerView}, you can enumerate every computer in the domain like this:
+
+
+Get-DomainComputer
+
+That’ll dump the full list. But raw lists are for amateurs. You want filters—because you’re looking for \textbf{targets}.
+
+Want to find domain controllers?
+
+Get-DomainComputer -Properties operatingSystem |
+
+%    Where-Object \{ \$_.operatingSystem -like "*Server*" -and \$_.operatingSystem -match "Domain Controller" \}
+
+Want to find machines running legacy OSes?
+
+\texttt{Get-DomainComputer -Properties operatingsystem}
+
+%    Where-Object \{ \$_.operatingsystem -match "Windows 7|Windows Server 2008" \}
+
+Old OS versions usually mean weak configurations, poor patching, and \textbf{easy wins}.
+
+Now let’s talk about activity. You don’t want cold machines. You want \textbf{hot ones}—the boxes users actively log into. LDAP stores lastLogonTimestamp, which is replicated across DCs and shows you when the machine last authenticated.
+
+
+Get-DomainComputer -Properties lastLogonTimestamp |
+
+%    Where-Object \{ \$_.lastLogonTimestamp -ne \$null \} |
+
+    Sort-Object lastLogonTimestamp -Descending
+
+Machines at the top? They’re active. They’re connected. They’re \textbf{likely to have valid tokens}.
+
+Want to get even better signal? Filter by description fields. Admins often label servers like this:
+
+\begin{itemize}
+    \item “SQL Production”
+
+    \item “FileShare”
+
+    \item “Dev-JumpBox”
+
+    \item “Backup\_DC2”
+
+\end{itemize}
+That’s your blueprint.
+
+Get-DomainComputer -Properties description |
+
+%\begin{lstlisting{Where-Object \{ \$_.description -match "SQL|Jump|Share|Backup" \}
+%\end{lstlisting}
+Each of those may host valuable credentials in memory, sensitive data, or lead to privileged access.
+If you’re using ldapsearch, the syntax looks like this:
+%ldapsearch -x -H ldap://dc.corp.local -D "corp\textbackslash{}%\lowprivuser" -w 'Password123!' -b "dc=corp,dc=local" "(objectClass=computer)" cn operatingSystem lastLogonTimestamp description
+And in C\#:
+
+DirectorySearcher searcher = new DirectorySearcher("(\&(objectClass=computer))");
+
+searcher.PropertiesToLoad.Add("cn");
+
+searcher.PropertiesToLoad.Add("operatingSystem");
+
+searcher.PropertiesToLoad.Add("lastLogonTimestamp");
+
+Want to filter further? Find \textbf{machines with logged-on privileged users}. BloodHound makes this trivial with session collection:
+
+SharpHound.exe -c Sessions
+
+But even without SharpHound, you can infer targets by analyzing \textbf{who owns what}. If DA\_john is logged in somewhere, and that machine is listed in AD, you can bet it’s worth checking for open RDP, SMB, or tokens in memory.
+
+Also watch for naming patterns. Admins often name critical boxes predictably:
+
+\begin{itemize}
+    \item dc01, dc02
+
+    \item fs01 (File Server)
+
+    \item sccm, wsus, vcenter
+
+    \item mgmt-01, admin-box
+
+\end{itemize}
+When you see that pattern, flag it. That’s where the crown jewels sit.
+
+Want to go next level? Extract \textbf{servicePrincipalName} (SPN) values from machines to identify Kerberoastable accounts:
+
+Get-DomainComputer -Properties servicePrincipalName |
+
+%    Where-Object \{ \$_.servicePrincipalName -ne \$null \}
+
+Each SPN mapped to a service account is a ticket you can roast. We'll go deeper into that in a later chunk.
+
+To sum it up: LDAP gives you visibility into every machine’s metadata—without touching the machine itself. No scanning. No alerts. Just surgical targeting.
+
+\textbf{Identifying High-Value Targets - The Privilege Path You’re Really After}
+
+Here is where everything starts to click. You’ve got the users, the groups, the machines. Now it’s time to hunt \textit{high-value targets} - because privilege is your finish line, and LDAP shows you \textit{how to get there without tripping any alarms.}
+
+This is where you separate script kiddies from real operators. A list of users and machines is just data. What you want is \textbf{a map to the top}—a route from wherever you are to wherever the power is. That means figuring out who the real players are in the domain. Not just Domain Admins. \textbf{Who has delegated rights? Who owns GPOs? Who can write to privileged objects?} Those are your targets.
+
+Start by identifying accounts with adminCount = 1. We touched on this earlier, but here’s why it matters: AdminSDHolder is a mechanism that stamps protected groups and their members with security descriptors. When adminCount is set to 1, the account is treated as privileged—even if someone forgot to remove it from Domain Admins months ago.
+Get-DomainUser -LDAPFilter "(adminCount=1)"
+
+That one line tells you who’s ever been considered privileged. It’s one of the most overlooked breadcrumbs in AD recon.
+
+Next: find \textbf{service accounts}. These accounts are often tied to SPNs, have no password expiration, and sometimes run as SYSTEM on critical boxes. Easy persistence. Easy hash dumping. Easy privilege escalation.
+
+Filter them like this:
+Get-DomainUser -Properties samaccountname,servicePrincipalName,userAccountControl |
+
+Where-Object \{ \$\_.servicePrincipalName -ne \$null -or (\$\_.userAccountControl -band 0x10000) \}
+Look for DONT\_EXPIRE\_PASSWORD and TRUSTED\_FOR\_DELEGATION. The former means long-term access. The latter means full impersonation.
+
+Then look at \textbf{group policy owners}. Anyone who can write to a GPO that applies to servers can inject logon scripts, registry keys, or scheduled tasks. That’s privilege escalation with one line of code.
+
+Use PowerView:
+
+Get-DomainObjectAcl -SearchBase "OU=Domain Controllers,DC=corp,DC=local" -ResolveGUIDs |
+
+Where-Object \{ \$\_.ActiveDirectoryRights -match "GenericAll|WriteDACL|WriteOwner" \}
+This tells you which users or groups can modify GPOs linked to domain controllers. You don’t need to be a DA if you can \textbf{inject payloads into their policy path}.
+
+Now pivot to \textbf{ACL abuse}. LDAP lets you enumerate every security descriptor in AD. You can hunt for:
+
+\begin{itemize}
+    \item GenericAll (full control)
+
+    \item GenericWrite (property control)
+
+    \item WriteDACL (modify ACLs)
+
+    \item WriteOwner (change object owner)
+
+\end{itemize}
+With PowerView:
+
+Find-InterestingDomainAcl -ResolveGUIDs
+
+This command alone will find \textbf{non-admin users who have admin-like power}. And it happens all the time. Helpdesk accounts, old contractors, even automation bots get added to ACLs to “make things easier.” That’s your in.
+
+Next: watch for \textbf{SIDHistory} abuse. Sometimes, accounts are migrated from other domains and bring their SID with them. If a user has SIDHistory set to the SID of a privileged account, they’ll inherit that access silently.
+
+Check with:
+Get-DomainUser -Properties sIDHistory |
+
+Where-Object \{ \$\_.sIDHistory -ne \$null \}
+This is a stealthy privilege path that bypasses group membership checks. If the SIDHistory contains the SID of a Domain Admin, \textbf{that user is a Domain Admin}, even if they’re not in the group.
+
+Let’s not forget \textbf{logon scripts and service accounts}. If you can modify a GPO that applies to User Configuration, and that GPO contains a logon script path, you’ve got code execution as that user. Same with any service that auto-starts with a writable binary path.
+
+And then there’s \textbf{delegation}. Find users and computers with these flags:
+
+\begin{itemize}
+    \item TRUSTED\_FOR\_DELEGATION
+
+    \item TRUSTED\_TO\_AUTH\_FOR\_DELEGATION
+
+\end{itemize}
+Query like this:
+
+Get-DomainUser -TrustedToAuth
+
+Get-DomainComputer -TrustedToAuth
+
+Those accounts can impersonate others—sometimes even to domain controllers.
+
+Finally, when all else fails, look for \textbf{descriptions}. Admins love to leave notes in the AD description field. These are free hints.
+
+Get-DomainUser -Properties description |
+
+%Where-Object \{ \$_.description -match "admin|backup|svc|legacy" \}
+You’d be amazed how often you’ll find things like:
+
+\begin{itemize}
+    \item “Old admin account – don’t delete”
+
+    \item “DA override for backup script”
+
+    \item “Temporary domain join”
+
+\end{itemize}
+Every one of those is an opportunity.
+
+Bottom line: LDAP recon isn’t about finding the DA account and going straight for it. It’s about finding \textit{the weakest link in the privilege chain}—and LDAP shows you exactly where the chain is rusting.
+
+\textbf{Abusing Object Attributes - SPNs, Delegation Flags, and ACLs}
+
+In this section, we expose some of LDAPs most dangerous truths: how certain attributes - when abused - hand over the keys to the castle. This is where attackers move from recon to \textit{weaponizing} what they see, all by querying the directory like a polite insider.
+
+Let’s get blunt. Most attackers don’t need exploits to escalate in Active Directory. They just need LDAP. Because AD is more than a directory—it’s a \textbf{database full of misconfigurations}. And the object attributes it stores? They tell you \textbf{how and where to escalate}—with no shellcode, no malware, and no noise.
+
+Let’s start with the big one: \textbf{SPNs (Service Principal Names)}. If a user account has an SPN assigned, you can request a Kerberos ticket for that service, \textbf{offline crack the ticket}, and dump the user’s hash. That’s called \textbf{Kerberoasting}. And LDAP will give you the entire SPN list in seconds.
+
+In PowerView:
+
+Get-DomainUser -SPN
+
+That’s all it takes.
+
+Want more detail?
+
+Get-DomainUser -Properties samAccountName,servicePrincipalName,userAccountControl |
+
+%Where-Object \{ \$_.servicePrincipalName -ne \$null -and (\$_.userAccountControl -band 0x110) \}
+
+That filters for accounts with SPNs that also have DONT\_EXPIRE\_PASSWORD or are enabled. Ideal for Kerberoasting.
+
+You can do the same with ldapsearch:
+ldapsearch -x -H ldap://dc.corp.local -D "corp\textbackslash{}%\user" -w 'Password123!' \textbackslash{}
+
+  -b "dc=corp,dc=local" "(servicePrincipalName=*)" samaccountname servicePrincipalName
+
+Every result is potentially roastable. Now you just run Rubeus or GetUserSPNs.py from Impacket to request the ticket and crack it:
+
+bash
+
+ 
+
+GetUserSPNs.py -request corp.local/lowpriv:Password123!
+
+Boom. TGS ticket in hand, crack offline with hashcat.
+
+Next, delegation abuse. Three key attributes to check:
+
+\begin{enumerate}
+    \item TRUSTED\_FOR\_DELEGATION
+
+    \item TRUSTED\_TO\_AUTH\_FOR\_DELEGATION
+
+    \item msDS-AllowedToDelegateTo
+
+\end{enumerate}
+The first means the account can impersonate others to any service. The second means \textbf{constrained delegation with protocol transition}—and that's an attacker’s dream. Why? Because it lets you impersonate \textbf{any user}, including Domain Admins, \textbf{to any service listed}.
+
+Check for delegation in PowerView:
+Get-DomainUser -TrustedToAuth
+
+Get-DomainComputer -TrustedToAuth
+
+You’ll get a list of all accounts that can \textbf{act on behalf of others}. If you control one, you control any downstream resource.
+
+Want to see where they can delegate to?
+
+Get-DomainComputer -Properties msDS-AllowedToDelegateTo |
+
+%Where-Object \{ \$_.'msDS-AllowedToDelegateTo' -ne \$null \}
+That tells you which services are in scope. And once you control that account or machine, it’s game over.
+
+Now let’s talk \textbf{ACLs (Access Control Lists)}. Most defenders only think in terms of group membership. But attackers? They look at \textbf{who can write to who}. And LDAP lets you pull the full set of ACLs on any object in the domain.
+
+Use PowerView:
+
+Find-InterestingDomainAcl -ResolveGUIDs
+
+You’ll get a list of objects where low-privilege users have \textbf{GenericAll}, \textbf{WriteDACL}, or \textbf{WriteOwner}. That means:
+
+\begin{itemize}
+    \item They can change group membership
+
+    \item They can modify permissions
+
+    \item They can set owner and escalate
+
+\end{itemize}
+Let’s say svc-backup01 has GenericAll on Domain Admins. That means it can add itself to the group. It doesn’t need a DA session. It just writes the right bit in LDAP and it’s done.
+
+Even better? ACL changes don’t always trigger alerts. Because it’s "just metadata."
+
+Also, don’t sleep on msDS-AllowedToActOnBehalfOfOtherIdentity. This is used for \textbf{resource-based constrained delegation} (RBCD), and if misconfigured, lets you impersonate \textbf{anyone to a target machine}—if you control the delegating principal.
+
+Pull it like this:
+
+Get-DomainComputer -Properties msDS-AllowedToActOnBehalfOfOtherIdentity |
+
+%Where-Object \{ \$_.'msDS-AllowedToActOnBehalfOfOtherIdentity' -ne \$null \}
+
+Or from ldapsearch:
+
+bash
+
+ 
+
+ldapsearch -x -H ldap://dc.corp.local -D "corp\textbackslash{}%\user" -w 'Password123!' \textbackslash{}
+
+  -b "dc=corp,dc=local" "(msDS-AllowedToActOnBehalfOfOtherIdentity=*)"
+
+If a machine allows another identity to act on its behalf, and you control that identity? You own the target.
+
+One more trick: hunt for writable userAccountControl. If you can flip bits here, you can \textit{disable pre-auth} (DONT\_REQUIRE\_PREAUTH) and launch \textit{AS-REP roasting} on users who don’t normally expose themselves.
+
+ 
+
+ 
+
+Set-DomainUserUserAccountControl -Identity targetuser -PreauthNotRequired
+
+Then roast.
+
+This is the power of LDAP. It doesn’t just show you where to go. It shows you how to \textit{get inside without ever breaking a door}. Just query the metadata, find the soft spot, and squeeze.
+
+\textbf{PowerView Deep Dive - Living Off the Land for AD Recon}
+
+Here, we go deep into the tool that makes attackers feel like insiders: \textbf{PowerView. }This isn’t just a recon tool - it’s an entire framework for mapping and manipulating Active Directory from a command shell. If you’re going to live off the land, \textbf{this is the land.}
+
+PowerView is the Swiss Army knife of LDAP-based AD reconnaissance. It’s written in  , blends into almost any Windows environment, and gives you full access to domain objects through legitimate system calls. That means no exploits. No DLL injections. No flashy malware. Just raw visibility, all through native APIs.
+
+Let’s break it down by functionality—because PowerView isn’t one tool, it’s about 30.
+
+\paragraph{   User Discovery}
+
+We’ve covered this earlier, but here’s the surgical version:
+
+ 
+
+ 
+
+Get-DomainUser -Filter * -Properties samaccountname,description,lastlogon
+
+Want to find active users with signs of privilege?
+
+ 
+
+ 
+
+Get-DomainUser -LDAPFilter "(\&(objectCategory=person)(objectClass=user)(adminCount=1))" -Properties samaccountname,lastlogon |
+
+%Where-Object \{ \$_.lastlogon -gt 0 \}
+That’s a list of previously privileged accounts that are still logging in.
+
+Group Mapping
+
+See who’s in what, and who can pull strings.
+
+ 
+
+ 
+
+Get-DomainGroupMember -Identity "Administrators" -Recurse
+
+Want every nested privilege link?
+
+ 
+
+ 
+
+Get-DomainGroupMember -Identity "Domain Admins" -Recurse
+
+Group membership isn’t just for DAs. Sometimes, Remote Desktop Users or Backup Operators get you farther without making noise.
+
+\paragraph{   ACL Hunting}
+
+This is where PowerView earns its keep. Most tools stop at groups. This goes deeper.
+
+ 
+
+ 
+
+Find-InterestingDomainAcl -ResolveGUIDs
+
+That tells you where you (or any user) has rights to write, control, or hijack. It exposes escalation paths that groups will never show.
+
+Example:
+
+ 
+
+ 
+
+Get-DomainObjectAcl -SamAccountName "Domain Admins" -ResolveGUIDs
+
+See who can edit the DAs group. Sometimes it’s a script. Sometimes it’s an old helpdesk account no one remembers.
+
+\paragraph{   Session Enumeration}
+
+Want to know who’s logged in where? It’s not perfect, but if you have permissions, this works:
+
+ 
+
+ 
+
+Invoke-UserHunter
+
+You’ll find where users (especially privileged ones) have active sessions. That tells you where to target with lateral movement tools like PsExec, RDP, or token impersonation.
+
+Want the quiet version?
+
+ 
+
+ 
+
+Invoke-StealthUserHunter
+
+Same data, less noise.
+
+GPO Abuse Paths
+This one’s a gem. If you can write to a GPO that links to servers or workstations, you’ve got code execution.
+
+Get-DomainObjectAcl -SearchBase "OU=Domain Controllers,DC=corp,DC=local" -ResolveGUIDs |
+
+%Where-Object \{ \$_.ActiveDirectoryRights -match "WriteDACL|GenericAll" \}
+
+Follow up with:
+
+ 
+
+ 
+
+Get-DomainGPO -Identity <GPOName> | Get-DomainObjectAcl -ResolveGUIDs
+
+Now you can pinpoint which user can control which policy. That’s post-exploitation gold.
+
+\paragraph{   SPN Recon for Kerberoasting}
+
+Want a tailored list of roastable accounts?
+
+
+Get-DomainUser -SPN
+
+Want only accounts with non-expiring passwords?
+
+Get-DomainUser -SPN -Properties userAccountControl |
+
+%Where-Object \{ \$_.useraccountcontrol -band 0x10000 \}
+Every line is a hash you can extract and crack offline.
+
+\paragraph{   Trust Relationships}
+
+If you’re in a forest or multi-domain environment, this is critical.
+
+Get-DomainTrust
+
+You’ll see domain trust direction, type, and transitivity. That tells you if you can pivot across domains, even if you’re not in them directly.
+
+\paragraph{\textbf{Defenses It Bypasses (by Design)}}
+
+PowerView doesn’t exploit vulnerabilities—it exploits design. Because it uses LDAP queries and .NET classes, it slips under most AV, EDR, and SIEM setups. Unless a blue team has explicit alerts for command strings or behavior patterns, it won’t make a sound.
+
+But use it smartly. Don’t spray. Don’t loop. Don’t hammer the DC. Query with purpose, pause between commands, and blend in.
+
+PowerView is surgical. It’s not about dumping everything. It’s about asking precise questions that only insiders know to ask. And because it uses Microsoft’s own APIs, it’s rarely blocked and rarely noticed.
+
+\textbf{LDAPsearch on Linux - Pulling AD Intel Without Touching  }
+
+In this section, we flip the perspective. You’re not on a Windows box. Maybe you popped a *nix jump host. Maybe you’re running your tools through a relay. Either way,  ’s off the table for now. Doesn’t matter - because `ldapsearch` gives you just as much power, with just as little noise.
+
+You don’t need a Windows shell to own an Active Directory environment. LDAP is an open protocol, and as long as you’ve got valid creds and the domain allows anonymous or low-privileged binds, \textbf{you can ask LDAP anything}—from Linux, from macOS, or from a container halfway across the world.
+
+That’s where ldapsearch comes in. It’s part of the ldap-utils package, available on most Unix-based systems. And it talks to Active Directory like a native.
+
+Let’s break down how to \textbf{weaponize ldapsearch for recon}—quietly and effectively.
+
+\paragraph{\textbf{   Authenticated Bind: Your LDAP Passport}}
+
+First, establish your baseline. Let’s say you’ve got a domain user credential: lowprivuser and password Password123!. You’ll bind like this:
+
+
+ldapsearch -x -H ldap://dc.corp.local -D "corp\textbackslash{}%\lowprivuser" -w 'Password123!' -b "dc=corp,dc=local"
+
+That binds to the domain controller dc.corp.local, using the base DN derived from the domain corp.local.
+
+Want to search anonymously? Some domains allow it:
+
+%ldapsearch -x -H ldap://dc.corp.local -b "dc=corp,dc=local"
+
+If that works, it’s a \textbf{misconfiguration gift}—you’ll still get user and group data, no creds needed.
+
+\paragraph{\textbf{Enumerating Users}}
+
+Pull all users in the domain:
+
+%ldapsearch -x -H ldap://dc.corp.local -D "corp\textbackslash{}\lowprivuser" -w 'Password123!' \textbackslash{}
+
+  -b "dc=corp,dc=local" "(objectClass=user)" sAMAccountName displayName userPrincipalName
+
+Want only enabled users?
+
+%ldapsearch -x -H ldap://dc.corp.local -D "corp\textbackslash{}\lowprivuser" -w 'Password123!' \textbackslash{}
+
+  -b "dc=corp,dc=local" "(\&(objectClass=user)(!(userAccountControl:1.2.840.113556.1.4.803:=2)))" \textbackslash{}
+
+  sAMAccountName userAccountControl
+
+This uses an LDAP matching rule to exclude disabled accounts.
+
+\paragraph{\textbf{   Finding Domain Admins and High-Priv Groups}}
+
+You can enumerate group membership like this:
+
+%ldapsearch -x -H ldap://dc.corp.local -D "corp\textbackslash{}\lowprivuser" -w 'Password123!' \textbackslash{}
+
+  -b "dc=corp,dc=local" "(cn=Domain Admins)" member
+
+You’ll get a list of full DNs for each member. You can then loop back and query each user object to extract more attributes.
+
+Want all groups and their members?
+
+%ldapsearch -x -H ldap://dc.corp.local -D "corp\textbackslash{}\lowprivuser" -w 'Password123!' \textbackslash{}
+
+  -b "dc=corp,dc=local" "(objectClass=group)" cn member
+
+Spotting Service Accounts with SPNs (for Kerberoasting
+
+Kerberoastable accounts expose SPNs. Grab them with:
+
+%ldapsearch -x -H ldap://dc.corp.local -D "corp\textbackslash{}\lowprivuser" -w 'Password123!' \textbackslash{}
+
+  -b "dc=corp,dc=local" "(servicePrincipalName=*)" samAccountName servicePrincipalName userAccountControl
+
+Then grep for accounts with userAccountControl bitmask 0x110 (normal account + no password expiry). These are ideal targets.
+
+\paragraph{\textbf{   Tracking Logon Activity}}
+
+You can pull the lastLogonTimestamp attribute to estimate account activity:
+
+%ldapsearch -x -H ldap://dc.corp.local -D "corp\textbackslash{}\lowprivuser" -w 'Password123!' \textbackslash{}
+
+  -b "dc=corp,dc=local" "(objectClass=user)" samAccountName lastLogonTimestamp
+
+The value will be in Windows FileTime format. Convert it with:
+
+date -d "@\$(((\$(echo <timestamp> | sed 's/...\$//') - 11644473600)))"
+
+This gives you real-time awareness of who's active, who's dormant, and where your timing windows are.
+
+\paragraph{\textbf{Finding Delegation Paths}}
+
+Search for accounts with delegation privileges:
+
+%ldapsearch -x -H ldap://dc.corp.local -D "corp\textbackslash{}\lowprivuser" -w 'Password123!' \textbackslash{}
+
+  -b "dc=corp,dc=local" "(\&(objectClass=computer)(userAccountControl:1.2.840.113556.1.4.803:=524288))" \textbackslash{}
+
+  sAMAccountName userAccountControl
+
+That filters for TRUSTED\_FOR\_DELEGATION.
+
+You can also grep for:
+
+\begin{itemize}
+    \item TRUSTED\_TO\_AUTH\_FOR\_DELEGATION → 16777216
+
+    \item msDS-AllowedToActOnBehalfOfOtherIdentity → RBCD targets
+
+\end{itemize}
+
+\paragraph{\textbf{ACL Enumeration via }\textbf{ntSecurityDescriptor}}
+
+LDAP doesn’t hand out full ACLs without a deeper bind and SD flags, but you can often infer them based on group membership and object ownership.
+
+If needed, pivot to tools like ldapdomaindump to pull these programmatically:
+
+%ldapdomaindump --no-grep -u 'corp\textbackslash{}\lowprivuser' -p 'Password123!' -o ./dump ldap://dc.corp.local
+
+This gives you clean JSON and HTML output of the entire domain structure—users, groups, computers, ACLs, GPOs, and delegation paths.
+
+ldapsearch is surgical. No  , no .NET. And that makes it perfect for:
+
+\begin{itemize}
+    \item Red teamers operating cross-platform
+    \item Living off the land on compromised Linux assets
+    \item Targeting hybrid AD environments from external relays
+    \item Flying under defenders who only monitor Windows logs
+
+\end{itemize}
+
+\textbf{BloodHound \& SharpHound - Visualizing LDAP Recon Lika a Map of the Battlefield}
+
+In this section, we plug everything into a weaponized visual layer. LDAP recon tells you what’s possible. \textbf{BloodHound} tells you what’s profitable. When you feed it right, you don’t just see targets—you see \textbf{pathways to take them down}, rendered like a GPS map for attackers.
+
+If PowerView and ldapsearch are scalpels, \textbf{BloodHound} is your battle map. It turns all that raw LDAP intel—users, groups, computers, sessions, ACLs—into a graph database that shows you \textbf{how to move}, \textbf{who to compromise}, and \textbf{what gives you domain dominance}.
+
+And at the heart of BloodHound is \textbf{SharpHound}—the ingestor that does the dirty work. It collects data using LDAP, SMB, and other native protocols, then outputs .json files that feed the BloodHound interface. From there, you’re not guessing anymore. You’re \textbf{navigating}.
+
+SharpHound Collection Basics
+
+First, grab a copy of SharpHound from the official BloodHound repository or your favorite staging method. If you’re on a compromised Windows host with user-level access, drop and run:
+
+SharpHound.exe -c all
+
+This collects everything:
+
+\begin{itemize}
+    \item AD object data (users, groups, computers)
+
+    \item Session info
+
+    \item ACLs
+
+    \item SPNs
+
+    \item GPO links
+
+    \item Trusts
+
+\end{itemize}
+Want to stay quieter? Use selective collection:
+
+SharpHound.exe -c Session,LocalAdmin,ACL
+
+You can also use file output:
+
+SharpHound.exe -c all -oJ -o <output\_path>
+
+Or remote:
+
+SharpHound.exe -c Trusts,ACL,Session -d corp.local -u lowpriv -p Password123! -oJ
+
+This minimizes footprint and lets you operate without touching memory or spawning heavy tools.
+
+BloodHound Interface: Reading the Graph
+Once you import the JSON files into BloodHound (usually through the GUI), the fun begins. BloodHound’s interface is clean, powerful, and deadlier the more you use it.
+
+Some core queries:
+
+\begin{itemize}
+    \item \textbf{Shortest path to domain admin}
+
+ Shows every path—direct, nested, or through ACL misconfigurations—that your current user can follow to become a DA.
+
+    \item \textbf{Users with unconstrained delegation}
+
+Targets for ticket harvesting and impersonation.
+
+    \item \textbf{Kerberoastable users}
+
+Immediate candidates for hash extraction and offline cracking.
+
+    \item \textbf{Users with RDP access to high-value targets}
+
+Lateral movement gold.
+
+    \item \textbf{Outbound/inbound control relationships}
+
+Lets you pivot through nested permissions and compromised hosts.
+
+\end{itemize}
+These aren’t just checklists. They’re \textbf{weaponized relationships}. Every edge in the graph represents an action you can take. Every node is a user or system you can compromise. It’s not abstract—it’s \textbf{direct ops intelligence}.
+
+\paragraph{\textbf{   Practical Examples}}
+
+Let’s say you land on userA, a low-priv user. You run SharpHound and import into BloodHound. Then you run:
+
+“Find Shortest Paths to Domain Admins from userA”
+
+The output shows:
+
+\begin{enumerate}
+    \item userA has \textbf{GenericWrite} on group1
+
+    \item group1 is nested inside group2
+
+    \item group2 is a member of Domain Admins
+
+\end{enumerate}
+
+One hop at a time, LDAP recon turns into real escalation. You don’t need exploits—you just modify group membership via LDAP and refresh your token. Done.
+
+Another scenario: BloodHound shows computerB has a session from admin1, and userA is a local admin on that box. Now you know:
+
+\begin{itemize}
+    \item If you compromise userA, you can log into computerB
+
+    \item If admin1 is active, you can steal their token or dump LSASS
+
+    \item From there, you’ve got DA creds
+
+\end{itemize}
+BloodHound didn’t invent the path. LDAP told it the truth. All BloodHound did was \textbf{draw the map}.
+
+\paragraph{\textbf{   Staying Quiet}}
+
+BloodHound’s collection methods can be noisy if used recklessly. To stay low:
+
+\begin{itemize}
+    \item Avoid SMB enumeration unless needed
+
+    \item Disable session enumeration if defenders monitor it
+
+    \item Use the LDAP or All collection with -NoSaveCache
+
+    \item Run from a box that already has access to critical systems
+
+\end{itemize}
+
+\paragraph{\textbf{BloodHound CLI + Custom Queries}}
+
+Want to script your recon? Use \textbf{BloodHound-python} or the Neo4j browser to write custom Cypher queries. Examples:
+
+MATCH (n:User)-[:MemberOf*1..]->(g:Group) WHERE g.name = "DOMAIN ADMINS@corp.local" RETURN n.name
+
+Or:
+
+MATCH (u:User)-[:AdminTo]->(c:Computer) RETURN u.name, c.name
+
+This is how you \textit{scale recon across large environments.} If there are hundreds of users, thousands of machines, and tangled trust paths, BloodHound is the only way to visualize your next move.
+
+LDAP gave you the data. BloodHound gives you the clarity. The shortest path to domain admin isn’t just a concept—it’s right there in front of you. You just have to follow the lines.
+
+\textbf{Staying Stealthy - How to Do LDAP Recon Without Getting Flagged}
+
+In this section, we get serious about tradecraft. Recon gets you nowhere if it burns you halfway in. So now we shift focus to \textit{stealth - }how to run DLAP reconnaissance \textit{quietly, efficiently, }and \textit{undetected }in real-world networks.
+
+Anyone can spray queries at LDAP. Real operators walk in like they belong. If your recon is noisy—constant queries, failed binds, broken filters—you’re not just wasting time. You’re tipping your hand. Security teams that monitor for behavior, not just payloads, are looking for exactly that.
+
+So the goal? Pull as much intelligence as you can while looking like a \textbf{normal domain user} doing normal domain things. Here’s how you do it.
+
+\paragraph{\textbf{   Use Legitimate Binds, Not Exploits}}
+
+First rule: no anonymous binds unless you’ve confirmed they’re allowed. Many modern domains disable them. Instead, bind as a low-privileged domain user—preferably a compromised credential with no known monitoring attached.
+
+Avoid binding as SYSTEM or NT AUTHORITY. Those stick out in logs and are sometimes restricted. The user you choose sets your \textbf{entire visibility scope}, so pick one that won’t raise flags.
+
+\paragraph{\textbf{   Batch and Pause Your Queries}}
+
+Don’t fire off 10,000 queries in 2 seconds. LDAP might be fast, but defenders use baseline analysis. If your user sends 5x more LDAP queries than any other workstation, you’re burned.
+
+Instead:
+
+\begin{itemize}
+    \item \textbf{Batch your requests} into logical sets (e.g., user listing, then group mapping)
+
+    \item \textbf{Throttle your queries} with sleep intervals
+
+    \item \textbf{Spread the timing} over hours or days, if possible
+
+\end{itemize}
+Example in  :
+\$users = Get-DomainUser
+
+Start-Sleep -Seconds (Get-Random -Minimum 3 -Maximum 10)
+
+\$groups = Get-DomainGroup
+
+Looks like a user clicking through ADUC. Not a threat actor.
+
+\paragraph{\textbf{   Minimize Attribute Requests}}
+
+LDAP queries that ask for \textit{every} attribute on \textit{every} object look suspicious. You don’t need 50 fields. Just pull what you need:
+
+\begin{itemize}
+    \item sAMAccountName
+
+    \item description
+
+    \item memberOf
+
+    \item servicePrincipalName
+
+    \item userAccountControl
+
+\end{itemize}
+Trim the fat.
+
+In PowerView:
+Get-DomainUser -Properties samAccountName,description
+
+In ldapsearch:
+
+%ldapsearch -x -H ldap://dc.corp.local -D "corp\textbackslash{}\user" -w 'Password123!' -b "dc=corp,dc=local" "(objectClass=user)" sAMAccountName
+
+Less is more. And it flies under the radar.
+
+Use Legitimate Toolchains
+
+Avoid custom LDAP binaries or hacking tools that trigger AV heuristics. Stick to:
+
+\begin{itemize}
+    \item PowerView
+
+    \item ldapsearch
+
+    \item SharpHound (selectively)
+
+    \item System.DirectoryServices (in C\#)
+
+    \item BloodHound-python (from approved admin jump boxes)
+
+\end{itemize}
+These tools use real protocols, real APIs, and leave minimal footprints—especially if you \textbf{don’t tamper with them}.
+
+\paragraph{\textbf{   Avoid File Drops}}
+
+Where possible, \textbf{run in-memory}. Use tools like:
+
+\begin{itemize}
+    \item Invoke-Expression (for PowerView)
+
+    \item Cobalt Strike Beacon to stage LDAP queries
+
+    \item SharpHound.ps1 as a one-liner scriptblock
+
+\end{itemize}
+Every file you drop is a liability. It can be detected, quarantined, or audited.
+
+\paragraph{\textbf{   Respect the Logs — Especially 4662}}
+
+Most LDAP queries won’t generate logs by default. But \textbf{if LDAP query auditing is enabled}, or \textbf{Advanced Threat Analytics (ATA)} or Defender for Identity is in place, you’re in the crosshairs.
+
+Event ID 4662 logs AD object accesses—\textbf{if auditing is configured on the object class}. Smart defenders will apply SACLs to adminCount=1 users, Domain Admins group, or sensitive OUs. Your queries could trip those wires.
+
+Solution? Query \textbf{outside of those zones first}, or use BloodHound’s -SkipGCDeconfliction to avoid domain-wide GCs.
+
+\paragraph{\textbf{   Stay In Character}}
+
+Everything you do should match the \textbf{expected behavior of the user you’re impersonating}.
+
+If you’re using a helpdesk account, don’t suddenly query domain trusts or RBCD entries. If you’re on a dev machine, don’t probe GPO ACLs.
+
+Blend in. Match access times. Mirror legitimate session behaviors.
+
+Use BloodHound to \textbf{pivot through realistic trust chains}, not brute force every target.
+
+\paragraph{\textbf{   Cache and Reuse What You Can}}
+
+LDAP results don’t change often. If you’ve already pulled user lists or group maps, don’t do it again. Cache it locally. Every query is another opportunity to get flagged.
+
+Build a lightweight local DB (like SQLite) to store:
+
+\begin{itemize}
+    \item Usernames
+    \item Group memberships
+    \item Hostnames and OS
+    \item Timestamps
+
+\end{itemize}
+Query once. Hunt often.
+
+\paragraph{\textbf{Reflect Real Admin Paths}}
+
+One advanced technique? \textit{Replay legitimate queries.}
+
+Use audit logs (if you’ve exfiltrated them), or beacon traffic from compromised admins, to \textit{mimic their LDAP patterns.} Query the same fields. Use the same time intervals. Target the same OUs.
+
+Now you’re not just stealthy. You’re \textit{camouflaged.}
+
+\textbf{Bottom line:} LDAP is open. Too open. But if you treat it like a zero-day and smash it with noise, you’ll get burned. The smarter play? Move like an insider. Query like IT. Pivot like an engineer.
+
+That’s how you recon with power—and walk away clean.
+
+\textbf{Using LDAP Recon to Drive Lateral Movement and Access Ops}
+
+Here, we turn intelligence into movement. LDAP recon gave you the map. Now you act on it. This is where attackers shift from passive gathering to \textit{active lateral movement - }using the data you’ve pulled to walk right into privileged systems.
+
+Recon isn’t just for show. Everything you pull from LDAP—user sessions, admin rights, machine names, delegation paths—translates directly into \textbf{targets and techniques}. This is where you stop collecting and start \textbf{moving}, using the knowledge of the domain against itself.
+
+Let’s walk through how attackers do it, step by step.
+
+ 1. Use Session Data to Choose Jump Targets
+
+You’ve run Invoke-UserHunter or parsed SharpHound’s session data. You see that DA\_James is logged into WKS02.corp.local. That means: if you get access to that machine, \textbf{you can steal his ticket, dump his hash, or impersonate him}.
+
+Your playbook:
+
+\begin{itemize}
+    \item Use LDAP to confirm WKS02 is reachable and active
+
+    \item Check if your current user has local admin on it
+
+    \item Use PsExec, WinRM, or RDP (depending on what’s allowed) to access the box
+
+\end{itemize}
+If you can’t touch it directly, hunt for \textbf{another user} with admin rights who has a session on a machine that also sees WKS02. Jump through that path.
+
+\paragraph{\textbf{   2. Abuse Admin Rights via LocalGroupMember Data}}
+
+LDAP recon tells you \textbf{who is a local admin on what machines}, especially through BloodHound and SharpHound’s AdminTo relationships.
+
+Let’s say you control svc.deploy, and LDAP tells you:
+
+\begin{itemize}
+    \item svc.deploy is a local admin on APP-SERVER01
+
+    \item APP-SERVER01 is a session host for GPO\_Admin
+
+\end{itemize}
+You have two moves:
+
+\begin{enumerate}
+    \item Use svc.deploy to log in and execute code on APP-SERVER01
+
+    \item Capture GPO\_Admin's creds or token
+
+    \item Escalate your privilege via GPO modification or logon script abuse
+
+\end{enumerate}
+All triggered by data pulled from LDAP.
+
+\paragraph{\textbf{   3. Pivot Through SPNs and Kerberoast Results}}
+
+Earlier, you found several accounts with SPNs using LDAP:
+
+bash
+
+ 
+
+%ldapsearch -x -H ldap://dc.corp.local -D "corp\textbackslash{}\user" -w 'Password123!' \textbackslash{}
+
+  -b "dc=corp,dc=local" "(servicePrincipalName=*)" samAccountName servicePrincipalName
+
+You request their TGS using Impacket or Rubeus:
+
+Rubeus.exe kerberoast
+
+Then crack it with Hashcat:
+
+hashcat -m 13100 hash.txt rockyou.txt --force
+
+The moment you recover a plaintext password, you can authenticate as that user.
+
+If the cracked user is:
+
+\begin{itemize}
+    \item In a privileged group → escalate
+
+    \item Assigned to sensitive resources → access data
+
+    \item Used in GPOs or scripts → insert persistence
+
+\end{itemize}
+Again, all rooted in LDAP-based discovery.
+
+4. Modify ACLs to Escalate Privileges
+
+LDAP told you that helpdesk1 has \textbf{GenericWrite} on the Domain Admins group. That means you can:
+
+\begin{itemize}
+    \item Add yourself to the group
+
+    \item Replicate a DC ticket
+
+    \item Forge your way to domain dominance
+
+\end{itemize}
+Using PowerView:
+ 
+Add-DomainGroupMember -Identity "Domain Admins" -Members "lowprivuser"
+
+Or use raw ldapmodify from Linux with the right LDIF file.
+
+Now you're not just reading the map. You’re \textbf{rewriting it}.
+
+5. Leverage GPO Links for Code Execution
+
+You identified a GPO with write access by svc.gpo. That GPO is linked to the Workstations OU. Which means:
+
+\begin{itemize}
+    \item Any computer in that OU will apply the GPO
+
+    \item You can insert a scheduled task, startup script, or registry key
+
+    \item The next time a target logs in, \textbf{your payload runs}
+
+\end{itemize}
+Edit the GPO using gpt.ini or GroupPolicyPreferences to drop files or launch commands.
+
+This kind of \textbf{LDAP-discovered GPO abuse} is often missed because the rights are buried in ACLs—not in group membership.
+
+\paragraph{\textbf{   6. Act on Delegation Flags}}
+
+LDAP revealed that web01.corp.local is TRUSTED\_FOR\_DELEGATION. You also see that it regularly hosts sessions from backup\_admin.
+
+Your flow:
+
+\begin{itemize}
+    \item Move to web01
+
+    \item Extract TGTs or impersonate backup\_admin to request service tickets
+
+    \item Use those tickets to access file servers or backup systems
+
+\end{itemize}
+Or if you control a user marked TRUSTED\_TO\_AUTH\_FOR\_DELEGATION, you can impersonate \textbf{anyone} to allowed services. LDAP shows exactly which services are scoped via:
+
+Get-DomainUser -TrustedToAuth
+
+No need to guess. Just read and act.
+
+\paragraph{\textbf{   7. Cycle Through SIDHistory and Shadow Access}}
+
+You find a user with a suspicious sIDHistory. LDAP reveals:
+
+%ldapsearch -x -H ldap://dc.corp.local -D "corp\textbackslash{}\user" -w 'Password123!' \textbackslash{}
+
+  -b "dc=corp,dc=local" "(sIDHistory=*)" samaccountname sIDHistory
+
+That user might not look privileged, but inherits rights from a legacy SID. This happens often during migrations.
+
+Test access. Try accessing resources directly or running net use or dir\textbackslash{}server\textbackslash{}share. If it works, you have hidden access routes no one tracks.
+
+\paragraph{\textbf{8. Keep It Iterative}}
+
+The real move here isn’t any single query—it’s how you \textit{chain them}.
+
+\begin{itemize}
+    \item Use LDAP to pull sessions \textbf{→} find where admins log in
+    \item Use LDAP to check access rights \textbf{→} see who controls those boxes
+    \item Use LDAP to read group memberships \textbf{→} see if you can become that person
+    \item Use BloodHound to map the whole thing \textbf{→} see the shortest route to DA
+
+\end{itemize}
+Then execute.
+
+LDAP is recon. But it’s also \textit{targeting,} \textit{timing,} and \textit{execution guidance.} Everything you need is in the directory. You just need to connect the dots—and know when to move.
+
+\textbf{Evading LDAP Logging, SIEM Detection, and Blue Team Traps}
+
+In this final section, the gloves come off. Recon without detection is an art form. So let’s talk evasion - how skilled attackers keep their LDAP activities \textit{invisible, boring, }and buried deep in the noise. Because if they see you coming, it’s over before you even start.
+
+There’s a myth that LDAP is stealthy by default. It’s not. It’s just \textbf{under-monitored}. But blue teams are getting smarter. They’re setting traps, watching query volumes, building baselines. And if you’re not careful, your recon becomes their alert.
+
+Here’s how to stay invisible—even in a hardened environment.
+
+Don’t Trip Logging SACLs
+
+Active Directory supports object-level auditing. If a domain admin adds a System Access Control List (SACL) to something sensitive—like Domain Admins, AdminSDHolder, or Domain Controllers OU—any LDAP read or write triggers Event ID 4662.
+
+This log tells defenders:
+
+\begin{itemize}
+    \item Who queried what
+
+    \item Which attributes were accessed
+
+    \item Whether it was a read or write
+
+\end{itemize}
+The catch? These SACLs aren’t universal. They’re \textbf{custom configurations}, meaning some orgs have them, others don’t.
+
+How to avoid:
+
+\begin{itemize}
+    \item Limit queries against high-value objects
+
+    \item Never run Get-DomainObjectAcl blindly against Domain Admins
+
+    \item Use BloodHound’s targeting filters to exclude obvious red flags
+
+\end{itemize}
+And if you \textit{must} query a sensitive object, \textbf{do it late} in your operation, not during initial recon.
+
+\paragraph{\textbf{   Blend Your Volume With Normal Traffic}}
+
+SIEMs are pattern watchers. They build baselines: "User X runs 50 LDAP queries per hour." If you show up and run 5,000? That sticks out.
+
+How to blend:
+
+\begin{itemize}
+    \item Stagger queries with Start-Sleep
+
+    \item Query in small chunks (e.g., 50 users per request)
+
+    \item Insert delays of 5–15 seconds between PowerView or SharpHound modules
+
+\end{itemize}
+Advanced trick: \textbf{randomize order}. Query users alphabetically? That’s a pattern. Use a shuffled list:
+
+\$users = Get-DomainUser | Get-Random -Count 50
+
+That makes timing unpredictable.
+
+\paragraph{\textbf{   Avoid Global Catalog Queries}}
+
+The Global Catalog (GC) is the fast lane of AD. It holds partial info about every object in every domain. But it’s also a magnet for detection—especially if defenders monitor TCP 3268 or event logs tied to GC access.
+
+Default LDAP queries hit TCP 389. GC queries go to 3268.
+
+BloodHound and SharpHound have flags like --SkipGCDeconfliction and --CollectionMethods LDAP to avoid GC entirely.
+
+Use them.
+
+\paragraph{\textbf{   Steer Clear of Honeypot Accounts and Traps}}
+
+Defenders sometimes create \textbf{fake accounts} with juicy names like:
+
+\begin{itemize}
+    \item sqladmin\_backup
+
+    \item svc\_nasadmin
+
+    \item oldDA
+
+    \item disabled\_joe\_admin
+
+\end{itemize}
+These don’t log in. They’re there to be queried. If someone pulls them via LDAP, the alert fires.
+
+How to stay clean:
+
+\begin{itemize}
+    \item Cross-check last logon timestamps
+
+    \item Avoid accounts that look suspiciously interesting
+
+    \item Prioritize accounts with recent activity
+
+\end{itemize}
+If it looks too good to be true, it probably is.
+
+\paragraph{\textbf{   Don’t Use Default SharpHound Timing}}
+
+BloodHound is a double-edged sword. Powerful? Yes. But default settings are noisy. Every environment has defenders who know what SharpHound looks like.
+
+To avoid detection:
+
+Use custom timing with --Throttle and --Jitter
+
+ Example:
+
+ bash
+
+ 
+
+SharpHound.exe -c All --Throttle 2000 --Jitter 30
+
+\begin{itemize}
+    \item Skip session collection unless you need it
+    \item %Avoid running from obvious attacker paths (like C:\textbackslash{}Temp\textbackslash{} or \%USERPROFILE\%\Downloads\textbackslash{})
+
+\end{itemize}
+Better: compile your own SharpHound with randomized signatures and obfuscate filenames.
+
+\paragraph{\textbf{  ️ %Know What LDAP Attributes Trigger Watchlists}}
+
+Certain attributes get attention. These include:
+
+\begin{itemize}
+    \item adminCount
+
+    \item msDS-AllowedToDelegateTo
+
+    \item msDS-AllowedToActOnBehalfOfOtherIdentity
+
+    \item userAccountControl
+
+    \item sIDHistory
+
+\end{itemize}
+Queries against these in large volumes may trigger alerts.
+
+Instead:
+
+\begin{itemize}
+    \item Query selectively
+
+    \item Don’t pull all attributes at once
+
+    \item Use benign queries to gather initial targets, then deep dive as needed
+
+\end{itemize}
+Example:
+
+Get-DomainUser -Properties samaccountname,lastlogon
+
+Then run privilege checks only on top 5\%.
+
+\paragraph{\textbf{   Clean Up After Yourself}}
+
+Defenders check for dropped files and persistence tools. If you’ve written .json output, logs, or recon results to disk:
+
+\begin{itemize}
+    \item Encrypt and exfil as soon as possible
+
+    \item Wipe temp directories
+
+    \item Use  ’s Remove-Item or Cobalt Strike’s file deletion APIs
+
+\end{itemize}
+Better yet: use in-memory tools and \textbf{write nothing to disk} unless you have to.
+
+\paragraph{\textbf{  ️ Look Like a Helpdesk, Not a Hacker}}
+
+The most invisible attacker? One who behaves like an admin.
+
+If your LDAP queries mimic what helpdesk users do—looking up group membership, checking recent logons—you’ll blend in. But if you’re hitting every delegation flag and every trust relationship in 2 minutes, \textbf{you’re not blending—you’re spotlighting}.
+
+So stay in character. Query what that user would logically query. And escalate slowly.
+
+LDAP is a weapon. But it’s also a liability. It logs. It trips wires. And if you’re careless, it buries you.
+
+But if you’re smart? You extract everything you need without setting off a single bell.
+
+That’s game.
+
+\subsection{\textbf{Defender’s View}}
+
+\textbf{Understanding the Threat: What Makes LDAP Recon Malicious}
+
+From a defender’s standpoint, LDAP reconnaissance is a critical early-stage tactic used by attackers to map out domain structure, identify high‑value targets, locate privileged accounts, and plan escalation—not just for curiosity, but for malicious intent. This isn’t benign polling—it’s reconnaissance crafted to prepare for credential theft, privilege escalation, lateral movement, or stealth attacks on GPOs and services. As defenders, your job is to differentiate between \textit{legitimate ad‑hoc queries} and \textit{sustained, targeted probing} designed to prepare a compromised environment for further exploitation.
+
+A malicious recon campaign differs from normal operational behavior in several ways: patterns of access, intensity of queries, breadth of privileged attributes requested, and sequence logic tailored to mapping privilege paths. As you step into this defense journey, you’ll learn how to detect these patterns through log analysis, SIEM correlation, decoy accounts, and behavioral baselining. By the end, you’ll be able not just to detect LDAP abuse, but to \textit{respond proactively}—thwarting attackers before they escalate.
+
+\textbf{Baselining Normal LDAP Usage - What “Normal” Looks Like}
+
+In this section, we build your defensive foundation: understanding what \textit{normal LDAP activity }looks like so that malicious queries stand out. You can’t catch what you don’t recognize as abnormal if you don’t know what you’re actively looking at.
+
+Before you can spot hostile LDAP recon, you need to define what “normal” looks like. In most enterprise environments, LDAP queries happen constantly. They’re generated by:
+
+\begin{itemize}
+    \item Domain-joined machines requesting authentication
+
+    \item Users accessing shared resources
+
+    \item Group Policy processing
+
+    \item Email and collaboration tools (like Outlook and Teams)
+
+    \item Admin tools like Active Directory Users and Computers (ADUC)
+
+\end{itemize}
+Here’s a classic, benign LDAP query from a domain controller’s view, using  :
+
+ 
+
+ 
+
+\$searcher = [System.DirectoryServices.DirectorySearcher]::new()
+
+\$searcher.Filter = "(objectClass=user)"
+
+\$searcher.SearchScope = "Subtree"
+
+\$searcher.PropertiesToLoad.Add("sAMAccountName") | Out-Null
+
+\$searcher.FindAll()
+
+This is what ADUC or a helpdesk tool might use when fetching user data. It’s scoped, shallow, and focused. In your logs, this will show up as Event ID 4662 (if auditing is enabled), or as benign network traffic on port 389 (LDAP) or 636 (LDAPS).
+
+To establish a baseline, you need to:
+
+\begin{itemize}
+    \item \textbf{Collect logs consistently:} Enable Directory Service Access auditing via Group Policy (Advanced Audit Policy Configuration > DS Access > Directory Service Access).
+
+    \item \textbf{Forward logs into a SIEM:} Solutions like Splunk, Sentinel, or ELK can normalize and analyze this data.
+
+    \item \textbf{Use NetFlow or network sensors:} Watch for spikes in LDAP request volume or outbound LDAP queries from non-domain controllers.
+
+\end{itemize}
+Use   or audit logs to identify who queries what:
+
+ 
+
+ 
+
+Get-WinEvent -FilterHashtable @\{LogName='Security'; ID=4662\} |
+
+  Where-Object \{ \$_.Properties[1].Value -like '*LDAP*' \}
+
+Then build behavioral baselines for:
+
+\begin{itemize}
+    \item Query volume per user/device per hour
+
+    \item Common attribute requests (e.g., sAMAccountName, memberOf, description)
+
+    \item Expected query sources (only workstations or service accounts—not servers that don’t use AD data)
+
+\end{itemize}
+Once that baseline is clear, the moment something breaks pattern—like a workstation querying msDS-AllowedToActOnBehalfOfOtherIdentity or a user fetching every SPN in the domain—you’ve got a signal worth chasing.
+
+\textbf{What Malicious LDAP Recon Looks Like - Patterns, Targets, and Intent}
+
+In this section, we pull back the curtain on the \textit{tactics, targets, }and \textit{patterns }of malicious LDAP reconnaissance. This is what it looks like when an attacker uses your own directory against you.
+
+Malicious LDAP recon doesn’t look like an admin solving a helpdesk ticket—it looks like someone mapping your entire kingdom. The difference is scale, depth, and precision. Threat actors aren’t browsing—they’re pulling. And their targets are \textbf{always the same}: people, privileges, pathways.
+
+Let’s break it down.
+
+\paragraph{\textbf{   Intent: What They Want to Learn}}
+
+\begin{itemize}
+    \item \textbf{Who are the privileged users?}
+
+ They query for adminCount=1, Domain Admins, or Enterprise Admins.
+
+    \item \textbf{Which users have SPNs?}
+
+ They search for accounts with servicePrincipalName=* to prep for Kerberoasting.
+
+    \item \textbf{What systems are delegated?}
+
+ They look for TRUSTED\_TO\_AUTH\_FOR\_DELEGATION and RBCD flags.
+
+    \item \textbf{Which GPOs can be modified?}
+
+ They scan for GenericWrite, WriteDACL, or WriteOwner on GroupPolicyContainer objects.
+
+    \item \textbf{Where are users logged in?}
+
+ They use session enumeration (either via LDAP or SMB) to identify where to move next.
+
+\end{itemize}
+
+\paragraph{\textbf{   Behavior: How They Query}}
+
+Attackers will typically:
+
+Run \textbf{broad queries}:
+
+  
+
+ 
+
+Get-DomainUser -Filter * -Properties samaccountname,servicePrincipalName,userAccountControl
+
+ This pulls every user, including dormant or disabled accounts, and flags accounts with SPNs or password-related attributes.
+
+Focus on \textbf{privileged attributes}:
+
+  
+
+ 
+
+Get-DomainUser -LDAPFilter "(adminCount=1)"
+
+Query \textbf{GPOs and delegation paths}:
+
+  
+
+ 
+
+Get-DomainObjectAcl -ResolveGUIDs
+
+\begin{itemize}
+    \item 
+
+    \item Dump \textbf{SIDHistory}, msDS-AllowedToActOnBehalfOfOtherIdentity, and trust relationships—stuff most admins never need.
+
+\end{itemize}
+These queries often \textbf{come in bursts} and \textbf{ask for many attributes at once}. You’ll see that in logs or traffic analysis as large payloads, high response rates, and repetitive querying from one host.
+
+\paragraph{\textbf{⚠️ Risk Signals to Look For}}
+
+\begin{itemize}
+    \item Workstations issuing domain-wide LDAP queries
+    \item Non-admin accounts querying 1000+ objects within seconds
+    \item Attribute requests that include userAccountControl, servicePrincipalName, msDS-AllowedToDelegateTo.
+    \item Tools like SharpHound or PowerView being used on endpoints
+    \item LDAP queries followed by lateral movement attempts or ticket requests
+
+\end{itemize}
+These aren’t one-offs. They’re \textit{structured, intentional, repeatable playbooks} used by red teams, pentesters, and real attackers.
+
+\textbf{Detecting Malicious LDAP Recon with Logs, SIEM, and Alerts}
+
+In this section, this is where defense turns proactive. You’ll learn not just to see malicious LDAP reconnaissance - but to \textit{catch it in motion, }respond fast, and disrupt the attacker’s entire play.
+
+Detecting malicious LDAP reconnaissance starts with one truth: attackers \textit{do not care if they leave fingerprints}. They only care if you catch them before they escalate. Your job is to have the brakes, before they hit the gas.
+
+\paragraph{\textbf{   a) Enable LDAP and Directory Auditing}}
+
+First, you have to \textbf{log the right things}. By default, LDAP activity isn’t logged in detail. You want to capture:
+
+\begin{itemize}
+    \item \textbf{Event ID 4662} – for Object Access, when a SACL is hit
+
+    \item \textbf{DS Access audit policy} – with flags on user, group, computer, and gPC classes
+
+    \item Logging on adminCount, servicePrincipalName, and delegation attributes
+
+\end{itemize}
+Enable this via Group Policy:
+
+ 
+
+ 
+
+AuditPol.exe /set /subcategory:"Directory Service Access" /success:enable /failure:enable
+
+Then attach SACLs to key objects:
+
+ 
+
+ 
+
+\# Example to audit access to adminCount attribute for all users
+
+\$obj = "CN=Users,DC=corp,DC=local"
+
+Set-Acl -Path "AD:\$obj" -AclObject (
+
+    Get-Acl -Path "AD:\$obj" | 
+
+    AddAuditRule((New-Object System.DirectoryServices.ActiveDirectoryAccessRule(
+
+       "Domain Users",
+
+       "GenericRead",
+
+       "Success",
+
+       "None",
+
+       "ObjectAndProperty",
+
+       "adminCount"
+
+    )))
+
+)
+
+This ensures you log reads of privileged attributes—exactly what malicious reconnaissance will hit.
+
+\paragraph{\textbf{   b) Monitor Baseline vs Behavior}}
+
+Once you have logs flowing, it’s time to build detection in your SIEM (Splunk, Sentinel, QRadar, etc.). Focus on \textbf{anomalous patterns}, such as:
+
+\begin{itemize}
+    \item \textbf{Spike in LDAP queries} from a single host or account
+
+    \item Bulk downloads of user, group, or computer data
+
+    \item Repeated queries for SPN, delegation, or group membership
+
+\end{itemize}
+An example in Kusto (Microsoft Sentinel):
+
+kql
+
+ 
+
+SecurityEvent
+
+| where EventID == 4662 and ObjectType endswith "LDAP"
+
+| summarize cnt = count() by Account, Computer, ObjectType, EventTime = bin(TimeGenerated, 1h)
+
+| where cnt > 100
+
+And in Splunk:
+
+spl
+
+ 
+
+index=wineventlog EventID=4662 ObjectType="*" 
+
+| stats count by Account\_Name, src, ObjectType 
+
+| where count > 200
+
+Thresholds will vary, but the logic stays the same: \textbf{you should not see hundreds of queries in an hour} from a low-priv user.
+
+\paragraph{\textbf{   c) Focus on Sensitive Attribute Reads}}
+
+Flag queries targeting high-value attributes:
+
+\begin{itemize}
+    \item adminCount
+
+    \item servicePrincipalName
+
+    \item controlledObjectSystemFlags
+
+    \item msDS-AllowedToActOnBehalfOfOtherIdentity
+
+    \item msDS-AllowedToDelegateTo
+
+\end{itemize}
+Sample detection KQL:
+
+kql
+
+ 
+
+SecurityEvent
+
+| where EventID == 4662 and (
+
+    ObjectName contains "adminCount" or 
+
+    ObjectName contains "servicePrincipalName" or 
+
+    ObjectName contains "msDS-AllowedToActOnBehalfOfOtherIdentity"
+
+)
+
+| project TimeGenerated, Account, ObjectName, Computer
+
+These attributes are rarely accessed by normal tools, so any read deserves scrutiny.
+
+\paragraph{\textbf{   d) Build Custom Hunting Alerts}}
+
+Don’t rely on generic user behavior analytics. You need \textbf{specific hunts} for:
+
+\begin{enumerate}
+    \item LDAP queries for SPN enumeration
+
+    \item User attribute harvest targeting adminCount
+
+    \item GPO \& delegation queries against msDS-AllowedToDelegateTo
+
+    \item Session enumeration or memberOf dumps across OUs
+
+\end{enumerate}
+Detect when these show up outside ticketed admin activity. That moment signals focused reconnaissance.
+
+\paragraph{\textbf{   e) Implement Deception and “Canary” Attributes}}
+
+Inject \textbf{honeytokens} into LDAP that look legitimately sensitive:
+
+\begin{itemize}
+    \item Fake accounts in Domain Admins
+
+    \item Fake SPNs
+
+    \item Delegate flags on a honeypot account or OU
+
+\end{itemize}
+Monitor any read on these. Inclusion in SIEM:
+
+ 
+
+ 
+
+\# Fake account creation
+
+New-ADUser -Name "svc\_ReportAdmin" -Enabled \$true -AdminCount 1
+
+Then alert on reads:
+
+kql
+
+ 
+
+SecurityEvent 
+
+| where EventID == 4662 and ObjectName contains "svc\_ReportAdmin"
+
+These reads mean \textbf{someone is mapping privilege}, not just executing routine tasks.
+
+\paragraph{\textbf{   f) Tie LDAP with Other Recon Methods}}
+
+Attackers rarely stop at LDAP. They’ll combine with:
+
+\begin{itemize}
+    \item \textbf{Kerberoast attempts} (Event ID 4769)
+
+    \item \textbf{Group policy modifications}
+
+    \item \textbf{Token theft or process injection}
+
+    \item \textbf{Lateral movement via SMB or RDP}
+
+\end{itemize}
+Your alerting should \textit{merge logs:}
+
+kql
+
+ 
+
+let ldap = SecurityEvent | where EventID == 4662 and ObjectName contains "servicePrincipalName";
+
+let kerb = SecurityEvent | where EventID == 4769;
+
+let smb = SecurityEvent | where EventID == 4624 and LogonType == 3;
+
+ldap
+
+| join kerberos on Account
+
+| join smb on Account
+
+A single incident involving all three? That’s not recon. That’s \textit{attack setup.}
+
+\paragraph{\textbf{g) Automated Response – Block and Investigate}}
+
+Once detection rules fire:
+
+\begin{enumerate}
+    \item \textbf{Quarantine} the host account and ID
+    \item \textbf{Rotate service account credentials} if SPNs were queried
+    \item \textbf{Run memory dumps} and live process inspections
+    \item \textbf{Investigate lateral movement footprints}
+    \item \textbf{Review GPO changes}, ACL modifications, and next-level actions
+
+\end{enumerate}
+You’re not just logging events. You’re \textit{interrupting the attack lifecycle} during early steps.
+
+\paragraph{\textbf{h) Continuous Improvement and Testing}}
+
+Detection accuracy depends on testing. Use \textit{purple team exercises} to:
+
+\begin{itemize}
+    \item Run PowerView or SharpHound with stealth flags
+    \item Validate that your SIEM rules fire and alert
+    \item Tune thresholds to reduce false positives
+    \item Submit TGS (Kerberoast) events tied to LDAP scans
+
+\end{itemize}
+Attackers change methods. So should you. Run these tests quarterly—at minimum.
+
+Malicious LDAP reconnaissance is both simple and shrewd. But it \textit{leaves tracks}. Your job as a defender is to build observability around those tracks before they lead to your domain compromise—and then \textit{trip the alarm the moment someone tries.}
+
+\textbf{Responding to Detected LDAP Recon - Turning Insight Into Action}
+
+This section aims to layout how you \textit{respond ecisively }once malicious LDAP reconnaissance is detected - complete with playbooks, and practical guidelines.
+
+Once your SIEM fires an alert on suspicious LDAP behavior—such as high-volume adminCount queries or SPN enumeration—it’s time to \textbf{take immediate, calculated action}. Every moment counts: you’re racing the attacker to escalate. This isn’t about gathering evidence—it’s about containing risk and disrupting their play.
+
+\paragraph{\textbf{   A) Incident Triage: Initial Response Steps}}
+
+\textbf{Verify the alert} by reviewing logs and cross-checking:
+
+  
+
+ 
+
+Get-WinEvent -FilterHashtable @\{LogName='Security'; ID=4662; Data='servicePrincipalName'\} |
+
+  Select-Object TimeCreated, AccountName, ObjectName
+
+\begin{enumerate}
+    \item 
+
+    \item Determine \textbf{source context}:
+
+    \begin{itemize}
+        \item Was it from a workstation or DC?
+
+        \item Is the account normally administrative?
+
+        \item Was the time of day unusual?
+
+    \end{itemize}
+\end{enumerate}
+\textbf{Isolate the system/account}:
+
+  
+
+ 
+
+\# Disable the user temporarily
+
+Disable-ADAccount -Identity "suspiciousUser"
+
+\# Or quarantine the host
+
+New-NetFirewallRule -DisplayName "Block LDAP" -RemoteIP <AlertingHostIP> -Action Block
+
+\begin{enumerate}
+    \item 
+
+    \item \textbf{Notify Tier 0 team} to accelerate containment and forensic capture.
+
+\end{enumerate}
+
+\paragraph{\textbf{   B) In-Depth Investigation \& Forensics}}
+
+\textbf{Retrieve memory dumps} from the alerting system (e.g., via Live Response).
+
+\textbf{Check for recon tools}:
+
+  
+
+ 
+
+Get-Process | Where-Object \{ \$_.Path -match 'PowerView|SharpHound' \}
+
+\begin{itemize}
+    \item 
+
+    \item Inspect network captures for LDAP/SMB activity spikes targeting elevation paths.
+
+\end{itemize}
+
+\paragraph{\textbf{   C) Hardening \& Mitigation}}
+
+\textbf{Revoke compromised credentials}, especially if SPNs or delegation attributes were queried.
+
+\textbf{Rotate service account passwords} tied to SPNs:
+
+  
+
+ 
+
+Set-ADAccountPassword -Identity "svcKerb" -Reset
+
+\textbf{Apply stricter ACLs} around privileged objects:
+
+  
+
+ 
+
+\$acl = Get-Acl "AD:CN=Domain Admins,CN=Users,DC=corp,DC=local"
+
+\$rule = New-Object System.DirectoryServices.ActiveDirectoryAccessRule(
+
+  "Domain Users", "ReadProperty", "Deny", "GenericAll")
+
+\$acl.AddAccessRule(\$rule)
+
+Set-Acl "AD:CN=Domain Admins,CN=Users,DC=corp,DC=local" \$acl
+
+\paragraph{\textbf{   D) Clean-Up and Remediation}}
+
+\begin{itemize}
+    \item \textbf{Purge audit logs}, re-enable services/accounts gradually.
+
+    \item \textbf{Deploy honeytokens}: create fake SPNs, honeypot accounts with adminCount=1, and ACL on msDS-AllowedToActOnBehalfOfOtherIdentity. Monitor their reads.
+
+    \item \textbf{Strengthen detection}: move sensitive attributes into baselined detection pipelines.
+
+\end{itemize}
+
+\paragraph{\textbf{   E) Lessons Learned \& Continuous Improvement}}
+
+\begin{itemize}
+    \item Document how attacker queried LDAP, what chain they were following.
+
+    \item Add that TTP to your playbooks; test again.
+
+    \item Train SOC/IR teams using the recorded alert timeline.
+
+    \item Schedule \textbf{purple team sessions} every 3 months, emulating this exact recon path to validate detection improvements.
+
+\end{itemize}
+
+\subsubsection{\textbf{Final Word on Malicious LDAP Recon Defense}}
+
+\textbf{Proper observability} combined with \textbf{contextual threat hunting} transforms passive logs into proactive defense. The moment an attacker starts mapping SPNs, adminCount flags, or delegation rights, you \textbf{must escalate response}. Your goal isn’t just detection—it’s early detection, immediate intervention, and systemic hardening to \textbf{make recon useless} for adversaries.
+
+\subsection{\textbf{9. BloodHound Recon}}
+
+\subsection{\textbf{9. SIDHistory Abuse}}
+
+\subsection{\textbf{9. Silver Tickets}}
+
+\subsection{\textbf{NTDS.dit Extraction}}
+
+ 

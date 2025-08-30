@@ -1,0 +1,54 @@
+%%%%%%%%%%%%%%%%%%%%% chapter.tex %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% sample chapter
+%
+% Use this file as a template for your own input.
+%
+%%%%%%%%%%%%%%%%%%%%%%%% Springer-Verlag %%%%%%%%%%%%%%%%%%%%%%%%%%
+%\motto{Use the template \emph{chapter.tex} to style the various elements of your chapter content.}
+\chapter{Chapter Outlines}
+\label{intro} % Always give a unique label
+% use \chaptermark{}
+% to alter or adjust the chapter heading in the running head
+
+\begin{abstract}
+Active Directory drives enterprises. Used by more than 90\% of Fortune 1000 companies, the all-expansive AD is the focal point for adversaries. Still, when it comes to AD security, there is a large gap of knowledge which security professionals and administrators struggle to fill.
+\end{abstract}
+This book is designed to prepare ethical hackers, penetration testers, red and blue teamers, and security professionals to better understand, analyze, and practice threats and cyberattacks in a modern Active Directory environment. This book is based off of my years of experience in making and breaking Windows and AD environments and teaching security professionals.
+
+Chapters cover topics like AD enumeration, trusts mapping, domain privilege escalation, domain persistence, Kerberos-based attacks (Golden and Silver Tickets), ACL and ACE issues, and how to properly defend AD infrastructures from emerging cyberthreats.
+
+\section{Chapter Objectives}
+The book is split into four modules, respectively.
+
+\subsection{Module 1: Active Directory Enumeration and Local Privilege Escalation}
+Enumerate information like users, groups, group memberships, computers, user properties, trusts, ACLs, and more, to map attack pathways to attacker TTPs using the MITRE ATT\&CK Framework and the Cyber Kill Chain (CKC).
+Learn and practice different local privilege escalation techniques on a Windows machine.
+Hunt for local admin privileges on machines in the target domain using multiple attack methods.
+Abuse enterprise applications to execute complex attack paths that involve bypassing antivirus and pivoting to different parts of the domain network.
+
+\subsection{Module 2: Lateral Movement, Domain Privilege Escalation and Persistence}
+Module 2: Lateral Movement, Domain Privilege Escalation, and Persistence
+Learn to find credentials and administrative sessions with high privileges using domain accounts like Domain Admins, extracting their credentials, and then using those credentials for replay attacks to escalate privileges, all of this with just using built-in protocls for pivoting.
+Learn to extract credentials from a restricted environment where application allowlisting is enforced; abuse derivative local admin privileges and pivot to other machines to escalate privileges to domain level.
+Understand the classic Kerberoast and its variants that enable privilege escalation.
+Understand and exploit delegation issues.
+Learn how to abuse privileges of Protected Groups to escalate privileges.
+Abuse Kerberos functionality to persist with DA privileges; forge tickets to execute attacks such as Golden and Silver Ticket attacks to persist.
+Subvert the authentication on the domain level with Skeleton Key and custom SSP.
+Abuse DC Safe Mode Administrator for persistence.
+Abuse the protection mechanism like AdminSDHolder for persistence.
+
+\
+
+
+
+
+
+
+
+
+
+
+
+

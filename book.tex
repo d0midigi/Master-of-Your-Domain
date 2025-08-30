@@ -1,0 +1,311 @@
+\documentclass[graybox,envcountchap,sectrefs]{svmono}
+\usepackage{lmodern}
+\usepackage{cite}
+\usepackage{fix-cm}
+\usepackage[table]{xcolor}
+\usepackage{caption}
+
+ 
+
+
+% =========================
+% Failsafe build switch
+% =========================
+\newif\ifbuildchapters
+\buildchapterstrue        % <-- set to \buildchapterstrue to include chapters
+\usepackage{ragged2e}  % Justifying content
+\let\raggedright\justifying
+
+
+% ---- Encoding & fonts
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{type1cm}
+\usepackage{newtxtext}
+\usepackage{newtxmath}
+\usepackage{microtype}
+\usepackage{hyphenat}
+\usepackage{amsmath}  
+%\usepackage{svmono} % For svgraybox environment
+\usepackage{inputenc}
+\usepackage{paralist}
+\usepackage{inconsolata}
+
+ 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ---- Beautiful table
+\usepackage[margin=1in]{geometry}
+%\setlength{\textwidth}{6.25in}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage[table]{xcolor}
+\usepackage{longtable}
+
+\definecolor{headerblue}{RGB}{0,102,204}
+\definecolor{rowgray}{gray}{0.95}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ---- Source Code Snippet Box
+\usepackage[most]{tcolorbox}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{caption}
+
+% Define color scheme
+\definecolor{terminalbg}{HTML}{1E1E1E}
+\definecolor{termtext}{HTML}{FFFFFF}
+\definecolor{termcomment}{rgb}{0.4, 1.0, 0.4}
+\definecolor{termkeyword}{rgb}{0.6, 0.6, 1.0}
+\definecolor{termboxlabel}{gray}{0.9}
+
+% Define listing style
+\lstdefinestyle{bashstyle}{
+    backgroundcolor=\color{terminalbg},
+    basicstyle=\ttfamily\small\color{termtext},
+    keywordstyle=\color{termkeyword},
+    commentstyle=\color{termcomment},
+    stringstyle=\color{orange},
+    breaklines=true,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false,
+    frame=none
+}
+
+% Define code box environment with a label (like 'bash')
+\newtcblisting{codeblock}[2][]{
+    listing only,
+    title=#2,
+    listing options={style=bashstyle},
+    colback=terminalbg,
+    coltitle=black,
+    fonttitle=\small\ttfamily\bfseries,
+    colframe=black,
+    boxsep=0pt,
+    top=1mm, bottom=1mm, left=1mm, right=1mm,
+    enhanced,
+    attach boxed title to top left={yshift=-1mm, xshift=2mm},
+    boxed title style={colback=termboxlabel, size=small, sharp corners=northwest},
+    #1
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% !! Awesomebox
+\usepackage{awesomebox}
+\usepackage{tcolorbox}
+\usepackage{fontawesome5}
+\usepackage{tcolorbox}
+\usepackage{fontawesome5}
+
+% Environment with a unique name
+\newcommand{\gearbox}[1]{%
+  \awesomebox[gray!60]{\faIcon{cog}}{Tool}{#1}%
+}
+\usepackage[nopar]{lipsum}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Enter in mainmatter:
+
+%\lipsum[1]
+
+%\notebox{\lipsum[2]}
+
+%\tipbox{\lipsum[3]}
+
+%\warningbox{\lipsum[4]}
+
+%\cautionbox{\lipsum[5]}
+
+%\importantbox{\lipsum[6]}
+
+%\newcommand{\gearbox}[1]{%
+  %\awesomebox[teal]{\faCog}{Tool}{#1}%
+%}
+
+%\lipsum[8]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Source Code Snippet Box
+\usepackage[utf8]{inputenc} 
+\usepackage{geometry} 
+\usepackage{tikz} 
+\usepackage{lipsum}
+
+\newcommand{\mybox}[4]{
+    \begin{figure}[h]
+        \centering
+    \begin{tikzpicture}
+        \node[anchor=text,text width=\columnwidth-1.2cm, draw, rounded corners, line width=1pt, fill=#3, inner sep=5mm] (big) {#4};
+        \node[draw, rounded corners, line width=.5pt, fill=#2, anchor=west, xshift=5mm] (small) at (big.north west) {#1};
+    \end{tikzpicture}
+    \end{figure}
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ----- Enter into mainmatter:
+
+%\begin{document}
+%\lipsum*[1]
+
+%\mybox{bash}{gray!20}{gray!40}{\texttt{python Responder.py -I eth0 -rdvw}}
+
+%\mybox{Summary 1}{green!40}{green!10}{This is a very different box... Well, ok, just the colour.}
+
+%\lipsum*[2]
+%\end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
+% ---- Core packages
+\usepackage{makeidx}
+\usepackage{wrapfig}
+\usepackage{graphicx}
+\graphicspath{{./}{images/}{mainmatter/images/}}
+\usepackage{multicol}
+\usepackage[bottom]{footmisc}
+\usepackage{xcolor}
+% ---- Code snippets (PowerShell example)
+\usepackage{listings}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+
+% ---- Index & graphics
+\makeindex
+\graphicspath{{./}{images/}}
+
+% ---- Hyperref (must be last)
+\usepackage[hidelinks]{hyperref}
+% ---- Load nameref before hyperref to prevent warning
+\usepackage{nameref}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Force wider layout to fix narrow centered appearance
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd{\@outputpage}{\null\vfil}{}{}{}
+\makeatother
+
+\captionsetup{compatibility=false}
+
+
+ 
+
+% Fix text width manually
+\setlength{\textwidth}{6.25in}
+\setlength{\oddsidemargin}{0.125in}  % or tweak this as needed
+\setlength{\evensidemargin}{0.125in}
+
+
+\usepackage{hyperref}
+\begin{document}
+\justifying
+
+
+\author{Author name(s)}
+\title{Book title}
+\subtitle{-- Monograph --}
+\maketitle
+
+\frontmatter
+\include{frontmatter/preface}
+\include{frontmatter/acknowledgement}
+\include{frontmatter/conventions}
+\include{frontmatter/codeplayground}
+\include{frontmatter/whatbookisabout}
+\tableofcontents
+\include{frontmatter/acronym}
+
+\mainmatter
+% Chapters
+\include{mainmatter/part}
+\include{mainmatter/awesomebox}
+\include{mainmatter/chapter1}
+\include{mainmatter/chapter2}
+\include{mainmatter/chapter3}
+\include{mainmatter/chapter4}
+\include{mainmatter/chapter5}
+\include{mainmatter/chapter6}
+\include{mainmatter/chapter7}
+\include{mainmatter/chapter8}
+%\include{mainmatter/chapter9}
+\include{mainmatter/chapter10}
+\include{mainmatter/chapter11}
+\include{mainmatter/chapter12}
+\include{mainmatter/chapter13}
+\include{mainmatter/chapter14}
+\include{mainmatter/chapter15}
+\include{mainmatter/chapter16}
+\include{mainmatter/chapter17}
+\include{mainmatter/chapter18}
+\include{mainmatter/chapter19}
+\include{mainmatter/chapter20}
+\include{mainmatter/chapter21}
+\include{mainmatter/chapter22}
+\include{mainmatter/chapter23}
+\include{mainmatter/chapter24}
+\include{mainmatter/chapter25}
+\include{mainmatter/chapter26}
+\include{mainmatter/chapter27}
+\include{mainmatter/chapter28}
+\include{mainmatter/chapter29}
+\include{mainmatter/chapter30}
+\include{mainmatter/chapter32}
+\include{mainmatter/chapter33}
+\include{mainmatter/chapter34}
+\include{mainmatter/chapter35}
+\include{mainmatter/chapter36}
+\include{mainmatter/chapter37}
+\include{mainmatter/chapter38}
+\include{mainmatter/chapter39}
+%\include{mainmatter/chapter40}
+\include{mainmatter/chapter41}
+\include{mainmatter/chapter42}
+\include{mainmatter/chapter43}
+\include{mainmatter/chapter44}
+\include{mainmatter/chapter45}
+\include{mainmatter/chapter46}
+\include{mainmatter/chapter47}
+\include{mainmatter/chapter48}
+\include{mainmatter/chapter49}
+\include{mainmatter/chapter50}
+\include{mainmatter/chapter51}
+\include{mainmatter/chapter52}
+%\include{mainmatter/chapter53}
+%\include{mainmatter/chapter54}
+%\include{mainmatter/chapter55}
+%\include{mainmatter/chapter56}
+\include{mainmatter/chapter57}
+\include{mainmatter/chapter58}
+\include{mainmatter/chapter59}
+\include{mainmatter/chapter60}
+\include{mainmatter/chapter61}
+\include{mainmatter/chapter62}
+\include{mainmatter/chapter63}
+\include{mainmatter/chapter64}
+\include{mainmatter/chapter65}
+\include{mainmatter/chapter66}
+\include{mainmatter/chapter67}
+\include{mainmatter/chapter68}
+\include{mainmatter/chapter69}
+\include{mainmatter/chapter70}
+\include{mainmatter/chapter71}
+\include{mainmatter/chapter72}
+\include{mainmatter/chapter73}
+\include{mainmatter/chapter77}
+\include{mainmatter/chapter81}
+
+
+\include{mainmatter/appendix}
+\include{mainmatter/annotatedtoc}
+
+\backmatter
+\include{backmatter/quickguide}
+\include{backmatter/seclists}
+\include{backmatter/glossary}
+\include{backmatter/references}
+\include{backmatter/appendixa}
+\include{backmatter/solutions}
+\include{backmatter/apttable}
+\include{backmatter/tools}
+\include{backmatter/bib}
+
+\printindex
+\end{document}

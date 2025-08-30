@@ -1,0 +1,69 @@
+
+\section{\textbf{Scarlet Goldfinch}}
+
+Closely mimicking SocGholish, this fake update variant propelled its primary payload, NetSupport Manager, into prominence as well.
+
+\subsection{\textbf{\#3}}
+
+\textbf{Overall Rank}
+
+\subsection{\textbf{3.4\%}}
+
+\textbf{Customers Affected}
+
+\subsection{\textbf{Analysis}}
+
+Scarlet Goldfinch is Red Canary’s name for a fake browser update activity cluster, similar to \href{https://redcanary.com/threat-detection-report/threats/socgholish/}{\textbf{SocGholish}}, that first emerged in June 2023. One of several emerging threats in mid-2023 that followed SocGholish’s fake update footsteps, Scarlet Goldfinch is tracked by \href{https://www.trellix.com/blogs/research/new-techniques-of-fake-browser-updates/}{\textbf{other researchers}} under several different names, including \href{https://medium.com/walmartglobaltech/smartapesg-4605157a5b80}{\textbf{SmartApeSG}} (due to early observations of C2 infrastructure hosted on SmartApe ASN) and \href{https://www.proofpoint.com/us/blog/threat-insight/are-you-sure-your-browser-date-current-landscape-fake-browser-updates}{\textbf{ZPHP}} (due to the use of PHP files to host C2 payloads).
+
+Like SocGholish, Scarlet Goldfinch leverages compromised websites to present unsuspecting visitors with a notification that they need to update their browser. Those who take the bait will download a malicious JavaScript (JS) file that typically attempts to install \href{https://redcanary.com/threat-detection-report/threats/netsupport-manager/}{\textbf{NetSupport Manager}}, providing persistent remote access to the adversary.
+
+Scarlet Goldfinch leverages web injects on compromised legitimate websites to redirect users to their fake update download sites. This approach leads to a somewhat diverse and indiscriminate pool of victims, and we have not observed any patterns in targeting by Scarlet Goldfinch. Left unchecked, we have observed additional follow-on payloads delivered after NetSupport, such as \href{https://redcanary.com/threat-detection-report/threats/lummaC2/}{\textbf{LummaC2}}.
+
+At a high level, Scarlet Goldfinch’s objectives have remained consistent from when we first observed it in mid-2023. The use of fake update lures to entice a user to run a malicious JS dropper to download and install NetSupport has remained consistent. However, at the procedure level, Scarlet Goldfinch demonstrated several changes throughout 2024, indicating ongoing active development.
+
+\begin{itemize}
+    \item Analysis
+    \item Take action
+    \item Detection
+    \item Testing
+\end{itemize}
+Scarlet Goldfinch tricks users into downloading a malicious JavaScript file that typically attempts to install NetSupport Manager, providing persistent remote access to the adversary.
+
+\paragraph{\textbf{Tracking changes in lure names}}
+
+\paragraph{\textbf{Ditching PowerShell}}
+
+While these changes in lure names indicate continued minor tinkering with Scarlet Goldfinch, the biggest change we observed showed up in mid-November 2024. For about 15 months prior to that, Scarlet Goldfinch had used \textbf{PowerShell} code as the second-stage downloader to deploy NetSupport onto the system. Spawned by the wscript process, PowerShell would reach out to a C2 domain to pull down a ZIP file containing the NetSupport client32.exe binary, unzip the contents to a folder in \%AppData\%, execute it, and modify the CurrentVersion\textbackslash{}Run key in the \textbf{Windows registry} to establish logon persistence. This PowerShell code saw minor changes over time, similar to the filename lures, adding increased obfuscation through variables and modifying the installation folder and run key names. But the basic functionality remained unchanged.
+
+Then, in November 2024, the PowerShell component disappeared from the infection chain. Instead, the adversaries beefed up the code in the JS file. The tactics and higher-level techniques remained the same–pull down a ZIP containing NetSupport, write it to a folder, and establish run key persistence–but the procedures for doing this now existed entirely within the initial JavaScript dropper. While this change not only represents active code development, it also impacts detection strategies.
+
+But as often happens, when one door closes another one opens. Scarlet Goldfinch no longer triggers the subset of PowerShell detection logic it once did, but we’re now seeing new activity from some of our other detection logic.
+
+\subsection{\textbf{Take action}}
+
+One of the best ways to mitigate risks associated with Scarlet Goldfinch–as well as SocGholish, Gootloader, and other threats that begin with malicious JavaScript files–is to change the default behavior in Windows to open JS files with notepad or another editor rather than immediately executing them. 
+
+\subsection{\textbf{Detection opportunities}}
+
+\paragraph{\textbf{Script execution from Explorer’s built-in ZIP function}}
+
+This pseudo-detection analytic looks for WScript executing JavaScript files in the temp folder and app data, a tell-tale sign of mischief. 
+
+parent\_process == (explorer.exe)
+
+\&\&
+
+process == (wscript.exe)
+
+\&\&
+
+command\_line\_includes ( users || temp) \& (.zip || .js)
+
+\&\&
+
+has\_netconn
+
+
+\subsection{\textbf{Testing}}
+
+You can test detection capabilities by modifying and executing \textbf{tests for T1059.007} using Atomic Red Team, particularly \textbf{Atomic Test \#2 – JScript execution to gather local computer information via wscript}. The tests will need customization using script paths that match those of Scarlet Goldfinch scripts.

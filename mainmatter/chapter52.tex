@@ -1,0 +1,141 @@
+Beware that pushing data using replication can brick your domain (although we never did it while developing DCShadow)
+
+Executive Summary
+
+DCShadow is a new feature in mimikatz located in the lsadump module. It simulates the behavior of a Domain Controller (using protocols like RPC used only by DC) to inject its own data, bypassing most of the common security controls and including your SIEM. It shares some similarities with the DCSync attack (already present in the lsadump module of mimikatz).
+
+As a reminder a Domain Controller is a server controlling an "Active Directory", a shared authentication service used in enterprises.
+
+First disclosure
+
+It was already possible to simulate a domain controller or to alter its internal database.
+
+For example, by installing in a virtual machine a customized version of SAMBA. But given the fact that running a virtual machine needs hardware instruction (on x64 CPU it is disabled by default), a physical interaction with the computer may be required to enable them in the BIOS/EFI. In addition the size and time needed for a VM is not scalable.
+
+DSInternals powershell tools already allows the editing of an existing AD database, but in offline mode. Putting it online requires to use the AD recovery mode which is not straight forward.
+
+Description of the attack
+
+The attacks is done using the following steps:
+
+registering the "DC" by creating 2 objects in the CN=Configuration partition and altering the SPN of the computer used.
+Pushing the data (triggered using DrsReplicaAdd, KCC or other internal AD events)
+Removing the object previously created to demote the DC
+
+
+Beware of testing your data before sending it !!
+
+Here is an example of error when pushing an incorrect DACL (in this case the Owner part was missing)
+
+And some other example of invalid data
+
+Is it a vulnerability ?
+
+No, because the protocols used are documented:
+
+
+MS-ADTS
+MS-DRSR
+
+It is a post exploitation attack (also called domination attack) because it requires domain admin (or enterprise admin) privileges
+
+Why is it a game changer ?
+
+functionally
+
+At a functional level:
+
+
+iem It can create new backdoor such as SIDHistory, ntpwdHistory, ...
+It is a tool to erase the attacker traces (replication metadata, schemasignatureinfo, ...)
+Create unseen XSS attack on administration reports
+
+
+Technically
+
+At a technical level:
+
+
+The modifications done are made without any logging
+Modifications done only by a DC such as setting the SID History or WhenChanged can be done without logging
+Partial changes such as changing only the previous password without the new one can be done without logging
+Modifications not compliant with the AD data such as a very long sAMAccountName (< 16 characters) can be done without logging
+
+In short it bypasses the SIEM monitoring done on the Active Directory
+
+Demo
+Object creation and deletion
+
+DCShadow allows to create object in the past or remove immediately objects via lingering or class change.
+
+Schema modifications
+
+Modify the schema is a powerful way to get backdoor. An example is the modification of the SDDL used by LAPS to store the local admin password. However such modification changes the attribute schemaInfo which tracks such modification and can be used by blue teams. DCShadow allows schema modifications without a change of schemaInfo.
+
+Forensics of the attack
+
+Because DCShadow is pushing replication information, DCShadow is responsible for pushing replication metadata. This metadata is accessible to anyone (including from trusted domains) and available through LDAP or RPC.
+
+This metadata is used by forensic analysts to rebuild the history of change and understand what happened on a domain. Well, this data cannot be trusted anymore.
+
+Metadata alteration
+
+DCShadow allows to modify the object metadata used to recover the past modifications.
+
+How can it be detected ?
+
+DCShadow is easy to detect at network level. API like DrsAddEntry or DrsReplicaAdd are called only from a DC so a call from another computer should be considered as suspicious.
+
+Using logs DCShadow can be detected when objects in the Configuration partition is added or when the computer object is changed. However a DC does not replicate the modifications immediately and regroup the changes when it replicates (a few minutes). As a consequence, the changes can be observed only on the DC attacked. This can be avoided by reusing a demoted DC (the information needed is already present in the configuration partition).
+
+DCShadow does set the SPN GC/* or E3514235-4B06-11D1-AB04-00C04FC2DCD2/* on computers object (via DrsAddEntry)
+
+Using LDAP cookie (LDAP\_SERVER\_DIRSYNC\_OID) is also a way to be notified of LDAP modification
+
+Using Audit Detailed Directory Service Replication events 4928 An Active Directory replica source naming context was established. and 4929 An Active Directory replica source naming context was removed.
+
+new attack possibilities
+
+Here are the new attack possibilities allowed by DCShadow:
+
+Compromise trusted domain via SID History and NTLM (previously only kerberos)
+"Reverse DCSync" - set the previous hash of the krbtgt to a known value
+"Remote skeleton key" - set a NTLM hash and an AES hash not matching the same password to create Golden / Silver ticket
+Setting backdoor in DACL
+
+
+Internals
+
+How to transform attributes to attid ?
+
+First the attribute has to be found in the schema using the LDAP query (\&(objectclass=attributeSchema)(lDAPDisplayName=<attribute>))
+
+Then the OID is extracted of the attribute using the property attributeID. The syntax is extracted from attributeSyntax. Both OID are converted using a prefixTable to AttiD using the procedure described in MS-DRSR 5.16.4 ATTRTYP-to-OID Conversion
+
+How to encode data to binary ?
+
+Using the attributeSyntax, a syntax is selected according to a MS-DRSR encoding algorithm.
+
+How a DC make the difference between an existing and a new object ?
+
+The DC checks the presence of mandatory attributes such as: instanceType, objectGuid (in NC) and whenCreated. If they are present, the object is new else it is an update. If the request is considered as an update but the object is not present, the object is considered as lingering object and an event is created
+
+FAQ
+
+Is DCShadow a permanent domain controller ?
+
+No: it transforms itself as a DC only the time the changes are pushed (a few seconds)
+
+Does DCShadow deals with the KCC ?
+
+No. It only add a single branch to the replication topology and remove it afterwards. It deals with KCC only if the Configuration records stay for long and in this case, it does not break the topology.
+
+Problem \& Tricks
+
+Adding objects
+
+Check that instanceType and whenCreated are set ; check that the objectGuid has not be used before (log internal processing - Duplicate event log entries were suppressed)
+
+Killing objects
+
+The creation date must be larger that the lingering time (more than 6 months!). Symptom: no RPC connection to the server

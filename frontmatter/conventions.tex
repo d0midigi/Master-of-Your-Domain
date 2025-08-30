@@ -1,0 +1,49 @@
+
+%%%%%%%%%%%%%%%%%%%%% chapter.tex %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% sample chapter
+%
+% Use this file as a template for your own input.
+
+%%%%%%%%%%%%%%%%%%%%%%%% Springer-Verlag %%%%%%%%%%%%%%%%%%%%%%%%%%
+%\motto{Use the template \emph{chapter.tex} to style the various elements of your chapter content.}
+\section{Conventions Used in This Book}
+\label{intro} % Always give a unique label
+% use \chaptermark{}
+% to alter or adjust the chapter heading in the running head
+
+To make this book easier to read and to help you quickly identify important elements, I use the following typographic conventions throughout the chapters:
+\begin{itemize}
+    \item \textbf{Bold}-Used for emphasis and for names of important concepts, roles, or terms when they first appear. Also used for button names, menu items, and other user interface elements.
+    \textit{Example:} Click \textbf{OK} to confirm the changes.
+    \item \textit{Italic}-Use for introducing new terms, highlighting variables in examples, and emphasizing key ideas in running texts.
+    \textit{Example:} The \textit{attack surface} is the total set of points an attacker can attempt to exploit.
+    \item \colorbox{gray!20}{\texttt{Monospace-Used}} for computer commands, executable names, file names, code keywords, and any text you see in that manner means that you must type exactly as shown.
+    \textit{Example:} Run \colorbox{gray!20}{\texttt{ping contoso.com}} to check network connectivity.
+    \item Monospace Bold-Used to highlight computer commands or code, executable names, file names, code keywords, and any text the reader sees in this manner means that you should type exactly as shown, particularly in step-by-step procedures.
+    \textit{Example:} Type \colorbox{gray!20}{\texttt{net user /domain}} to list domain accounts.
+    \sloppy
+    \item CAPITAL LETTERS-Used for Active Directory service records, protocol acronyms, and other abbreviations.
+    \textit{Example:} The \_LDAP SRV record is used for locating domain controllers.
+    \item \textbf{Notes}-Provide additional context, background details, or clarifications to help you better understand a concept or procedure. Notes often explain why something is important from either an offensive or defensive perspective.
+    \item \textbf{Tips}-Offer practical advice, shortcuts, and techniques to make tasks faster, easier, or more effective. Tips may include recommended configurations, useful command variations, or field-tested methods that work well in Active Directory environments.
+    \item \textbf{Warnings}-Alert you to potential risks, pitfalls, or security hazards. Warnings emphasize actions that could result in system compromise, data loss, or reduced security posture if ignored. In the offensive context, they may describe the impact of an exploit; in the defensive context, they explain how to avoid it.
+\end{itemize}
+
+
+Please use the 'starred' version of the new \texttt{abstract} command for typesetting the text of the online abstracts (cf. source file of this chapter template \texttt{abstract}) and include them with the source files of your manuscript. Use the plain \texttt{abstract} command if the abstract is also to appear in the printed version of the book.
+\sloppy
+\abstract{Each chapter should be preceded by an abstract (no more than 200 words) that summarizes the content. The abstract will appear \textit{online} at \url{www.SpringerLink.com} and be available with unrestricted access. This allows unregistered users to read the abstract as a teaser for the complete chapter.}
+
+\section{Section Heading}
+\label{sec:1}
+Use the template \emph{chapter.tex} together with the document class SVMono (monograph-type books) or SVMult (edited books) to style the various elements of your chapter content conformable to the Springer Nature layout.
+
+\section{Section Heading}
+\label{sec:2}
+% Always give a unique label
+% and use \ref{<label>} for cross-references
+% and \cite{<label>} for bibliographic references
+% use \sectionmark{}
+% to alter or adjust the section heading in the running head
+Instead of simply listing headings of different levels we recommend to let 

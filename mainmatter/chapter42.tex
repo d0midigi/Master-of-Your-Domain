@@ -1,0 +1,462 @@
+
+\textbf{Kerberoasting}
+
+\textit{ABC}
+
+Section 1: Attacker’s View
+
+\section{\textbf{Understanding Golden Ticket Attacks}}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{| l | l |}
+\hline
+\textbf{What It Is in Shortform:} & \textbf{Tools Used:} \\
+\hline
+\textit{Golden Ticket attacks use a forged Kerberos Ticket Granting Ticket (TGT) to gain unrestricted access or resources within an Active Directory domain.} &  \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\subsection{\textbf{1. Kerberoasting}}
+
+Abuse of the Kerberos authentication protocol to extract \textit{Ticket Granting Service} \textit{(TGS) tickets} that can be brute-forced offline. From an attacker’s view, abusing the Kerberos authentication protocol through a technique commonly referred to as “Kerberoasting” represents a high-value, low-risk method for obtaining domain credentials. This attack targets service accounts within a Windows Active Directory (AD) environment, specifically accounts associated with \textit{Service Principal Names (SPNs)}. These SPNs are used by Kerberos to identify services on a network, and because of how the Kerberos ticketing system works, attackers can extract encrypted service tickets, which are then susceptible to offline brute-force or dictionary attacks. By doing so, an attacker can potentially recover the plaintext passwords of privileged service accounts without triggering alarms on the domain or service being attacked.
+
+To execute a Kerberoasting attack, you must first gain access to a standard user account within the domain. This access can come from phishing, exploiting weak passwords, or lateral movement from an already compromised system. Once you establish toehold, you use that authenticated context to enumerate SPNs via LDAP queries. Tools like \textbf{PowerView, Rubeus}, and \textbf{Impacket’s getSPNs.py} can automate this process, listing all service accounts with registered SPNs. This step is critical, as only accounts tied to SPNs will have the required Ticket Granting Service (TGS) tickets that can be requested and subsequently cracked.
+
+Once a list of target SPNs is obtained, you next send a request to the \textit{Key Distribution Center (KDC)}, asking for a TGS for each of the SPNs. Because you’re authenticated, the KDC will respond with the requested tickets, encrypting them with the hash of the target service account’s password. These TGS tickets are then saved locally by the attacker for offline analysis. This offline nature of the cracking process is key to the attack’s stealth, as it avoids repeated login attempts that would otherwise trigger account lockouts or alerts in most monitoring solutions.
+
+At this point, the attacker uses tools like \textbf{Hashcat} or \textbf{John the Ripper (JtR)} to brute-force the service ticket. These tools attempt to guess the service account password by comparing hashed guesses with the encrypted portion of the TGS ticket. If the password is weak or reused across environments, it’s only a matter of time before the correct plaintext password is recovered. Once the password is cracked, the attacker can use it to impersonate the service account, potentially elevating privileges or gaining access to sensitive systems and data.
+
+Furthermore, service accounts are often overlooked in routine security audits and may have passwords that are never changed or managed by password vaulting solutions. They may also possess elevated privileges, such as local administrator access on servers, access to databases, or even domain admin rights in misconfigured environments. This makes Kerberoasting particularly dangerous. An attacker who successfully compromises such an account gains not just persistence, but also lateral movement capabilities and potential privilege escalation routes.
+
+Many organizations are unaware that service accounts with SPNs are exposed in this way by default. Kerberos is designed to be a secure authentication protocol, but the implementation within Active Directory allows for these tickets to be retrieved without special permissions. Moreover, because requesting a TGS is a normal operation in AD, these requests typically do not raise red flags unless defenders have specialized monitoring and anomaly detection systems in place.
+
+This lack of visibility makes Kerberoasting an ideal for stealthy attackers who want to avoid detection while gathering credentials.
+
+One tactic attackers often use is to prioritize service accounts that use the RC4 encryption for their Kerberos tickets. While newer versions of Windows support stronger encryption types, RC4 remains widely used for compatibility, and it’s significantly easier to brute-force compared to AES-based tickets. Attackers can specify the encryption types they prefer when requesting TGS tickets, further increasing their success rate when targeting environments that haven’t fully deprecated legacy encryption standards.
+
+From a campaign planning perspective, Kerberoasting is often employed in the mid-to-late stages of a network intrusion. After initial access and reconnaissance, the attacker uses Kerberoasting to pivot deeper into the network, compromise higher-valued targets or establish additional backdoors. The technique scales well: once a single domain user is compromised, an attacker can enumerate and request TGS tickets for dozens or even hundreds of SPNs, all without triggering defenses if the environment lacks proper telemetry.
+
+In some cases, attackers may combine Kerberoasting with other techniques such as \textit{AS-REP Roasting} or \textit{Golden Ticket} attacks. AS-REP roasting is used against accounts that do not require Kerberos pre-authentication, while Golden Tickets involve forging TGTs using the krbtgt account hash. When used together, these methods can provide a comprehensive path for total domain compromise, especially if the target organization lacks segmentation, password hygiene, or effective detection capabilities.
+
+Successful Kerberoasting depends heavily on poor password policies. If service accounts have long, complex, and regularly rotated passwords, brute-forcing becomes computationally expensive and time-prohibitive; however, in many environments, attackers find that service account passwords are rarely changed and often follow predictable naming conventions. This makes dictionary attacks, particularly those using known password leaks or organizational naming schemes, highly effective.
+
+Additionally, attackers may use obfuscation techniques to hide their Kerberoasting activities. For example, rather than using tools like Rubeus in cleartext, they may obfuscate the binaries using tools like Invoke-Obfuscation or run them from memory using reflective \textit{DLL (Dynamic Link Library)} injection. This reduces the likelihood that antivirus or \textit{Endpoint Detection and Response (EDR)} tools will detect the behavior. Some attackers will even automate the attack process with a larger script or \textit{C2 (Command and Control) framework} like \textbf{Cobalt Strike} or \textbf{Empire}, blending Kerberoasting into a multi-pronged attack campaign.
+
+Once a service account is compromised, the attacker can use it for various purposes depending on its permissions. They might access file shares, escalate privileges via token impersonation, or pivot to systems that trust the compromised service. If the service account is a member of high-privileged groups like Domain Admins: game over. The attacker can achieve full domain compromise. Even lower-privileged accounts can be leveraged for lateral movement. Persistence, or further exploitation. They’re also commonly referred to as “low hanging fruit.”
+
+Overall, Kerberoasting is a powerful, low-noise technique that exploits a design feature of Kerberos and Active Directory. It doesn’t rely on zero-day exploits or advanced malware, but rather on predictable human behavior, misconfigurations, and weak operational security and hygiene. For red teamers, it’s an essential tactic in the toolkit; for defenders, it’s a reminder that strong password policies, continuous monitoring, and proper SPN hygiene are not optional - they are critical defense mechanisms.
+
+The success of Kerberoasting as a method lies in its simplicity and stealth. Unlike more aggressive tactics like password spraying or account lockout attacks, Kerberoasting plays by the rules of the environment. It uses legitimate user accounts, standard LDAP and Kerberos protocols, and offline cracking to bypass many traditional security controls. As such, it will remain a preferred method of attack until defenders fully implement protections like managed service accounts, ticket encryption hardening, and fine-grained anomaly detection across the authentication stack.
+
+\subsubsection{\textbf{Tools}}
+
+Rubeus
+
+Impacket
+
+PowerView
+
+\subsubsection{\textbf{Attack Code}}
+
+Enumerate service accounts with SPNs
+
+Import-Module .\textbackslash{}PowerView.ps1
+
+Get-DomainUser -SPN
+
+Request TGS ticket
+
+Rubeus.exe kerberoast
+
+\subsubsection{Defense}
+
+From a defender’s view, Kerberoasting presents one of the most persistent and underestimated threats to the integrity of Active Directory (AD) environments. Unlike many attack techniques that require elevated privileges or complex chains of exploits, Kerberoasting thrives on a fundamental design characteristic of the Kerberos protocol - namely, the ability for any authenticated domain user to request service tickets for accounts with Service Principal Names (SPNs). The inherent permissiveness of this mechanism places the burden of defense squarely on the configuration of your environment, the strength of service account credentials, and the visibility into \textbf{ticketing behaviors.(what to look for) if this is a known flaw within kerberos how come no workaround? Why does this attack persist?}
+
+The first and most critical defense against Kerberoasting is enforcing strong, unique, and regularly rotated passwords for service accounts. Service accounts, by their nature, are designed to run critical services and are often granted elevated privileges, sometimes even domain-level access. In many environments, these accounts are created and forgotten, their passwords unchanged for years. This stagnation is a goldmine for attackers, as static passwords can be easily cracked offline given enough time and processing power. Defenders must implement a policy that treats service accounts as high-value assets, enforcing minimum password lengths of 25 characters or more, incorporating randomization, and rotating them periodically using automated vaulting solutions.
+
+Managed Service Accounts (MSAs) and Group Managed Service Accounts (gMSAs) offer a modern alternative to traditional service accounts and provide automated password management and rotation. By transitioning critical services to use gMSAs, defenders can effectively eliminate the risks associated with static passwords. gMSAs store their credentials in a secure way and update them automatically, making them resistant to Kerberoasting by design; however, the adoption of gMSAs requires planning, application compatibility checks, and rigorous access control.
+
+Beyond password policies, defenders must invest in proactive detection and alerting mechanisms. Although requesting a service ticket (TGS) is a normal operation within Kerberos, large volumes of such requests, particularly for unusual SPNs or from unexpected accounts, can be indicative of reconnaissance activity or ongoing Kerberoasting attempts. Security teams should deploy SIEM (Security Information and Event Management) solutions capable of parsing Kerberos logs (Event ID 4769) and correlating abnormal request patterns. Baselines should be established to differentiate between legitimate service usage and anomalous activity originating from user workstations.
+
+Modern detection solutions, including Endpoint Detection and Response (EDR) tools and User and Entity Behavior Analytics (UEBA), are well-suited to detect Kerberoasting. These tools leverage machine learning models and behavioral baselines to flag deviations such as a standard user suddenly requesting multiple TGS tickets within a short time frame. When implemented effectively, these tools can provide early warnings before an attacker has a chance to extract and crack the tickets.
+
+Encryption protocol hardening is another underutilized yet crucial layer of defense. By default, Kerberos supports various encryption types, including RC4, which is known to be weak and significantly easier to brute-force compared to AES-128 or AES-256. Defenders should audit their domain and disable support for RC4 where possible, forcing the use of stronger encryption for ticket issuance. Group Policy Objects (GPOs) can be used to configure Kerberos encryption types on both domain controllers and clients, thereby reducing the feasibility of successful offline cracking.
+
+Reducing the attack surface area also involves limiting the number of accounts that are associated with SPNs. Every service account tied to an SPN is a potential Kerberoasting target. Conducting a periodic audit of all SPNs within the domain allows defenders to identify and eliminate unnecessary service account exposures. Furthermore, privilege minimization should be enforced so that service accounts are only granted the specific rights required to perform their designated functions.
+
+Credential hygiene also extends to monitoring service account usage. Defenders should ensure that service accounts are not used for interactive logons or daily administrative tasks. Every interactive login event tied to a service account increases its exposure and the likelihood of its credentials being harvested from memory. GPO settings can be configured to deny logon locally or via Remote Desktop Services for service accounts, thereby reducing the risk of credential theft through memory scraping tools like Mimikatz.
+
+In addition to technical controls, defenders must foster a culture of operational security awareness. Security teams should educate IT administrators and developers on the risks of misconfigured service accounts and the importance of using secure development practices. For example, credentials should never be hard-coded into scripts or stored in plaintext configuration files. Access to password vaults should be audited and restricted, and change management processes should include security reviews for new service deployments.
+
+Network segmentation and tiered administrative models can also play a significant role in mitigating the lateral movement opportunities granted by Kerberoasting. If an attacker compromises a service account, their ability to escalate privileges or access sensitive systems should be constrained by segmentation policies and just-in-time access models. Microsoft’s Tiered Access Model is a proven approach to structuring administrative privileges in a way that isolates critical assets and limits credential exposure.
+
+Logging and auditing must be enabled and centralized for maximum visibility. While Windows event logs provide a wealth of information, their value is only realized when they are aggregated, normalized, and correlated. Centralized log management platforms should be configured to retain security logs for a minimum of 12 months, allowing for forensic analysis in the event of a breach. Event correlation rules should be tuned to detect not just one-off anomalies, but also slow-and-low patterns indicative of stealthy attackers.
+
+For advanced environments, defenders may consider implementing honeypots or decoy SPNs as detection mechanisms. These decoys act as canaries—if a TGS request is made for a nonexistent or unused SPN, it can serve as a high-confidence indicator of malicious activity. These honeypots can be integrated with automated response systems to isolate the offending workstation or account before further damage is done.
+
+Security operations should also regularly simulate Kerberoasting attacks as part of red teaming or purple teaming exercises. These simulations not only validate existing defenses but also train detection and response teams to recognize the signals of a Kerberoasting attempt. Tools like Rubeus and PowerView can be safely used in a controlled environment to emulate adversary behavior, enabling continuous improvement of detection capabilities.
+
+Ultimately, defending against Kerberoasting is not about a single tool or configuration. It requires a multi-layered strategy that incorporates password hygiene, secure account management, proactive monitoring, threat hunting, and organizational discipline. By addressing each layer, defenders can close the window of opportunity that Kerberoasting relies on and ensure that their AD infrastructure remains resilient against credential theft and privilege escalation attacks.
+
+Even in the best-defended environments, breaches can still occur. Therefore, having an incident response plan that specifically addresses credential theft scenarios is essential. This plan should include steps for identifying compromised accounts, rotating passwords, isolating affected systems, and conducting a root cause analysis. By practicing incident response procedures in advance, organizations can significantly reduce recovery times and limit the impact of a successful Kerberoasting attack.
+
+In conclusion, Kerberoasting remains a potent threat due to its stealth, simplicity, and reliance on inherent features of Active Directory; however, defenders are not powerless. Through diligent configuration, continuous monitoring, and layered security practices, the threat can be contained and significantly diminished. The key is not to treat Kerberoasting as a rare edge case, but rather as a baseline threat that must be accounted for in every enterprise security strategy.
+
+\subsection{\textbf{Glossary}}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{A} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Assume Breach}
+
+"Assume breach" is a security principle and a mindset that dictates that a security system should be designed and operated under the assumption that a breach has already occurred or will inevitably occur. It emphasizes proactive measures to detect, respond to, and mitigate the impact of breaches rather than solely focusing on preventing them. This approach is a core component of Zero Trust Architecture, which aims to minimize the impact of potential breaches by limiting access and trust within the network.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{B} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Backdoor}
+
+A backdoor is a secret method of bypassing normal authentication or security measures to gain access to a computer system, network, or application. It's like a hidden entrance that allows attackers to bypass security controls and maintain persistent access.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{C} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Canary Tokens}
+
+Canary tokens are digital tripwires used in cybersecurity to detect unauthorized access to sensitive data or systems. They are essentially decoy files, URLs, or API keys strategically placed within a network or application, designed to trigger an alert when accessed by an attacker or malicious actor. This early warning system helps defenders identify potential breaches and respond quickly.
+
+\textbf{Credential Hygiene}
+
+Credential hygiene refers to the practices and processes involved in managing and protecting authentication credentials like passwords, tokens, and keys. It's crucial for maintaining security across various systems and applications, particularly in CI/CD pipelines and SaaS environments. Effective credential hygiene minimizes the risk of unauthorized access, data breaches, and other security incidents.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{D} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{E} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{External Trust}
+
+An external trust in Active Directory is a trust relationship established between two domains in different forests. It allows users in one domain to access resources in the other domain, even though the domains are not part of the same forest. This type of trust is often used when there is a need for resource sharing between organizations with separate Active Directory environments.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{F} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Forest Trust}
+
+Forest trusts in Active Directory are a type of trust relationship established between the root domains of two separate Active Directory forests. They allow users and resources in one forest to be accessed by users in the other forest, effectively creating a bridge between the two separate domains.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{G} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{H} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{HONEYTOKENS}
+
+Honeytokens are decoy elements, like fake data or credentials, strategically placed within a system to detect unauthorized access and malicious activity. They act as tripwires, triggering alerts when accessed by attackers, thus revealing their presence and methods. Unlike honeypots, which are entire systems, honeytokens are small, discrete components designed to be part of real systems.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{I} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Interdomain}
+
+Interdomain refers to something existing or occurring between two or more domains. In networking, it specifically relates to routing traffic between different autonomous systems (AS). It can also refer to courses that integrate knowledge from two different domains.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{J} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{K} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{L} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Local Security Authority (LSA)}
+
+The Local Security Authority (LSA) is a security subsystem within the Windows operating system that manages and enforces local security policies. It's responsible for crucial tasks like authenticating users during sign-in, verifying passwords, and handling access tokens. Essentially, the LSA acts as a gatekeeper, controlling access to resources and ensuring only authorized users and processes can interact with the system. 
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{M} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{N} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{NTDS.dit File}
+
+NTDS.dit, short for New Technology Directory Services Directory Information Tree, is the central database for Microsoft Active Directory Domain Services (AD DS). It's a critical component that stores all the information about objects within an Active Directory domain, including users, groups, computers, and their associated attributes, including password hashes. This file essentially powers authentication and authorization across an organization's network, processing requests, storing password information securely, and managing group policy settings.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{O} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{P} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Protocol Stack}
+
+A protocol stack, also known as a network stack, is a hierarchical set of communication protocols organized into layers. Each layer performs a specific function and relies on the services of the layer below it, while providing services to the layer above. This layered approach simplifies the design, implementation, and troubleshooting of complex network communication systems.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{Q} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{R} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{S} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Service Principal Name (SPN)}
+
+A Service Principal Name (SPN) is a unique identifier for a service instance, used in Active Directory for Kerberos authentication. It links a service to a specific service account, enabling clients to locate and authenticate the service. SPNs are crucial for services like SQL Server, IIS, and others that use Kerberos for secure communication.
+
+\textbf{Signature Validation}
+
+Kerberos signature validation is a crucial security mechanism within the Kerberos authentication protocol, ensuring the integrity and authenticity of messages and tickets exchanged during authentication and authorization processes. It involves verifying digital signatures on various Kerberos components, primarily the Privileged Attribute Certificate (PAC), to prevent malicious tampering and unauthorized privilege escalation.
+
+\textbf{Shadow Domain Admin}
+
+A shadow domain admin refers to a user account that possesses administrator-level privileges within a domain, but is not officially part of the designated domain administrator group. These accounts often go unnoticed by security teams because they don't appear in standard administrative listings, making them a potential security risk.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{T} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{Total Domain Persistence}
+
+Total domain persistence refers to an attacker's ability to maintain long-term, uninterrupted control over a compromised network or domain, even in the face of detection and attempts to remove them.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{U} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\textbf{User and Entity Behavior Analytics (UEBA)}
+
+User and Entity Behavior Analytics (UEBA) is a cybersecurity solution that uses machine learning and data analytics to detect suspicious activities by analyzing the behavior of users and other entities within an organization's network. By establishing baseline behaviors, UEBA identifies anomalies that may indicate security threats, such as insider threats or compromised accounts.
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{V} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{W} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{X} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{Y} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+\begin{table}
+\justifying
+
+\begin{tabular}{l}
+\textbf{Z} \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+ 

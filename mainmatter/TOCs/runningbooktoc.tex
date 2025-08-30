@@ -1,0 +1,425 @@
+\documentclass{article}
+\usepackage{blindtext}
+\usepackage{titlesec}
+\title{Sections and Chapters}
+\author{Gubert Farnsworth}
+\date{ }
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\section{Part I-Foundations of Active Directory (AD) Security}
+
+What This Book Will Teach You (and What It Will Not)
+Offensive vs. Defensive Lenses in AD Security
+Why AD Continues to Remain Vulnerable
+AD Crown Jewels-An Attractive Target for Attackers
+Ethical and Legal Considerations for Hacking Active Directory Environments
+
+\subsection{Core Networking and Security Concepts for AD Environments}
+Networking 101: How Data Moves
+TCP/IP: IP Addressing, Subnets, and Routing Basics
+Common Network and AD-Related Protocols: SMB, LDAP, Kerberos, DNS, RPC, RDP
+Packet Flow in AD Authentication
+
+\subsection{Active Directory Architecture}
+Domains, Trees, and Forests
+Organizational Units (OUs) and Group Policy Objects (GPOs)
+Security Principles: Users, Groups, Computers, Service Accounts
+AD Relationships and Trusts: Internal and External Attack Surfaces
+
+\subsection{Identity, Authentication, and Authorization in Active Directory}
+Kerberos Authentication Deep Dive
+NTLM and Legacy Protocols
+Access Control Lists (ACLs) and Security Descriptors
+Privilege Models and AD Tiers (Tier 0, 1, 2)
+
+\subsection{Regulatory and Compliance Drivers in AD Security}
+NIST, CIS, ISO, and Microsoft Baselines
+Common Enterprise AD Compliance Requirements
+How Compliance Affects Offensive and Defensive Operations
+
+\section{Part II-Offensive Security: Attacking Active Directory}
+
+\subsection{The AD Attack Surface}
+Mapping Attack Entry Points
+Common Misconfigurations
+The Role of Shadow IT in AD Risk
+
+\subsection{Reconnaissance and Enumeration}
+Passive Recon with OSINT
+Internal AD Enumeration:
+LDAP, PowerView, BloodHound
+Mapping Trusts and Privilege Escalation Pathways
+
+\subsection{Credential Access and Abuse}
+Credential Dumping
+LSASS
+SAM
+\subsubsection{\texttt{NTDS.dit}}
+Pass-the-Hash (PtH)
+Pass-the-Ticket (PtT)
+Overpass-the-Hash
+Harvesting and Reusing Kerberos Tickets
+
+\subsection{Privilege Escalation in AD}
+Exploiting Delegation
+Unconstrained Delegation
+Constrained Delegation
+Resource-based Constrained Delegation (RBCD)
+Abusing Service Principal Names (SPNs)
+Kerberoasting
+Exploiting Weak ACLs and GPO Permissions
+
+\subsection{Persistence Techniques}
+Golden and Silver Tickets
+Skeleton Keys and Security Support Provider (SSP) Injection
+DCShadow Attack
+Abusing \texttt{AdminSDHolder}
+SIDHistory Abuse
+
+\subsection{Lateral Movement}
+Pass-the-Hash / Ticket Techniques
+Remote Service Exploitation
+\subsubsection{WMI: (Windows Management Instrumentation}
+\subsubsection{Sysinternals \texttt{PsExec}}
+WRM: (Windows Remote Management)
+Credential Relay Attacks
+NTLM Relay Attack
+
+\subsection{AD Attacks in Hybrid Environments}
+Azure AD and On-Prem Sync Abuse
+OAuth Token Theft and Cloud-Based Persistence
+Cross-Tenant and Cross-Forest Exploitation
+
+\section{Part III-Defensive Security: Protecting Active Directory}
+\subsection{Building an AD Defense Strategy}
+
+Adopting and Establishing Zero Trust in Active Directory
+The Tiered Administration Model
+The Principle of Least Privilege (PoLP) and Just-in-Time (JIT) Access
+
+\subsection{Hardening Authentication}
+Enforcing Kerberos Pre-Auth and Disabling NTLM
+MFA for AD Accounts
+Securing Service Accounts and SPNs
+
+\subsection{Group Policy and OU Security}
+Locking Down GPO Permissions
+GPO Attack Detection and Prevention
+Securing OU Structure Against Misuse
+
+\subsection{Monitoring and Detection}
+Event Logging for Defenders
+SIEM Integration and Use Cases
+
+\subsection{Detecting Common AD Attacks}
+DCSync
+DCShadow
+AS-REP Roasting
+LLMNR and NBT-NS
+
+\subsection{Incident Response (IR) in AD Breaches}
+Containment and Eradication Procedures
+Putting Out Forest Fires: DC Reinstallation and Forest Recovery
+Post-Incident Hardening
+
+\subsection{Threat Hunting in AD}
+Threat Hunting Methodologies
+Using BloodHound for Defensive Strategies
+Canary Objects and Decoy Accounts
+
+\subsection{Defending Against Hybrid AD Attacks}
+Azure AD Conditional Access Policies
+Securing Azure AD Connect
+Cloud and On-Prem Identity Threat Detection
+
+\section{Part IV-Advanced Scenarios and Case Studies}
+\subsection{Full Kill Chain Walkthrough: From Initial Toehold to Domain Admin (DA)}
+
+Step-by-Step Red Team Attack Simulation
+Blue Team Detection and Mitigation at Each Stage
+
+\subsection{Case Study: Real-World AD Breach Analysis}
+How the Attack Unfolded
+Missed Defensive Opportunities
+Lessons Learned and Preventative Measures
+
+\subsection{Designing and Secure AD From the Ground Up}
+Defender Security Best Practices
+Secure Build Standards and Templates
+Long-Term Maintenance Strategy
+
+\subsection{Initial Access and Active Directory Exploitation}
+\begin{itemize}
+    \item Exploit unpatched, uncovered vulnerabilities to gain initial access
+    \item Perform application allowlisting attack for executing malicious scripts inside the domain structure
+    \item Set up an in-house Active Directory simulated environment and gain offensive and defensive learning by simulating APT TTPs and mapping attacker TTPs to their respective security framework
+    \item Other Topics to be Covered:
+        \begin{itemize}
+            \item Lab Setup
+        \end{itemize}
+        \begin{itemize}
+            \item     Abusing Server Message Block (SMB)
+        \end{itemize}
+        \begin{itemize}
+            \item SMB DLL Delivery
+        \end{itemize}
+        \begin{itemize}
+            \item LLMNR Poisoning Attack
+        \end{itemize}
+        \begin{itemize}
+            \item Capturing NTLMv2 Hashes
+        \end{itemize}
+\end{itemize}
+
+\subsection{Active Directory Enumeration}
+Perform domain reconnaissance on domain entities such as domains, users, groups, ACLs, OYs. Forests, Trust Relationships, GPOs and GPPs using Microsoft built-in utilities
+Hunt and map Active Directory resources using PowerShell enumeration scripts, and the tools BloodHound, and RPCClient
+Seek out hidden Domain Admin and Administrator accounts to use for privilege escalation, lateral movement, and persistence.
+
+\subsection{Post-Enumeration Activities in Active Directory}
+RPCClient
+BloodHound
+PowerView
+
+\subsection{Abusing Kerberos}
+Discover Service Principal Names (SPNs) that are associated with normal user accounts
+Use Kerberoasting attacks to steal service tickets or RC4 HMAC hashes tied to service accounts
+Perform AS-REP Roasting to retrieve an encrypted AS-REP with a user's RC4 HMAC password
+Kerberos Authentication Protocol and Delegation
+AS-REP Roasting Attack
+Kerberoasting
+Kerberos Brute-Force Attacks
+
+\subsection{Credential Dumping}
+Domain Cache Credential
+Local Administrator Password Solution (LAPS)
+DCSync Attack
+NTDS.dit
+Golden Ticket
+Silver Ticket
+
+\subsection{Privilege Escalation}
+Unconstrained Delegation
+Resource-based Constrained Delegation (RBCD)
+HiveNightmare
+sAMAccountName Spoofing
+SeBackupPrivilege
+PrintNightmare
+
+\subsection{Establishing and Maintaining Persistence in Active Directory}
+Golden Certificate Attack
+DSRM
+AdminSDHolder
+DC Shadow Attack
+Skeleton Key
+
+\subsection{Lateral Movement}
+Pass-the-Ticket (PtT)
+Pass-the-Cache
+Overpass-the-Hash
+Pass-the-Hash (PtH)
+
+\subsection{Tools}
+PowerShell-Empire
+CrackMapExec
+Impacket Suite
+A to Z Mimikat \& Rubeus
+
+
+
+
+
+
+\section{Part ?-References and Tools}
+\section{AD Security Tools Catalog}
+\subsection{Offensive Tools}
+\subsubsection{PowerView}
+\subsubsection{Mimikatz}
+\subsubsection{Rubeus}
+\subsubsection{Impacket Suite}
+\subsection{Defensive Tools}
+\subsubsection{ATA}
+\subsubsection{Defender for Identity}
+\subsubsection{PingCastle}
+\subsubsection{\texttt{SYSMON}}
+
+\section{Command and Script Reference}
+\subsection{Common PowerShell, CMD, and Bash Scripts for AD Operations}
+\subsection{Tool Syntax and Usage Examples}
+
+\section{Glossary of Active Directory Security Terms}
+
+\section{Appendices}
+\subsection{A: AD Security Checklist}
+\subsection{B: Detection Rule Samples}
+\subsubsection{Sigma}
+\subsubsection{Splunk Queries}
+\subsubsection{KQL}
+\subsection{C: AD Hardening GPO Examples}
+
+\section{Part VI-Active Directory Enumeration and Local Privilege Escalation}
+\subsection{Enumerating Useful Active Domain-Related Information}
+\subsection{AD Local Privilege Escalation Techniques}
+\subsection{Hunting for Domain Local Admin Privileges Using Multiple Methods}
+\subsection{Abusing Enterprise AD Applications to Discover Attack Pathways}
+\subsection{Security Defense Evasion}
+\subsubsection{Techniques for Bypassing Security Control Mechanisms}
+\subsubsection{Bypassing Signature-Based Antivirus}
+\subsubsection{Pivoting and Obfuscation Methods}
+\section{Part VII-Lateral Movement, Domain Privilege Escalation, and Persistence}
+\subsection{Hunting for Domain Administrator Accounts}
+\subsection{Hijacking High-Privileged Sessions}
+\subsection{AD Credential Extraction}
+\subsubsection{Credential Theft and Replay Attacks}
+\subsubsection{Exfiltrating Credentials from Restricted Environments}
+\subsubsection{Bypassing Allowlists}
+\subsection{Leveraging Built-In Protocols to Escalate Privileges}
+\subsection{Abusing Derivative Domain Local Admin Privileges}
+\subsection{Understanding the Classic Kerberoast}
+\subsubsection{Variants to Escalate Privileges}
+\subsection{Exploiting Delegation Issues}
+\subsection{Protected Groups Privilege Abuse}
+\subsection{Kerberos}
+\subsubsection{Abusing Kerberos Functionality to Persist Using DA Privileges}
+\subsection{Golden and Silver Tickets}
+\subsection{Abusing DC Safe Mode for Persistence}
+\subsection{AdminSDHolder Manipulation}
+\section{Part IIIX-Domain Persistence and Escalation to Enterprise Admins}
+\subsection{ACL Modification for DCSync Attack}
+\subsection{Security Host Descriptor Modification}
+\subsection{Methods for Domain Controller Persistence}
+\subsection{Abusing Trust Keys and \texttt{krbtgt}}
+\subsection{Executing Intra-Forest Trust Attacks}
+\subsection{AD Database Abuse to Achieve RCE}
+\section{Part IX-Advanced Threat Analytics and Deception}
+\subsubsection{Temporal Group Memberships}
+\subsubsection{ACL and ACE Auditing}
+\subsubsection{LAPS-Local Administrator Password Solution}
+\subsubsection{Hardening SIDs}
+\subsubsection{Kerberos Pre-Auth}
+\subsubsection{SID Filtering}
+\subsubsection{Selective Authentication}
+\subsubsection{Credential Guard and Device Guard}
+\subsubsection{PAWs and SAWs}
+\subsection{Tiered Administration}
+\subsubsection{Tier 0}
+\subsubsection{Tier 1}
+\subsubsection{Tier 2}
+\subsection{EASE and Red Forests}
+\subsection{Defensive Deception Tactics}
+\subsubsection{Lures and Decoys}
+\subsubsection{Canaries and Canary Tokens}
+\subsubsection{Honeypots, Honeynets, and Honey Tokens}
+
+\section{Introduction to Red Teaming}
+\subsection{Defining Red Team}
+\subsection{Red Team vs. Pentesting}
+\subsectiob{Objectives and Benefits}
+\subsection{Rules of Engagement (ROE) and Legal Aspects}
+\subsection{Tools and Red Team Methodologies}
+\section{Infrastructure and Command \& Control (C2)}
+\subsection{Acquisition of Domains for Operations}
+\subsection{Infrastructure Requirements}
+\subsection{Setting Up and Securing C2 Infrastructure}
+\subsection{Domain Fronting}
+\subsection{HTTPS and DNS Redirectors}
+\section{Initial Recognition}
+\subsection{Passive Recognition: WHOIS, DNS, and Social Networks}
+\subsection{Active Recognitiion: Network Scanning and Service Discovery}
+\subsection{Identity by Email}
+\subsection{Organizational Data Analysis}
+\subsection{Best Practices for Keeping a Low Profile}
+\section{Initial Compromise}
+\subsection{Compromise Techniques}
+\subsubsection{Web Shells}
+\subsubsection{SQL Injection (SQLi)}
+\subsubsection{Password Spraying}
+\subsection{Preparation and Use of Social Engineering Attacks}
+\subsection{Creation of Malicious Payloads}
+\subsection{Payload Distribution}
+\subsection{Attack Vector Customization}
+\subsection{Cyberattack Simulation}
+\section{Establishing a Bridgehead}
+\subsection{Obfuscation Techniques}
+\subsection{Bypassing and Evading Traditional Security Detection Mechanisms}
+\subsection{Executing Malicious Code with .NET and PowerShell}
+\subsection{Command Execution}
+\subsection{Coded Scripts to Evade Detection}
+\subsection{Post-Attack and Intelligence Gathering}
+\subsectiob{Access and Detection Avoidance Strategies}
+\section{Attacking Active Directory Red Team Style}
+\subsection{Lateral Movement}
+\subsection{Enumeration and Privilege Escalation in Active Directory}
+\subsection{Mapping AD Relationships}
+\subsection{Lateral Movement Propagation}
+\subsectiob{The Importance of Situational Awareness and Personal OPSEC}
+\section{Goal Attainment and Reporting}
+\subsection{Database Attack Strategies}
+\subsection{Sensitive Data Exfiltration Techniques}
+\subsection{Preparing Detailed Vulnerability Identification and Remediation Reports}
+\subsection{Verifying and Validating Corrective Measures: Re-Verification and Re-Validation Testing Procedures}
+\subsection{Analyzing Post-Attack Effectiveness of Attack Methodologies}
+\subsection{Measuring Impact of Attack and TTP Strategies}
+\section{Frameworks and Methodologies}
+\subsection{Introduction to Cyber Security Frameworks}
+\subsubsection{MITRE ATT\&CK Framework}
+\subsubsection{Lockheed Martin Cyber Kill Chain (CKC)}
+\subsection{Understanding and Using Threat Intelligence}
+\subsection{Planning and Executing Opponent Emulations}
+\subsection{Analysis of Indicators of Compromise (IoC)}
+\subsection{Technology Watch and Strategy Adaptation}
+\section{Attack Infrastructure and Operational Security}
+\subsection{Configuring and Managing Red Team Tools}
+\subsection{Securing Attack Infrastructure}
+\subsection{Setting Up Beacons and Redirectors}
+\subsection{Maintaining Access and Continued Persistence}
+\subsection{Risk Management}
+\subsection{Reducing Your Attack Footprint}
+\section{Malware Analysis and Reverse Engineering}
+\subsection{Malware Analysis Tools}
+\subsubsection{Ghidra}
+\subsubsection{IDA Pro}
+\subsubsection{OllyDBG}
+\subsection{Malware Reverse Engineering}
+\subsection{Portable Execution (PE) File Formats and Internal Structure}
+\subsection{Malware Tactics}
+\subsection{Importance of Malware Analysis}
+\section{Capture the Red Team Flag}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\subsection{}
+
+This is the first section.
+
+\blindtext
+
+\addcontentsline{toc}{section}{Unnumbered Section}
+\section*{Unnumbered Section}
+
+\blindtext
+
+\section{Second Section}
+
+\blindtext
+\end{document}

@@ -1,0 +1,101 @@
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{NAC.png}
+
+\end{figure}
+\chapter{Network Access Control, or NAC, solutions support network visibility and access management through security policy enforcement on devices and users of corporate networks.}
+Network Access Control (NAC) is a security solution that restricts device access to enterprise networks based on compliance with predefined security policies. It provides the mechanisms necessary for installing, enforcing, and locking down security rules that determine whether a device is permitted to connect. A NAC system often uses a sandboxed "quarantine zone" (or as I lovingly refer to it as \textit{"network jail"}) where devices are placed until they are verified and validated as compliance thus being granted access to the network.
+
+NAC is conceptually similar to switch-level port security-both enforce rules about what is allowed to connect and how that access is controlled. Security policy creation has always been a favorite task of mine because of how dynamic you can make them, molding and adapting them to user roles, device posture, or risk contexts. For example, imagine a group of employees returning to the office after traveling with company laptops. While away, those laptops connected to numerous public hotspots and access points, leaving behind digital footprints and potentially exposing them to risk. When the laptops are plugged back into the corporate network and attempt to initially connect, instead of granting immediate access, NAC intercepts the connection.
+
+A NAC system can deny network access to noncompliant devices, place them in the network jail, or give them only restricted access to computing resources, thus keeping insecure nodes from infecting the network.
+
+Before access is approved, NAC performs posture checks or security compliance pre-checks such as verifying operating system patch levels, antivirus status, or application updates. During this process, the laptop remains in quarantine with only limited or redirected network access. Depending on how strict the security policies are, NAC may deny access entirely for even minor noncompliance (e.g., a missing browser update), or it may allow conditional access while remedial steps are applied. Only once the devices satisfsy all policy requirements are they released from the network jail and grantred full access to the internal LAN.
+
+\subsection{General NAC Capabilities}
+NAC solutions help defenders and organizations control access to their networks through the use of the following capabilities:
+\begin{itemize}
+    \item Policy lifecycle management: Enforces policies for all operating scenarios without requiring separate products or additional modules.
+    \item Profiling and visibility: Recognizes and profiles users and their devices before malicious code can cause damage.
+    \item Guest networking acecss: Manage guests through a customizable, self-service portal.
+\end{itemize}
+\begin{itemize}
+    \item Security posture check: Evaluates security-policy compliance by user type, device type, and operating system.
+    \item Incidence response: Mitigates network threats by enforcing security policies that block, isolate, and repair noncompliant machines without administrator attention.
+    \item Bidirectional integration: Integrate with other security and network solutions through the open/RESTful API.
+\end{itemize}
+
+\subsection{Use cases for network access control}
+
+\subsubsection{NAC for guests/contractors}
+
+Whether accounting for contractors, visitors, or partners, organizations use NAC solutions to make sure that non-employees have access privileges to the network that are separate from those of employees.
+
+ 
+\subsubsection{NAC for BYOD}
+
+The exponential growth in mobile devices has liberated the workforce from their desks and given employees freedom to work remotely from their mobile devices. NAC for BYOD ensures compliance for all employee owned devices before accessing the network.
+
+
+\subsubsection{NAC for the Internet of Things}
+
+IoT devices, whether they be in manufacturing, healthcare, or other industries, are growing exponentially and serve as additional entry points for attackers to enter the network. NAC can reduce these risks in IoT devices by applying defined profiling and access policies for various device categories.
+
+\subsubsection{NAC for incidence response}
+
+NAC vendors can share contextual information (for example, user ID or device type) with third-party security components. They can respond to cybersecurity alerts by automatically enforcing security policies that isolate compromised endpoints.
+
+\subsubsection{NAC for medical devices}
+
+As more medical devices come online, it’s critical to identify devices entering a converged network. NAC solutions can help protect devices and medical records from threats, improve healthcare security, and strengthen ransomware protection.
+
+ 
+
+ 
+ 
+
+\section{Network Access Control Types}
+There are two basic types of network access control solutions: \textbf{pre- and post-admission.
+\begin{itemize}
+    \item }Pre-admission: This type of NAC works by controlling access at the time a user or device requests admission to the network. This type of control evaluates the attempt amnd allows entry when the user requesting access proves they are authorized to enter the network according to the organizatiion's established security policies.
+\begin{itemize}
+    \item Post-admission: This type of NAC happens after the user is inside of the network, when they try to access another part of it. The post-admission NAC presents the pre-admission layer, the post-admission layer can stop lateral movement and limit the damage of an ongoing cyberatatck. With this type of NAC, the user needs to authenticate each time they want to move around to aother part of the nnetwork.
+\end{itemize}
+\end{itemize}
+
+Network Access Control ensures that any user who accesses a network, resources data, or devices is verified and authorized to do so. Controlling who enters your network is a fundamental first step to protecting your organization's sensitive data and applications from malciious activities. Not only that, but as a defender, that is your job.
+
+NAC is vastly different from other layered security barriers and methods in that it offers sentralized management of security policies and executes previously set requirements made by security teams. This solution delivers consistent access control across all endpoings trying to connect to the corporate network-all while giginv administrators the centralized ability to grant or revoke user and device access.
+
+Because organizations not only need to keep bad actors out of their network but prevent authorized use from being exploited for malicious purposes, an NAC solution provides the visibility and control needed over the devices and users accessing the network. It controls not only who can enter the network but manages access for users who are already inside the network, in compliance with security policies.
+
+
+\subsection{Use cases for network access control}
+
+NAC versatility makes it suitable for a wide range of scenarios and use cases:
+
+1. BYOD environment
+
+As more companies rely on remote work, \href{https://www.citrix.com/solutions/unified-endpoint-management/what-is-byod.html}{Bring-Your-Own-Device} is becoming more common. The challenge of BYOD is that CISOs have to find a way to provide secure network access to thousands of different, unmanaged devices. Remote or hybrid staff and third-party contractors use an array of devices—tablets, desktops, laptops, and smartphones—to connect to the company network. This makes endpoint and network security incredibly complex.
+
+Adding Internet of Things (IoT) devices to this already complex scenario means you need an NAC system to also identify and categorize those devices. The increasing use of smart sensors for monitoring utilities and security systems will also increase the demand for Network Access Control.
+
+The risk is especially high with mobile devices such as tablets, smartphones, and laptops. These personal devices may not have up to date operating systems, and IT has limited visibility into the health of the devices without a unified endpoint management solution. In addition, it is pretty common for users to disable security features or install applications that are blacklisted on managed devices. The dangers become even greater when these mobile devices connect to public networks, such as those offered in airports, public libraries, and coffee shops.
+
+Adding Internet of Things (IoT) devices to this already complex scenario means you need an NAC system to also identify and categorize those devices. The increasing use of smart sensors for monitoring utilities and security systems will also increase the need for Network Access Control.
+
+All these device types make it especially challenging for organizations to provide users with secure access to the network while managing network security threats.
+
+2. Giving role-based network access to third parties
+
+Another difference between NAC and other security technologies that either allow or deny access to a network is that NAC has the advantage of granting network access at a granular level. Manual management of roles and permissions is resource-intensive and inefficient. When NAC solutions integrate with role-based network access systems such as active directory controls, the management of roles and permissions can be executed with greater control and flexibility.
+
+Weak security protocols in network access are one of the most common vulnerabilities found in penetration tests. An NAC solution can help by providing access to sensitive data only for authorized users. Giving direct access to the resources minimizes network shares, mitigating another common risk.
+
+3. Reducing the risk of advanced persistent threats ATP
+
+Although network access control solutions don’t usually have specific functions to detect and stop APT intrusions, they can play a role in mitigating the potential impacts of an APT attack. NAC systems can stop the attacker from connecting to the network, and by integrating with APT detection solutions, can help isolate compromised systems before attackers can infiltrate deeper into the network.
+
+NAC can also play a role in preventing supply-chain attacks by restricting access to the network of a compromised third party and limiting the lateral movement of attackers in the event of a breach.
+
+ 
